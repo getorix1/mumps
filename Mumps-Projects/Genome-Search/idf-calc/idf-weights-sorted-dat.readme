@@ -1,0 +1,3 @@
+Concatenate the idf-weights-sorted-split* into one file named idf-weights-sorted.dat
+
+The file is not a tar file and it is not gzipped.
