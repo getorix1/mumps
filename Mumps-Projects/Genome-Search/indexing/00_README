@@ -1,0 +1,236 @@
+June 24, 2024
+
+Genomic Searching and Indexing with N-Grams and Inverse Document Frequency Weighting
+
+This directory is used to index a genomic database and retrieve sequences based 
+on sequence fragment queries.
+
+The directory contains a table (idf-weights-sorted.dat) of IDF values for 3,968,320
+11 base-pair words. These were created by the programs in directory idf-calc above.
+You may re-run this calculation but it take a very long time and requires a large 
+training set of sequences.
+
+The indexing procedure takes a sample database of sequences and creates indices to 
+the sequences based on 'words' or pase-pairs in teh sequence. A word is normally 11 
+consecutive base-pairs.
+
+A retrievel program takes a sequence fragement, breaks it down into 11 base-pair
+words and searched the indices for sequendces that contain these words and scores 
+sequences foound based on the IDF values of the matched words and the number of words 
+matched.
+
+
+Quick Start
+
+1. Install Mumps
+
+Mumps is included in this distro in the:
+
+	Mumps-Language-Processors/Mumps-Interpreter-Compiler-Library
+
+directory. To install, as root, run:
+
+	./ConfigureNativeMumps.script 
+
+This will install any needed software and configure the system. Software is installed
+from Ubuntu and related repositories. Sorry, this only works with 'apt' based systems
+at present.
+
+Note: you may need to make the script files executabel before running them.
+
+Next, as root, run:
+
+	./CompileNativeSingleUserMumps.script 
+
+This will compile and install Mumps.
+
+You also need to be sure there is a copy in the indexing IDF weights present.
+These are calculated in the idc-calc directory. If the fle is not present 
+the indexing script will not work.  The file is named idf-weights-sort.dat.
+
+A copy is supplied in the distro.
+
+The indexing will not work without access to the idf-weights-sort.dat file.
+
+
+2. Index one of the sample databases
+
+There are two sample databases in the directory sample-data. One is in Genbank format:
+
+	genbank.sample.database
+
+and the other is in FASTA format:
+
+	nt.sample.database
+
+Both are very small in order that the distribution not become too large. 
+
+For normal work, you will need to get your own data, probably from NCBI:
+
+	https://ftp.ncbi.nlm.nih.gov/genbank/
+
+	https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA/
+
+To index one of the small sample databases and test the system, edit the file index.script and
+in the section of code like this:
+
+------------------------------------------------------------------------------------------------
+
+# Uncomment one of these depending on which database you are using
+
+TYPE="NT"
+# TYPE="GENBANK"
+
+if [ $TYPE  = "GENBANK" ]; then
+        echo "-----------------------GENBANK-------------------------"
+        SOURCE="sample-data/genbank.sample.database"
+        code/extractDNA $max_docs < $SOURCE > db.tmp
+        SOURCE="db.tmp"
+else
+        echo "-----------------------NT------------------------------"
+        SOURCE="sample-data/nt.sample.database"
+        fi
+
+------------------------------------------------------------------------------------------------
+
+Comment the line beginning withTYPE as desired. In the example, TYPE is set to 
+NT which means that the FASTA format "sample-data/nt.sample.database" will be used.
+
+If you use you own datbase, modify SOURCE as appropriate so that it points to
+your database and be sure TYPE is set correctly for the type of database.
+
+
+3. Index the selected database
+
+To index a database type:
+
+	index.script 1000
+
+where 1000 is the maximum number of sequences to index. If you omit the count, the
+value 10000 will be used.
+
+Note: you may need to make the script files executable before running them.
+
+The system will begin indexing the database selected. It will attempt to acquire all CPUs on your
+machine and use them to the maximum. If your CPU cooler is inadequate, you can reduce the load
+by manually setting cpu_count in index.script AND in retrieve.script rather than letting the system
+determine the count. A lower count will lower temperatures.
+
+For as many CPUs as you have (or say you have) the system will create directories named
+seg0, seg1, seg2, ... These containg the indexing segment results. There will be one for each
+CPU.
+
+4. Run a test retrieval
+
+To search the database, type:
+
+	retrieve.script file_name
+
+where "file_name" is the name of the file containing the sequence to use as a search key. If
+you do not provide a file name, the name "tstquery" will be used. A test query is provided
+in the file tesquery.
+
+The file containing the search sequence should contain, in lower case, a string of nucleotides. No
+other material is permitted other than blanks. The seach key must be a single line although it 
+can be a very long line.
+
+The distro contains a tstquery file with the contents:
+
+gccttcggcgg tccgcttgccg tcttgctcccc tcggcgttgct cccccgtccgg ctctgggccgc cttgttcgaca ggaccgcctct 
+acttcgaggct gtgctgctca ggcccctgccg cgggtccggga
+
+Note: line feed added in the above for clarity. Actual file consists of one line. Blanks in the above
+are optional.
+
+The results of the above query on the sample database are:
+
+------------------------------------------------------------------------------------------------------
+
+Mon May  8 06:17:52 PM EDT 2023
+
+Example retrieve sequences
+
+File containing query not supplied. Using tstquery instead
+Number or processing elements: 8
+
+Query: 
+gccttcggcgg tccgcttgccg tcttgctcccc tcggcgttgct cccccgtccgg ctctgggccgc cttgttcgaca ggaccgcctct 
+acttcgaggct gtgctgctca ggcccctgccg cgggtccggga
+
+ls: cannot access 'seg1/*.rslt': No such file or directory
+ls: cannot access 'seg2/*.rslt': No such file or directory
+ls: cannot access 'seg5/*.rslt': No such file or directory
+ls: cannot access 'seg6/*.rslt': No such file or directory
+ls: cannot access 'seg7/*.rslt': No such file or directory
+
+Searching ...
+###
+   550 0.006 550 >X17329.1 Rabbit mRNA for titin (partial) (A-band) ...
+              matched keys: *gccgccttgtt 
+
+    1 g-cct-tcg-gcggtc-cg-ctt---gccg--tcttgctcccctcggcgtt-g-ctcc-c 48
+      : ::: : : :   ::  :  ::   ::::     :::  : ::  :: :: :   :: :
+  818 gacctattgtgatatcaggagttacagccgaaaaatgc-acact-agc-ttggaaaccgc 875
+
+   49 c-cgtccgg-ctctgg--gccg-c--c------t-t-gt-tcg--a-cag-g--acc-gc 86
+      : : :: :: :  :::  : :: :  :      : :  : : :  :  :: :  ::: ::
+  876 cacttcaggacggtggaag-cgacatcataaattatattgtggaaaggagagaaaccagc 935
+
+   87 ctctacttcg--agg-ctgt-g-c--tgctc-a-g-gc---ccct--gccgc-gggtc-c 130
+      : :  ::: :   :: :::: : :  ::: : : : ::   ::::  :: ::  :::: :
+  936 cgc--ctt-gtttggactgtggtcgatgc-caatgtgcaaaccctcagctgcaaggtcac 992
+
+ Score = 102
+
+###
+   481 0.009 481 >NM_001101700.1 Oryctolagus cuniculus dystroglycan 1 (DAG1), mRNA  ...
+              matched keys: *aggcccctgcc *ccggctctggg 
+
+    1 gcc-ttc-gg--cg-g--t----ccgctt-gcc-gtc-ttgct-c-ccctc-g-g-cg-t 41
+      ::: : : ::  :: :  :    :: :::  :: : : ::::: : ::: : : : :: :
+ 1180 gccgtccaggatcgtgcctacccccacttctccagccattgctcctcccacagagacgat 1240
+
+   42 tgctcc-cc---c---g-tccggct-ctgggccg-ccttgttcga-ca---ggac-c--- 84
+       ::::: ::   :   : ::: : : :::::  : ::  : :: : ::   :::: :   
+ 1241 ggctcctccagtcagggatcctgttcctgggaagcccacggtc-accactcggactcgag 1300
+
+   85 --gcc-tctacttc-g------aggct-gtgctgc-t-caggccc-ctgccgcgg-gtc- 129
+        ::: : :: ::: :      :  :: : ::  : : :: :::: ::  :: :: ::: 
+ 1301 gtgccat-ta-ttcagaccccaaccctag-gccccatcca-gcccact--cg-ggtgtca 1354
+
+  130 --cg--gg-a 135
+        ::  :: :
+ 1355 gacgctggca 1365
+
+ Score = 128
+
+###
+    41 0.020 41 >NM_176670.2 Bos taurus ATP synthase F1 subunit delta (ATP5F1D), mR ...
+              matched keys: *cgggtccggga *ggcccctgccg 
+
+    1 gccttcggcggtccgcttgccgtcttgctcccctcggcgttgctcccccgtccggctctg 61
+      :::::: :: ::::::  :::::: :::::::::: :::::::::: :::::::: : ::
+   30 gccttccgctgtccgccagccgtcatgctcccctccgcgttgctccgccgtccgggtttg 90
+
+   62 ggccgccttgttcgacaggaccgcctctacttcgaggctg-tgctgctcaggcccctgcc 121
+      :::::::: ::::: :::: ::::::::::  ::::::::  ::::::::::::::::::
+   91 ggccgcctcgttcgccaggtccgcctctacgccgaggctgccgctgctcaggcccctgcc 151
+
+  122 gcgggtccggga 134
+      ::::::::::::
+  152 gcgggtccggga 164
+
+ Score = 216
+
+
+	elapsed time 0
+
+------------------------------------------------------------------------------------------------------
+
+Note: the error messages are due to the small size of the database. The system is 
+complaining that some segments have no results.
+
+The system takes your query, breaks it into 11 character n-grams and creates all possible permutations
+of each n-gram. These are matched against the database. The top scoring sequences are retrieved
+and a Smith-Watermann sore is computed for each. The results are presented in ascending Smith-Waterman
+order.

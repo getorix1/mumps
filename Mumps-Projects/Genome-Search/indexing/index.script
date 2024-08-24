@@ -1,0 +1,143 @@
+#!/bin/bash
+
+#*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Internet Radio Automation & Encoding Toolkit
+#+
+#+     Copyright (C) 
+#+	2018, 2019, 2020, 2021, 2022, 2023 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://www.cs.uni.edu/~okane
+#+     https://threadsafebooks.com/
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#+
+#+ June 24, 2024
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+echo
+echo "---------------------------------------------"
+date
+echo
+
+#-----------------
+#       settings
+#-----------------
+
+echo
+
+if [ -z $1 ]
+        then
+                echo "Max Number of Docs per segment not supplied - default of 10000 used..."
+                max_docs=10000
+        else
+                max_docs=$1
+		echo "Begin processing up to $max_doc sequences per segment"
+        fi
+
+make -C gtk-glade -j 8
+make -C code -j 8
+
+echo
+echo "-----------------------------------------------"
+cpu_count=`grep processor /proc/cpuinfo | wc -l`
+echo "Number or processing elements: $cpu_count"
+
+code/starttime.mps
+
+TYPE="NT"
+#TYPE="GENBANK"
+
+if [ $TYPE  = "GENBANK" ]; then
+	echo "-----------------------GENBANK-------------------------"
+	SOURCE="sample-data/genbank.sample.database"
+	code/extractDNA $max_docs < $SOURCE > db.tmp
+	SOURCE="db.tmp"
+else
+	echo "-----------------------NT------------------------------"
+	SOURCE="sample-data/nt.sample.database"
+	fi
+
+max_docs=`code/count-seq $max_docs < $SOURCE`
+
+echo "Actual number of sequences=$max_docs"
+
+echo $max_docs > MAX_DOCS
+
+# avoid count truncation
+
+max_docs=$(($max_docs+$cpu_count))
+
+# maximum sequences per segment
+
+max_docs=$(($max_docs/$cpu_count))
+
+echo "Number of sequences per segment $max_docs"
+echo
+
+code/chop $max_docs $cpu_count < $SOURCE 
+
+rm -f db.tmp
+
+echo
+echo "Extract sequences from $SOURCE"
+echo
+
+segment=0
+
+for (( i=0 ; i<$cpu_count ; i++ )); 
+	do
+	echo "---------------------------"
+	echo "segment $i starting sequence = $segment"
+	rm -r -f seg$i
+	mkdir -p seg$i
+	cp code/index-thread.script seg$i
+	cp code/genome seg$i
+	cp code/starttime.mps seg$i
+	cp code/endtime.mps seg$i
+	cp code/extractNT seg$i
+	cp code/indexing-controls.script seg$i
+	echo "segment $i contains `grep ">" db-$i | wc -l` sequences"
+	count=`grep ">" db-$i | wc -l`
+	mv db-$i seg$i/input
+
+	cd seg$i
+	rm -f nohup.out
+	rm -f idf-weights-sorted.dat
+	ln -s ../idf-weights-sorted.dat idf-weights-sorted.dat
+
+	nohup index-thread.script $i $segment $max_docs &
+
+	cd ..
+	segment=$((segment+count))
+
+	done
+
+wait
+
+for (( i=0 ; i<$cpu_count ; i++ )); 
+	do
+	rm -f seg$i/*.tmp
+	rm -f seg$i/*.converted
+	done
+
+echo "Indexing phase finished."
+code/endtime.mps
+echo
+rm starttime
+
+

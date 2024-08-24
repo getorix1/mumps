@@ -1,0 +1,1192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<TITLE>Inverse Document Frequency Weighted Genomic Sequence Retrieval</TITLE>
+<META NAME="AUTHOR" CONTENT="Kevin C. O'Kane">
+<META NAME="DESCRIPTION" CONTENT="sequence retrieval, genomics, blast, fasta, DNA, IDF, inverse document frequency">
+</HEAD>
+
+<BODY LANG="en-US" TEXT="#000000" BGCOLOR=gainsboro>
+<P><FONT SIZE=3>
+
+<table bgcolor=dodgerblue width=100% border=2>
+<tr>
+<td bgcolor=black align=center valign=top>
+<a href=http://math-cs.cns.uni.edu/~okane/cgi-bin/newpres/m.compiler/compiler/index.cgi>
+<img src=mdh7.gif border=0>
+<br>
+<font size=+2 color=dodgerblue>Mumps/MDH Toolkit
+</a>
+<td align=left>
+<font size=3> <b> Inverse Document Frequency Weighted <br>
+Genomic Sequence Retrieval
+<br>
+Version 1.0
+<HR>
+Kevin C.  O'Kane, Ph.D. <BR>
+Computer Science Department <BR>
+University of Northern Iowa <BR>
+Cedar Falls, IA 50614 <BR>
+<a href=mailto:okane@cs.uni.edu>okane@cs.uni.edu</a>
+<br>
+<a href=http://www.cs.uni.edu/~okane>http://www.cs.uni.edu/~okane</a>
+<BR>
+</b>
+May 30, 2005
+</table>
+
+<CENTER>
+<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=2 BGCOLOR="#c0c0c0">
+<TR>
+<TD>
+Copyright (c) 2004, 2005 Kevin C. O'Kane, Ph.D.
+
+<P>
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with
+the Invariant Sections being: Page 1, with the Front-Cover Texts
+being: Page 1, and with the Back-Cover Texts being: no Back-Cover
+Texts. 
+</TD>
+</TR>
+</TABLE>
+</CENTER>
+<HR>
+<b>Contents</b>
+<p>
+<ol type=A>
+<li> <a href=#live>Online Version</a>
+<li><a href=#comments>General Comments</a>
+<li><a href=#distros>Distributions</a>
+      <ul> 
+      <li> Full Source Code Distribution
+      <li> Windows XP Binary Only Distribution
+      </ul>
+<li><a href=#linux>Linux/Cygwin Installation</a>
+<li><a href=#dosinstall>WinXP Binary Installation</a>
+<li><a href=#seqret>Sequence Retrieval</a>
+<li><a href=#using>Using the Web Interface</a>
+<li><a href=#examples>Web Examples</a>
+<li><a href=#method>Methology</a>
+</ol>
+<hr>
+
+<ol type=A>
+
+<a name=live></a>
+<li>
+<b>Online Version</b>
+<p>
+
+An online server version of the IDF Searcher can be accessed
+by clicking the link below.  This version maintains
+recent (see dates) versions of NCBI data bases
+and may be used for searching and testing.  The
+server is a dual Xeon 2.25 mHz system with 4 GB
+of main memory and four 5500 rpm IDE disk 
+drives (~1 terabyte total) running Mandrake 9.2 Linux.
+Other activity, including experiments, other users and student
+use, will affect timing.  From time to time, the
+data bases are updated.  During updates, parts of the system
+will not be available.  See <a href=#using>
+Using the Web Interface</a> below for details on how to use.
+<p>
+<blockquote>
+<table border=1 cellspacing=0 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+<a href=http://neamh.cns.uni.edu/cgi-bin/idf/VIRAL/index.cgi>
+Live OnLine Server - Click Here</a>
+</table>
+</blockquote>
+<p>
+
+<a name=comments> </a>
+<li>
+<b>General Comments</b>
+<p>
+<ol>
+<li>
+The system is set not to index very long sequences.  The parameter controlling
+the maximum size to be indexed is the variable "SEQ_LIMIT"
+in "WordBuild.cpp".  It is set to 8,000, by default.
+When "WordBuild" finishes, it gives the total
+number of sequences and the number of sequences
+skipped due to length.  
+<p>
+
+<li>
+"WordBuild" requires a very large amount of memory to run
+efficiently.  You should have at least 1 GB of main memory
+and your system should be otherwise idle during indexing.
+</ol>
+<p>
+
+<a name=distros></a>
+<li>
+<b>Distributions</b>
+<p>
+The full IDF distribution is to be found in::
+
+<blockquote>
+<table border=1 cellspacing=0 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+<a href=http://www.cs.uni.edu/~okane/source/>
+http://www.cs.uni.edu/~okane/source/</a> 
+</table>
+</blockquote>
+
+and is named similar to:
+
+<blockquote>
+<table border=1 cellspacing=0 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+idf.src.2.02.tar.gz
+</table>
+</blockquote>
+
+(use the latest revision code). This package can be used
+to build the Linux, Cygwin and Windows XP versions
+and consists mainly of source code. Note, the distribution
+contains a binary file for Linux which is part of the
+FASTA distribution:
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      W.R. Pearson & D.J. Lipman PNAS (1988) 85:2444-2448
+<p>
+      The module "fasta34.cgi" is a binary executable that
+      will run under compatible Linux systems. See the file
+      "COPYRIGHT" for details on obtaining the source for
+      "fasta34.cgi". There are restrictions regarding the
+      use of "fasta34.cgi".
+</table>
+</blockquote>
+You may want to visit the 
+<a href=http://fasta.bioch.virginia.edu/>
+http://fasta.bioch.virginia.edu/ </a> FASTA site and update this module.
+<p>
+
+The Windows XP binary distribution is located in the same directory
+with a name in the form of:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+IDF-2.02a.zip
+</table>
+</blockquote>
+
+Other software, including the Mumpss Compiler, the MDH Toolkit and
+documentation are also located in 
+<a href=http://www.cs.uni.edu/~okane/source>
+http://www.cs.uni.edu/~okane/source/ </a>
+<p>
+<hr>
+
+<a name=linux></a>
+<li>
+<b>Linux/Cygwin Installation</b>
+<p>
+
+Note: the installation files contain both source code and binaries.
+The binaries are mainly for the MS WinXP distribution.
+The binaries are those files ending in ".exe" and
+"fasta34.cgi".
+The code was developed under Mandrake Linux 9.2,
+Cygwin and Windows XP.  The WinXP executables are 
+(*.exe) and batch (*.bat) files.  Not all script files
+for Linux work with Cygwin and WinXP at present.
+<p>
+
+You must install the Mumps Compiler and MDH Toolkit which
+is free and available from:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      http://www.cs.uni.edu/~okane
+</table
+</blockquote>
+
+For Linux/Cygwin users, use gzip to untar/unzip the files.  
+This will create a directory named "idf" under which will
+be the code and subdirectories for data bases. 
+<p>
+
+For easiest web server installation, move to your web server's cgi-bin
+directory before unzipping the files (this will require root
+priviledges), however, the distribution can be unzipped into an
+ordinary user's directory.  If installed to a user's directory,
+the preferred location is in the user's web server home directory
+in the directory authorized to run cgi scripts.  For most users
+running Apache, this will be a directory of the form:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      ~/public_html/cgi-bin
+</table>
+</blockquote>
+
+or
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      ~/web/cgi-bin
+</table>
+</blockquote>
+
+If installed in the web server's cgi-bin directory, this will typically
+be:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      /var/www/cgi-bin
+</table>
+</blockquote>
+
+Which ever directory you install the system into, be aware that the indexing
+consumes large amounts of disk space.  It is critical that the disk on
+which you do the installation has large amounts of free space.
+<p>
+
+<ol>
+<li>
+Modify file "parms.h" in the "idf" directory as appropriate (see below
+for details - initially, the defaults in this file are probably adequate).
+<p>
+
+<li>
+In the IDF directory, Run "CompileMe.script".
+<p>
+
+<li>
+Download the appropriate nucleotide data bases.  These will include all
+or some of the following (at your option - you only need to download the
+ones with which you want to work):
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+   ftp://ftp.ncbi.nih.gov/genbank/gbbct*.seq.gz<br>
+   ftp://ftp.ncbi.nih.gov/genbank/gbvrl*.seq.gz<br>
+   ftp://ftp.ncbi.nih.gov/genbank/gbinv*.seq.gz<br>
+   ftp://ftp.ncbi.nih.gov/genbank/gbpat*.seq.gz<br>
+   ftp://ftp.ncbi.nih.gov/genbank/gbpri*.seq.gz<br>
+   ftp://ftp.ncbi.nih.gov/genbank/gbphg*.seq.gz<br>
+   ftp://ftp.ncbi.nih.gov/genbank/gbrod*.seq.gz<br>
+   ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nt.gz<br>
+</table>
+</blockquote>
+
+Place these files in a directory, preferably on a disk
+different that the one containing the IDF distribution.
+<p>
+
+You must decompress these files after downloading them
+with a Linux/Cygwin command or the form:
+<p>
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+gzip -d nt.gz
+</table>
+</blockquote>
+<p>
+
+It you are using Linux or Cygwin, gzip is part of the operating
+system distribution.
+<p>
+
+You will need to place the path description to these files in the
+script files used to index the data bases (see below).  It is
+preferable that these files be on a seperate disk than the disk
+you will do you indexing on.
+<p>
+
+<li>
+The system is divided into subdirectories corresponding to the
+major data base divisions at NCBI.  In each of these sub-directories
+are are files to build and access the DNA indices.  You will need
+to modify files in each of these directories that you use.  For Linux/Cygwin
+users, modify the file "BUILD_INDEX.script".  These files build the indexed 
+data base for Linux/Cygwin and WinXP, respectively.
+<p>
+
+<li>
+Descend into one of the directories you want to use. Select from:
+<p>
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      BACTERIA<br>
+      VIRAL<br>
+      INVERTEBRATES<br>
+      PATENT<br>
+      PHAGE<br>
+      VERTEBRATES<br>
+      PRIMATES<br>
+      RODENTS<br>
+      NT
+</table>
+</blockquote>
+
+For puposes of discussion, we assume you entered the BACTERIA directory.
+<p>
+
+Modify the file "BUILD_INDEX.script" to make the script variable 
+GENBANK_DATABASE point to the directory in which the data files 
+were downloaded and decompressed.  For example,
+<p>
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+GENBANK_DATABASE="/d1/genbank"
+</table>
+</blockquote>
+<p>
+
+if the files gbcbt*.seq (for BACTERIA) are in directory "/d1/genbank"
+<p>
+
+Modify (if necessary) the script variable SOURCE_CODE to point to the
+directory which contains the compiled source code (the directory in which
+you performed "CompileMe.script" (this will normally be the parent
+directory of the directory you are in which is the default).
+This step will normally be skipped.
+<p>
+
+<li>
+For all systems, modify "current" and place the date of the download of the data
+files in the space provided.
+<p>
+
+<li>
+Modify "index.cgi" and place in the script variable
+SHRED_HOME the base URL to access the directories noted above.
+For example, if you placed the distribution in your system's web server
+cgi-bin directory:
+<p>
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+/var/www/cgi-bin/idf
+</table>
+</blockquote>
+<p>
+
+where "idf" is the name of the directory created when you un-tar/un-gzip
+the distribution, make SHRED_HOME:
+<p>
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+SHRED_HOME="http://www.YourSystemName.edu/cgi-bin/idf"
+</table>
+</blockquote>
+<p>
+
+filling in the Internet name your system uses.  If done this way, you
+will reference the data sets with the URL:
+<p>
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+http://www.YourSystemName.edu/cgi-bin/idf/PRIMATES/index.cgi
+</table>
+</blockquote>
+<p>
+
+or
+<p>
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+http://www.YourSystemName.edu/cgi-bin/idf/NT/index.cgi
+</table>
+</blockquote>
+<p>
+
+and so on.  If you place the distribution on another disk or in a different
+location, you may place a soft link in /var/www/cgi-bin to the distribution.
+For example, if the distribution is on another disk, say /d1/idf, then do
+the following (as root):
+<p>
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+cd /var/www/cgi-bin<br>
+ln -s /d1/idf idf<br>
+chown apache idf<br>
+chgrp apache idf
+</table>
+</blockquote>
+
+<p>
+In the files named index.cgi in the distribution, use the value of SHRED_HOME
+shown above.  Because of the soft link, the distribution will appear to be in
+/var/www/cgi-bin.  Note that you must be root to do this and it assumes
+that you are using the Apache web server.
+<p>
+
+<li>
+Index one or more data bases.  Descend into one of the directories noted
+above.  For Linux/Cygwin, to index the associated data base, run the command:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+nohup nice BUILD_INDEX.script &
+</table>
+</blockquote>
+<p>
+
+Depending on the size of the data base and the speed of your machine, this may
+take several hours (about 12 hours for NT, more or less, for example.  During
+index builds, you should minimize all other system activity and close unneeded
+windows.  The indexer attempts to maximize physical memory usage.
+<p>
+
+<li>For Linux/Cygwin, when you have successfully indexed one or more data bases
+(see "nohup.out" for a transcript of any messages), you must set ownerships and
+protections.  At the level of the "idf" directory as root, do the following:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+chown -R YourId idf<br>
+chgrp -R apache idf
+</table>
+</blockquote>
+
+where YourId is the user id of the user whom you want to have ownership
+of the files.
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      chmod g+x idf<br>
+      cd idf<br>
+      chmod g+rx BACTERIA<br>
+      chmod g+rx VIRAL<br>
+      chmod g+rx INVERTEBRATES<br>
+      chmod g+rx PATENT<br>
+      chmod g+rx PHAGE<br>
+      chmod g+rx VERTEBRATES<br>
+      chmod g+rx PRIMATES<br>
+      chmod g+rx RODENTS<br>
+      chmod g+rx NT<br>
+</table>
+</blockquote>
+
+The distribution should establish correct access protections for executable
+and data files but you may need to individually modify these.
+<p>
+</ol>
+
+
+
+
+<a name=dosinstall></a>
+<li>
+<b>WinXP Binary Installation</b>
+<p>
+This section deals with the WinXP binary distribution.
+See the full source code distribution for further
+details:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+<a href=http://www.cs.uni.edu/~okane>http://www.cs.uni.edu/~okane</a>
+</table>
+</blockquote>
+<p>
+
+<ol>
+<li>
+Apache Web Server
+<p>
+
+If you want to use this package with a web brower, you must
+install Apache on your local machine from:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+http://httpd.apache.org/
+</table>
+</blockquote>
+
+Download the binary Windows XP version and follow the instructions.
+<p>
+
+<li>
+IDF Server and Indexer Code
+<p>
+
+Find the Apache cgi-bin directory.  This is, by default, in:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      C:\Program Files\Apache Group\Apache2
+</table>
+</blockquote>
+
+<ol>
+<li> Enter the cgi-bin directory.
+<p>
+
+<li>
+Unzip the distribution.  This will create a directory
+named "idf" in "cgi-bin" and the binary code will be
+under "idf".
+<p>
+
+<li>
+Copy the file "mdh7.gif" from the "idf" directory to
+the Apache icons directory
+</ol>
+<p>
+
+<li>
+Genomic Libraries.
+<p>
+
+Download the libraries you want to index.  Place them on
+the C: drive or, preferably, on some other drive in a
+directory of their own.  The genomic files can be obtained
+from:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      ftp://ftp.ncbi.nih.gov/genbank/
+</table>
+</blockquote>
+
+These files are named in the form:  gbXXXNN.seq.gz where
+XXX is one of:
+<blockquote>
+
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      bct   bacteria files <br>
+      vrl   virus files <br>
+      pri   primate files <br>
+      rod   rodent files <br>
+      pln   plant files <br>
+      pat   patent files <br>
+      vrt   vertebrate files <br>
+      inv   invertebrate files <br>
+      est   expressed sequence tags <br>
+</table>
+</blockquote>
+
+and NN is a sequence number beginning with 1. Each of these files when decompressed, is about
+250MB.  A full set is very large.
+<p>
+
+You must decompress these files before using with the
+command similar to:
+<blockquote>
+
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+gzip -d gbrod*.seq.gz
+</table>
+</blockquote>
+
+A free copy of gzip for Windows XP is at:
+<blockquote>
+
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+http://www.gzip.org
+</table>
+</blockquote>
+
+You may download the full non-redundant nucleotide data base ("nt") from:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nt.gz
+</table>
+</blockquote>
+
+You should use a file transfer program that is capable
+of handling files whose lengths are in excesss of 2 GB
+as of this writing, most are not).
+This file should also be decompressed (you must use a version
+of gzip that handles files in length greater than 2GB).
+The file should be placed, however, in
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      C:\Program Files\Apache Group\Apache2\cgi-bin\idf\NT
+</table>
+</blockquote>
+
+and renamed to "pri.nt".  Because the default settings
+of many web servers do not permit following symbolic links,
+the file should be resident in this directory.
+If following symbolic linsk is permitted, be sure that the
+target file is world readable.
+
+<p>
+
+<li>
+Indexing
+<p>
+
+The data bases need to be indexed before they can be used.
+This can be quite time consuming, depending on how much
+memory you have, how fast your disk drives and processor
+are and how large the file set.  The VIRAL data base is
+the smallest and the NT data base is the largest.
+<p>
+
+To index, enter the "idf" directory and descend to the
+sub-directory for the data base you want to index.  For
+example, if you want to index the VIRAL data base,
+enter this directory.
+<p>
+
+Edit the file:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+BUILD_INDEX.bat
+</table>
+</blockquote>
+
+and modify the line:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+set DB=k:\genbank\gbvrl*.seq
+</table>
+</blockquote>
+
+so that the path points to the directory in which the
+gbvrl*.seq files are located.  For example, if they
+are in a directory named DNA on drive D:, modify the
+above to read:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+set DB=d:\DNA\gbvrl*.seq
+</table>
+</blockquote>
+
+Note: This line is NOT included in the NT directory batch
+file.  Instead, you must, as noted above, place the "nt"
+file in this directory and rename it "pri.nt".
+<p>
+
+Otherwise, you must make this modification in each directory
+before you perform indexing.  Now run the batch file by typing:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      BUILD_INDEX
+</table>
+</blockquote>
+
+You may see a few error messages initially concerning missing
+files.  These are caused by attempts to delete old versions of
+the index.
+<p>
+
+The programs will probably run for quite a while - depending on your
+machine.  It is best not to run anything else while indexing
+as this will permit the process to run faster (the indexer
+attempts to use all available physical memory).
+<p>
+
+When the process is done, edit the file named "current" and
+insert the date on which the files were downloaded.
+<p>
+
+<li>
+Test the Installation
+<p>
+
+When the indexing had finished, open a web browser (Apache
+should be running as evidenced by a "bulls-eye" like
+icon in the system tray).
+<p>
+
+Enter the address:
+<blockquote>
+
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+http://127.0.0.1/cgi-bin/idf/VIRAL/index.exe
+<p>
+you may also use:
+<p>
+http://127.0.0.1/cgi-bin/idf/index.exe
+</table>
+</blockquote>
+
+Note the "index.exe" - NOT "index.html"!
+The display will contain an interface and a test sequence.
+Click "Search" to try it.
+Note: a dsummy nucleotide string is initialized in each
+search window.  This may or may not (probably not) give
+significant matches - the string is from a mosquito).
+</ol>
+<p>
+
+<a name=seqret> </a>
+<li>
+<b>Sequence Retrieval</b>
+<p>
+
+The main search routine is "find10h2.cgi" and it can be run interactively
+be descending to one of the data base directories and typing:
+<p>
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+      ../find10h2.cgi < testsequence    (for Linux/Cygwin) 
+<p>
+      ..\find10h2 < testsequence        (for WinXP)
+</table>
+</blockquote>
+
+
+where "testsequence" is a file name of a file containing a query sequence in
+fasta format.
+<p>
+
+Note: when you compile find10h2.cpp, it loads a header (parms.h)
+files with parameters.  See TestCompare for details on these.
+<p>
+
+When you run find10h2 from a command prompt, the following
+parameters apply:
+
+<blockquote>
+<table border=1 cellspacing=1 cellpadding=5 bgcolor=lightsteelblue><tr><td>
+<tr><td>
+-- swscore
+<td>
+Use Smith-Waterman scoring of final results.
+IDF scoring will be used to identify candidates
+but the SW procedure will score and rank these.
+Using SW increases the amount of time required
+by a considerable amount.  Default: disabled.
+
+<tr><td>
+--showsw
+<td>
+Use Smith-Waterman scoring and show the SW alignments.
+This increases the amount of time required considerably
+and can result in very large amounts of output depending
+upon sequence sizes and alternative alignments. Default: disabled.
+
+<tr><td>
+--help
+<td>
+Displays parmeter options.
+
+<tr><td>
+--unweighted
+<td>
+Use unweighted indexing only.  Usually results in
+serious performance degradation. Default: disabled.
+
+<tr><td>
+--showmax nbr
+<td>
+Number of sequences to display.  Default is 500.
+
+<tr><td>
+--low nbr
+<td>
+Low weight cutoff.  System will not use words with
+weights lower than this to score sequences. Default: 65
+
+<tr><td>
+--high nbr
+<td>
+High weight cutoff.  System will not use words with
+weights higher than this to score sequences. Default: 120
+
+<tr><td>
+--gap nbr
+<td>
+SW gap penalty.  Default: -1.
+
+<tr><td>
+--match nbr
+<td>
+SW match reward.  Default: 2.
+
+<tr><td>
+--mismatch nbr
+<td>
+SW mis-match penalty.  Default: -1.
+
+<tr><td>
+--suffix string
+<td>
+String to append to "fasta.sequences." as name for fasta
+sequences output file. Default: none.  Enables sequence
+fetching (--genseq).
+
+<tr><td>
+--genseq
+<td>
+For each sequence up to --showmax, fetch the sequence and
+store it in an output file named "fata.sequences" or
+"fasta.sequences.name" where "name" is provided by --suffix.
+
+<tr><td>
+--nohtml
+<td>
+Output will be in plain text (no HTML links embedded).  The
+default is to embed HTML links into the output.
+</pre>
+</table>
+</blockquote>
+
+<b>Other Notes</b>
+<p>
+
+The script TestCompare randomly selects sequences from "nt", randomly alters
+them, searches for the originals with with find10h.cgi and blastn.
+<p>
+<hr>
+
+
+<a name=using></a>
+<li>
+<b>Using the Web Interface</b>
+<p>
+The basic web page should appear as follows (Windows XP version -
+the Linux/cygwin version has a few more options which will be
+discussed below):
+<p>
+<img border=1 src=idffig1.jpg>
+<p>
+Options:
+<ol type=a>
+<li>
+Select the data base.  The list of data bases appears down the left
+hand side.  The current data base is listed on the top line along
+with the date on which is was built.
+If the current data base is not the one you want, click the line
+on the left of the display naming the correct data base.
+<p>
+<li>
+Weight distribution - the last line in the top blue area is a link
+to a graph of the word weight distribution for this data base.
+If you click it, you will see a display such as:
+<p>
+<img border=1 src=weight.jpg>
+<p>
+This graph indicates the relative weights of word fragments used in the indexing
+process.  It can be useful in determining parameters for searches.
+<p>
+<li>
+Sequence text box - the large white text box in the center is where you
+place your sequence.  Your sequence should be in FASTA format,
+that is, the firt line begins with a ">" symbol followed by a 
+description of the query sequence.  Subsequent lines contain the
+nucleotide sequence to be searched for.  At present, sequences
+are limited to a total of about 1,000 character, inclusive of the
+first line.  The display you see has a sample sequence
+already filled in.  You should replace it with your sequence
+or you may use it as a test case.  If you use this test sequence,
+it will probably not match any sequence in your data base well
+except if you are using the "NT" data
+base from which is was extracted.
+<p>
+<li>
+Selection of scoring technique - lower left hand box.
+Options:
+<ol type=i>
+<li> IDF scoring (default).  Sequences will be scored using the IDF technique
+only and the results will be ordered by IDF socres.
+<p>
+<li>
+Smith-Waterman Scoring. Sequences will be selected by the IDF method but scored
+using the Smith-Waterman algorithm.  This option will increase the amount
+of time for a search but can produce better scorrings.
+<p>
+<li>
+Smith-Waterman Scoring - show aligns.
+Same as above but optimal alignments will be shown.  Note:
+for a given query sequence and data base match and a given 
+Smith-Waterman score, it is likely there are more than one
+possible alignment that produces the same score. Only
+one alignment is shown.  Other alignments, although different,
+are usually quite similar.
+<p>
+<li>
+IDF Selection with fasta34 Scoring. This option (not shown
+in the figure above) is available only in the
+Linux/Cygwin versions.  The IDF method will be used to select
+a set of sequences which will be scored using the fasta34 (W.R. Pearson & D.J. Lipman PNAS (1988) 85:2444-2448)
+algorithm.  Final output will be from the fasta34 program.
+</ol>
+<p>
+<li>
+IDF Weight Factor. These parameters determine which portion of the IDF weight distribution
+will be used for scoring.  Generally speaking, the weight distribution is a bell-like
+curve.  Words to the left of the main peak (or peaks) represent higher
+frequency, more broadly distributed words.  Words to the right of the
+central peak(s) are less widely distributed and norlally of
+lower frequency.  Bu selecting a band of words in the downslope
+of the main peaks, the retrieval is faster and more sensitive.
+The graphs of word distribution can be seen by clicking on the line
+"Click Here for weight distribution" in the top left box.
+The box labeled: "No Weighting:" disables IDF weight indexing
+and should not be used except to compare the effectiveness
+of the IDF method versus raw indexing.
+<p>
+<li>
+Retrieve  25 sequences. The number of top scoring sequences to retrieve.
+Larger number of sequences will increase timing slightly for IDF
+scoring and moderately for Smuth-Waterman scoring.
+<li>
+SW Settings.  These are the basic reward/penalty values used
+in the Smith-Waterman algorithm, if selected. The value for
+"Gap" is the penalty for opening a gap in a match; the "Mismatch" is the
+penalty for a sequence mismatch; and the "Match" value is the reward
+for matching letters.
+<p>
+<li>
+Search button.  Click the search button to initiate the search.
+</ol>
+<p>
+<a name=examples></a>
+<li>
+<b>Web Examples</b>
+<p>
+<ol type=a>
+<li>
+Search with default selections shown in figure above:
+<p>
+<img border=1 src=idffig2.jpg>
+<p>
+The display has been scrolled down to show results.  Each result consists
+of a score and a portion of the first line of the sequence (the
+descriptor).  Each line is a link to the full display of the
+sequence at NCBI.
+<p>
+<li>
+Same search but with Smith-Waterman scoring turned on:
+<p>
+<img border=1 src=idffig3.jpg>
+<p>
+Turning on SW scoring also enables, in addition to the SW score, bit and E value scoring.  The Sim score is the
+ratio of the number of matched letters to the total number of letters between
+the two sequences.  
+
+<li>
+Same search but with Smith-Waterman alignments enabled:
+<p>
+<img border=1 src=idffig4.jpg>
+<p>
+Only a portion of the first match is shown. This option
+greatly increases the amount of output.
+</ol>
+<p>
+<a name=method></a>
+<li>
+<b>Methodology</b>
+<p>
+This section explores the underlying hypothesis that it is possible to identify genomic sequence fragments in 
+large data bases whose indexing characteristics are comparable to that of a weighted vocabulary of 
+natural language words.  The Inverse Document Frequency (IDF) is a simple but widely used natural language 
+word weighting factor that measures the relative importance of words in a collection based on 
+word distribution.  A high IDF weight usually indicates an important content descriptor.  
+An experiment was conducted to calculate the relative  IDF weights of all segmented overlapping 
+fixed length n-grams of length eleven in the NCBI "nt" and other data bases. The 
+resulting n-grams were ranked by weight; the effect on sequence retrieval calculated in 
+randomized tests; and the results compared with BLAST and MegaBlast for accuracy and speed.  Also 
+discussed are several anomalous specific weight distributions indicative of differences 
+in evolutionary vocabulary.
+<p>
+BLAST and other similar systems pre-index each data base sequence by short code letter words of, by 
+default, three letters for data bases consisting of strings over the larger amino acid alphabet and 
+eleven letters for data bases consisting of strings over the four character nucleotide alphabet.  Queries 
+are decomposed into similar short code words.  In BLAST, the data base index is sequentially scanned and 
+those stored sequences having code words in common with the query are processed further to extend the initial 
+code word matches.  Substitution matrices are often employed to accommodate mutations due to evolutionary 
+distance and statistical analyses predict if an alignment is by chance, relative to the size of the data base.  
+<p>
+Indexing and retrieving natural language text presents similar problems.  Both areas deal with very large 
+collections of text material,  large vocabularies and a need to locate information based on imprecise and 
+incomplete descriptions of the data.  With natural language text, the problem is to locate those documents 
+that are most similar to a text query.  This, in part, can be  accomplished by techniques that identify those 
+terms in a document collection that are likely to be good indicators of content.  Documents are converted to 
+weighted vectors of these terms so as to position each document in an n-dimensional hyperspace 
+where "n" is the number of terms.   Queries are likewise converted to vectors of terms to denote a point in the hyperspace and documents ranked as possible answers to the query by one of several well known formulas to measure the distance of a document from a query.  Natural language systems also employ extensive inverted file structures where content is addressed by multiple weighted descriptors.
+<p>
+During World War II, n-grams, fixed length consecutive series of "n" characters, were developed by 
+cryptographers to break substitution ciphers.  Applying n-grams to indexing, the text, stripped of 
+non-alphabetic characters, is treated as a continuous stream of data that is segmented into 
+overlapping fixed length words.  These words can then form the basis of the indexing vocabulary.  
+<p>
+      The purpose of this experiment was to determine if it were possible to computationally identify genomic sequence 
+fragments in large data bases whose indexing characteristics are similar to that of a weighted vocabulary of natural 
+language words.  The experiments employed an n-gram based retrieval system utilizing an inverse document frequency
+(IDF) term weight and an incidence scoring methodology.   The results were compared with BLAST and MegaBlast to 
+determine if this approach produced results of  comparable recall when retrieving sequences from the data base 
+based on mutated and incomplete queries.   
+<p>
+This experimental model incorporates no evolutionary assumptions and is based entirely on a computational analysis 
+the contents of the data base.  That is, this approach does not, by default, use any substitution matrices or 
+sequence translations.  The software does, however, allow the inclusion of a file of aliases, effectively substitutions 
+and translations are always a possible extra step.  The distribution package includes a module that can compute 
+possible aliases based on term-term correlations or on well known empirically based amino acid substitutions.  
+<p>
+
+Experimental Design
+<p>
+For our primary experiments, sequences from the very large NCBI "nt" non-redundant nucleotide data base were 
+used. The "nt" data base (ftp://ftp.ncbi.nih.gov/blast/db/FASTA) was approximately 12 billion bytes in length at 
+the time of the experiment and consisted 2,584,440 sequences in FASTA format.  Other experiments using the 
+nucleotide primate, est, plant, bacteria, viral, rodent and other collections in GenBank were also performed as noted 
+below. 
+<p>
+
+<table width=80% align=center border=1 bgcolor=#cccccd>
+<tr><td bgcolor=#cccccd align=center >
+Example Entries from "nt" (FASTA Format)
+<tr><td>
+<blockquote>
+<xmp>
+>gi|2695846|emb|Y13255.1|ABY13255 Acipenser baeri mRNA for immunoglobulin heavy chain, clone ScH 3.3
+TGGTTACAACACTTTCTTCTTTCAATAACCACAATACTGCAGTACAATGGGGATTTTAACAGCTCTCTGTATAATAATGA
+CAGCTCTATCAAGTGTCCGGTCTGATGTAGTGTTGACTGAGTCCGGACCAGCAGTTATAAAGCCTGGAGAGTCCCATAAA
+CTGTCCTGTAAAGCCTCTGGATTCACATTCAGCAGCGCCTACATGAGCTGGGTTCGACAAGCTCCTGGAAAGGGTCTGGA
+ATGGGTGGCTTATATTTACTCAGGTGGTAGTAGTACATACTATGCCCAGTCTGTCCAGGGAAGATTCGCCATCTCCAGAG
+ACGATTCCAACAGCATGCTGTATTTACAAATGAACAGCCTGAAGACTGAAGACACTGCCGTGTATTACTGTGCTCGGGGC
+GGGCTGGGGTGGTCCCTTGACTACTGGGGGAAAGGCACAATGATCACCGTAACTTCTGCTACGCCATCACCACCGACAGT
+GTTTCCGCTTATGGAGTCATGTTGTTTGAGCGATATCTCGGGTCCTGTTGCTACGGGCTGCTTAGCAACCGGATTCTGCC
+TACCCCCGCGACCTTCTCGTGGACTGATCAATCTGGAAAAGCTTTT
+>gi|2695850|emb|Y13260.1|ABY13260 Acipenser baeri mRNA for immunoglobulin heavy chain, clone ScH 16.1
+TCTGCTGGTTACAACACTTTCTTCTTTCAATAACCACAATACTGCAGTACAATGGGGATTTTAACAGCTCTCTGTATAAT
+AATGACAGCTCTATCAAGTGTCCGGTCTGATGTAGTGTTGACTGAGTCCGGACCAGCGGTTGTAAAGCCTGGAGAGTCCC
+ATAAACTGTCCTGTAAAGCCGCTGGATTCACATTCAGCAGCTATTGGATGGGCTGGGTTCGACAAACTCCGGGAAAGGGT
+CTGGAATGGGTGTCTATTATAAGTGCTGGTGGTAGTACATACTATGCCCCGTCTGTTGAGGGACGATTCACCATCTCCAG
+AGACAATTCCAACAGCATGCTGTATTTACAAATGAACAGCCTGAAGACTGAAGACACTGCCATGTATTACTGTGCCCGCA
+AACCGGAAACGGGTAGCTACGGGAACATATCTTTTGAACACTGGGGGAAAGGAACAATGATCACCGTGACTTCGGCTACG
+CCATCACCACCGACAGTGTTTCCGCTTATGCAGGCATGTTGTTCGGTCGATGTCACGGGTCCTAGCGCTACGGGCTGCTT
+AGCAACCGAATTC
+>gi|2695852|emb|Y13263.1|ABY13263 Acipenser baeri mRNA for immunoglobulin heavy chain, clone ScH 112
+CAAGAACCACAATACTGCAGTACAATGGGGATTTTAACAGCTCTCTGTATAATAATGACAGCTCTATCAAGTGTCCGGTC
+TGATGTAGTGTTGACTGAGTCCGGACCAGCAGTTATAAAGCCTGGAGAGTCCCATAAACTGTCCTGTAAAGCCTCTGGAT
+TCACATTCAGCAGCAACAACATGGGCTGGGTTCGACAAGCTCCTGGAAAGGGTCTGGAATGGGTGTCTACTATAAGCTAT
+AGTGTAAATGCATACTATGCCCAGTCTGTCCAGGGAAGATTCACCATCTCCAGAGACGATTCCAACAGCATGCTGTATTT
+ACAAATGAACAGCCTGAAGACTGAAGACTCTGCCGTGTATTACTGTGCTCGAGAGTCTAACTTCAACCGCTTTGACTACT
+GGGGATCCGGGACTATGGTGACCGTAACAAATGCTACGCCATCACCACCGACAGTGTTTCCGCTTATGCAGGCATGTTGT
+TCGGTCGATGTCACGGGTCCTAGCGCTACGGGCTGCTTAGCAACCGAATTC
+>gi|2695854|emb|Y13264.1|ABY13264 Acipenser baeri mRNA for immunoglobulin heavy chain, clone ScH 113
+TTTCTTCTTTCAATAACCACAATACTGCAGTACAATGGGGATTTTAACAGCTCTCTGTATAATAATGACAGCTCTATCAA
+GTGTCCAGTCTGATGTAGTGTTGACTGAGTCCGGAACAGCAGTTATAAAGCCTGGAGAGTCCCATAAACTGTCCTGTAAA
+GCCTCTGGATTCACATTCAGCAGCTACTGGATGGGCTGGGTTCGACAAGCTCCTGGAAAGGGTCTGGAATGGGTGTCTAC
+TATAAGCAGTGGTGGTAGTGCGACATACTATGCCCCGTCTGTCCAGGGAAGATTCACCATCTCCAGAGACGATTCCAACA
+GCCTGCTGTCTTTACAAATGAACAGCCTGAAGACTGAAGACACTGCCGTCTATTACTGTGCTCGAAACTTACGGGGGTAC
+GAGGCTTTCGACCTCTGGGGTAAAGGGACCATGGTCACCGTAACTTCTGCTACGCCATCACCACCGACAGTGTTTCCGCT
+TATGCAGGCATGTTGTTCGGTCGATGTCACGGGTCCTAGCGCTACGGGCTGCTTAGCAACCGAATTC
+</xmp>
+</blockquote>
+</table>
+
+<p>
+      The overall frequencies of occurrence of all possible non-overlapped 11 character words in each sequence in the data base were determined along with the number of sequences in which each unique word was found.  A total of 4,194,299 unique words were identified, slightly less than the theoretical maximum of  4,194,304.  The word size of 11 was initially selected as this is the default word size used in BLAST for nucleotide searches. The programs however, will accommodate other word lengths and the default size for proteins is three.
+<p>
+      Each sequence in the "nt" data base was read and decomposed into all possible words of length 11.  Procedurally, given the vast amount of words thus produced, multiple (about 110 in the case of "nt") intermediate files of about 440 million bytes each were produced. Each file was ordered alphabetically by word and listing, for each word, a four byte relative reference number of the original sequence containing the word.  Another table was also produced that translated each relative reference number to an eight byte true offset into the original data base.  The multiple intermediate files were subsequently merged and three files produced: (1) a large (40 GB) ordered word-sequence 
+master table giving, for each word, a list of the sequence references of those sequences in which the word occurs; (2) a file containing the IDF weights for each word; and (3) a file giving for each word the eight byte offset of the word's entry in the master table.   
+<p>
+<center><img src=http://www.cs.uni.edu/~okane/source/flowchartA.jpg border=1><p>
+Flowchart 1
+<br>
+Source code copies of this code are available at:
+<a href=http://www.cs.uni.edu/~okane/source/>http://www.cs.uni.edu/~okane/source/</a> 
+<br>in the file
+named <i>idf.src-1.06.tar.gz</i>  (note: version number will change with time).
+</center><p>
+
+<p>
+      The IDF weights (freq.bin) Wi for each word i were calculated by: 
+<p>
+                            Wi= (int) 10 * Log10 ( N / DocFreqi )        (1)
+<p>
+      where N is the total number of sequences, and DocFreq is the total number of sequences in which each word occurred.  This weight yields higher values for words whose distribution is more concentrated and lower values for words whose use is more widespread.  Thus, words of broad context are weighted lower than words of narrow context.  
+<p>
+      For retrieval, each query sequence was read and decomposed into overlapping 11 character words which were converted to a numeric equivalent for indexing purposes.  Entries in a master scoring vector corresponding to data base sequences were incremented by the weight of the word if the word occurred in the sequence and if the weight of the word lay within a specified range.  When all words had been processed, entries in the master sequence vector were normalized according to the length of the underlying sequences and to the length of the query.  Finally, the master sequence vector was sorted by total weight and the top scoring entries were either displayed with IDF based weights, or scored and ranked by a built-in Smith-Waterman alignment procedure.  
+<p>
+Results
+<p>
+      
+      All tests were conducted on a dual processor Intel Xeon 2.25 mHz system with 4 GB of memory and 5,500 rpm disk drives operating under Mandrake Linux 9.2.  Both software systems benefited from the large memory to buffer I/O requests but BLAST, due to the more compact size of its indexing files (about 3 GB vs. 40 GB), was able to load a very substantially larger percentage of its data base into memory which improved its performance in serial trials subsequent to the first.  
+<p>
+      Figure 1 shows a graph of aggregate word frequency by weight.  The height of each bar reflects the total number of instances of all words of a given weight in the data base.  The bulk of the words, as is also the case with natural language text3,7, reside in the middle range.  
+<p>
+<center>
+<img src=fig1.jpg border=1>
+<br>
+Figure 1
+</center>
+<p>
+      Initially, five hundred test queries were randomly generated from the "nt" data base by (1) randomly selecting sequences whose length was between 200 and 800 letters; (2) from each of these, extracting a random contiguous subsequence between 200 and 400 letters; and (3) randomly mutating an average of 1 letter out of 12.  While this appears to be a small level of mutation, it is significant for both BLAST and IDF where the basic indexing word size is, by default, 11. A "worst case" of mutation for either approach would be a sequence in which each word were mutated.  In our mutation procedure, each letter of a sequence had a 1 in 12 chance of being mutated.
+<p>
+      The test queries were processed and scored by the indexing program with IDF weighting enabled and disabled and also by BLAST.  The output of each consisted of 500 sequence title lines ordered by score. The results are summarized in Table 1 and Figures 2 and 3. In Figures 2 and 3, larger bars further to the left indicate better performance (ideally, a single large bar at position 1).  The Average Time includes post processing of the results by a Perl program.  The Average Rank and Median Rank refer to the average and median positions, respectively, in the output of the sequence from which a query was originally derived. A lower number indicates better performance.  The bar at position 60 indicates all ranks 60 and above as well as sequences not found.  
+<p>
+<center>
+<img src=table1.jpg border=1>
+<br>
+Table 1
+</center>
+<p>
+<center>
+<img src=fig2.jpg border=1>
+<br>
+Figure 2
+</center>
+<p>
+<center>
+<img src=fig3.jpg border=1>
+<br>
+Figure 3
+</center>
+<p>
+      When running in unweighted mode, all words in a query were weighted equally and sequences containing those words were scored exclusively on the unweighted cumulative count of the words in common with the query vector.  When running in weighted mode, query words were used for indexing if they fell within the range of weights being tested and data base sequences were scored on the sum of the weights of the terms in common with the query vector and normalized for length.
+<p>
+      Figure 3 shows results obtained using the 500 random sequences using indexing only and no weights.  The graph in Figure 2 shows significantly better results for the same query sequences with weighted indexing enabled (see also Table 1).  
+<p>
+      Subsequently, multiple ranges of weights were tested with the same random sequences.  In these tests, only words within certain weight ranges were used.  The primary indicators of success were the Average Rank and the number of sequences found and not found.  From these results, optimal performance was obtained using weights in the general range of 65 to 120.  The range 75 to 84 also yielded similar retrieval performance with slightly better timing. 
+<p>
+      Table 2 shows the results of a series of trials at various levels of mutation and query sequence length.  The numbers indicate the percentage of randomly generated and mutated queries of various lengths found. The IDF method is comparable to BLAST at mutations of 20% or less.  In all cases, the IDF method was more than twice as fast.  
+<p>
+<center>
+<img src=table2.jpg border=1>
+<br>
+Table 2
+</center>
+<p>
+      On larger query sequences (5,000 to 6,000 letters), the IDF weighted method performed slightly better than BLAST.  On 25 long sequences randomly generated as noted above, the IDF method correctly ranked the original sequence first 24 times, and once at rank 3.  BLAST, on the other hand,  ranked the original sequence first 21 times while the remaining 4 were ranked  2, 2, 3 and 4.  Average time per query for the IDF method was 47.4 seconds and the average time for BLAST was 122.8 seconds.
+<p>
+      Word sizes other than eleven were tested but with mixed results.  Using a word longer than eleven greatly increases the number of words and intermediate file sizes while a smaller value results in too few words relative the number of sequences to provide full resolution.
+<p>
+      A set of random queries was also run against MegaBlast.  MegaBlast is a widely used fast search procedure that employs a greedy algorithm and is dependent upon larger word sizes (28 by default).  The results of these trials were that the IDF method was able to successfully identify all candidates while MegaBlast failed to identify any candidates.  MegaBlast is primarily useful in cases where the candidate sequences are a good match for a target database sequence.
+<p>
+      Figure 4 is a graph of the number of distinct words at each weight in the "nt" data base.  The twin peaks were unexpected.  The two distinct peaks suggest the possible presence of two .vocabularies. with overlapping bell curves.  To test this, we separately indexed the nucleotide data in the NCBI GenBank collections for primates (gbpri*), rodents (gbrod*), bacteria (gbbct*), plants (gbpln*), vertebrates (gbvrt*), invertebrates (gbinv*), patented sequences (gbpat*), viruses (gbvir*), yeast (yeast_gb.fasta) and phages (gbphg*) and constructed similar graphs.  The virus, yeast, and phage data bases were too small to give meaningful results and the patents data base covered many species.  The other databases, however yielded the graphs shown in Figure 5 which, for legibility, omits vertebrates and invertebrates (see below).  In this figure, the composite NT data base graph is seen with the twin peaks as noted from Figure 4.  Also seen are the primate and rodent graphs which have similar but more pronounced curves.  The curves for bacteria and plants display single peaks.  The invertebrate graph is roughly similar to the bacteria and plant graphs and the vertebrate curve is roughly similar to primates and rodents although both these data sets are small and the curves are not well defined.
+<p>
+<center>
+<img src=fig4.jpg border=1>
+<br>
+Figure 4
+</center>
+<p>
+<center>
+<img src=fig5.jpg border=1>
+<br>
+Figure 5
+</center>
+<p>
+      The origin and significance of the twin peaks is not fully understood.  It was initially hypothesized that it may be due to mitochondrial DNA in the samples.  To determine if this were the case, the primate data base was stripped of all sequences whose text description used the term .mitochon*.. This removed 19,647 sequences from the full data bases of 334,537 sequences.  The data base was then re-indexed and the curves examined.  The curves were unchanged except for a very slight displacement due to a smaller data base (see below).  In another experiment, words in a band at each peak in the primate data base were extracted, concatenated, and entered as (very large) queries to the "nt" data base.  The resulting sequences retrieved showed some clustering with mouse and primate sequences at words from band 67 to 71 and bacteria more common at band 79 to 83.  
+<p>
+      The "nt", primate and rodent graphs, while otherwise similar, are displaced from one another as are the plant and bacteria graphs. These displacements appear mainly to be due to differences in the sizes of the data bases and the consequent effect on the calculation of the logarithmic weights.  The NT data base at 12 GB is by far the largest, the primate and rodent data set are 4.2 GB and 2.3GB respectively, while the plant and bacteria databases are somewhat similar at 1.4 GB and 0.97 GB, respectively.  
+<p>
+      Conclusions
+<p>
+      The results indicate that it is possible to identify a vocabulary of useful fragment sequences using an n-gram based  inverse document frequency weight.  Further, a retrieval system based on this method and incidence scoring is effective in retrieving genomic sequences and is generally better than twice as fast as BLAST and of comparable accuracy when mutations do not exceed 20%.  The results also indicate that this procedure works where other speedup methods such as MegaBlast do not.
+<p>
+      Significantly, these results imply that genomic sequences are susceptible to procedures used in natural language  indexing and retrieval.  Thus, since IDF or similar weight based systems are often at the root of many natural language retrieval systems, other more computationally intense text natural language indexing, retrieval and visualization techniques such as term discrimination, hierarchical sequence clustering, synonym recognition, and vocabulary clustering to name but a few, may also be effective and useful.
+<p>
+</ol>
+
+</body>
+</html>
+
