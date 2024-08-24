@@ -1,0 +1,70 @@
+/*====================================================================
+ *   Mumps Compiler Global Array Handler - Berkeley DB Interface
+ *   Copyright (c) 2002 by Matthew Lockner
+ *   lockner@cns.uni.edu
+ * 
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Lesser General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2.1 of the License, or (at your option) any later version.
+ *
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ *   License along with this library; if not, write to the Free Software
+ *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *            
+ *=====================================================================
+ *   This file contains the Mumps global array handling code.
+ *   All references to global arrays inside Mumps source turn into calls
+ *   to global(), where the requests are transliterated into requests
+ *   upon the underlying Berkeley DB B-tree database on disk.
+ *====================================================================*/
+
+/* May 23, 2020 */
+
+#include "defines.h"
+#include "stateVector.h" 
+
+#define CACHE_GIGS 0
+#define CACHE_BYTES 1000000
+#define PAGE_SIZE 1024
+
+/* Legal request types to global(). */
+
+#ifndef EMPTY
+#define EMPTY 5
+#endif
+
+/*---------------------------------------------------------------------
+ * global() - Request global array service.
+ *
+ * g: Specifies the operation requested.
+ *    Valid operations are:
+ *       EMPTY
+ *       GCLOSE
+ *       PCLOSE
+ *       INIT
+ *       KILL
+ *       LOCK
+ *       NEXT
+ *       OPEN
+ *       ORDERNEXT
+ *       ORDERPREV
+ *       PREVIOUS
+ *       RETRIEVE
+ *       STORE
+ *       XNEXT
+ *
+ * key: Key sought or stored.
+ * bd:  Value returned or stored.
+ *
+ * Returns: 1 on operation success, 0 on failure.
+ */
+
+int Mglobal (const int g, unsigned char key[], unsigned char bd[], /* kok */
+      struct MSV *); /* kok may 11, 2003 */
+            

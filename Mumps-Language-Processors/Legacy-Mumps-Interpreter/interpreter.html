@@ -1,0 +1,2710 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title> MumpsVM Language Definition</title>
+	<meta name="generator" content="LibreOffice 6.4.7.2 (Linux)"/>
+	<meta name="created" content="2000-10-14T00:00:00.015014300"/>
+	<meta name="changed" content="2022-03-16T19:56:50.469033040"/>
+	<style type="text/css">
+		@page { size: 8.5in 11in; margin-left: 0.79in; margin-right: 0.39in; margin-top: 0.39in; margin-bottom: 0.39in }
+		p { margin-bottom: 0.1in; background: transparent; line-height: 115%; background: transparent }
+		pre { background: transparent; background: transparent }
+		pre.western { font-family: "Liberation Mono", monospace; font-size: 10pt }
+		pre.cjk { font-family: "Noto Sans Mono CJK SC", monospace; font-size: 10pt }
+		pre.ctl { font-family: "Liberation Mono", monospace; font-size: 10pt }
+		td p { background: transparent; background: transparent }
+		em { font-style: italic }
+		a:link { color: #000080; so-language: zxx; text-decoration: underline }
+		a:visited { color: #800000; so-language: zxx; text-decoration: underline }
+	</style>
+</head>
+<body lang="en-US" link="#000080" vlink="#800000" bgcolor="#c0c0c0" dir="ltr">
+<table width="100%" cellpadding="2" cellspacing="2" bgcolor="#87ceeb" style="background: #87ceeb; page-break-before: always">
+	<tr>
+		<td style="border: 1px double #808080; padding: 0.02in"><p align="center" style="margin-bottom: 0.2in">
+			<b>MumpsVM User's Guide</b> 
+			</p>
+			<hr/>
+
+			<p align="center" style="margin-bottom: 0.2in">Kevin C. O'Kane,
+			Ph.D.<br/>
+Computer Science Department<br/>
+University of Northern
+			Iowa<br/>
+Cedar Falls, IA
+			50614<br/>
+kc.okane@gmail.com<br/>
+https://www.cs.uni.edu/~okane<br/>
+March
+			16, 2022</p>
+			<p style="margin-bottom: 0.2in">Copyright (C) 2022 Kevin C. O'Kane
+						</p>
+			<p style="margin-bottom: 0.2in">This program is free software; you
+			can redistribute it and/or modify it under the terms of the GNU
+			General Public License as published by the Free Software
+			Foundation; either version 2 of the License, or (at your option)
+			any later version. 
+			</p>
+			<p style="margin-bottom: 0.2in">This program is distributed in the
+			hope that it will be useful, but WITHOUT ANY WARRANTY; without
+			even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+			PARTICULAR PURPOSE. See the GNU General Public License for more
+			details. 
+			</p>
+			<p>You should have received a copy of the GNU General Public
+			License along with this program; if not, write to the Free
+			Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+			02111-1307 USA A copy of the license appears at the end of this
+			document. 
+			</p>
+		</td>
+	</tr>
+</table>
+<hr/>
+
+<p><font size="3" style="font-size: 12pt">This document describes the
+implementation of the MumpsVM virtual machines for use with Windows
+95/98, Windows NT, Solaris and Linux. Solaris is a trademark of Sun
+Microsystems. Windows 95/98 and Windows NT are trademarks of
+Microsoft Corporation; The material herein is preliminary in nature
+and subject to change. Use of the software described here is at the
+user's risk. Please send error reports the the e-mail address above. </font>
+</p>
+<hr/>
+
+<p><font size="3" style="font-size: 12pt"><b>Contents</b></font></p>
+<ul>
+	<li><p style="margin-bottom: 0in"><a href="#introduction"><font size="3" style="font-size: 12pt">Introduction
+	</font></a>
+	</p>
+	<li><p style="margin-bottom: 0in"><a href="#install"><font size="3" style="font-size: 12pt">Installing
+	the Virtual Machines </font></a>
+	</p>
+	<li><p style="margin-bottom: 0in"><a href="#compile"><font size="3" style="font-size: 12pt">Compiling
+	the Virtual Machines </font></a>
+	</p>
+	<li><p style="margin-bottom: 0in"><a href="#websvr"><font size="3" style="font-size: 12pt">Using
+	a VM with a Web Server</font></a></p>
+	<li><p style="margin-bottom: 0in"><a href="#termination"><font size="3" style="font-size: 12pt">Uncontrolled
+	Termination</font></a></p>
+	<li><p style="margin-bottom: 0in"><a href="#pgmfmts"><font size="3" style="font-size: 12pt">Program
+	Formats</font></a></p>
+	<li><p style="margin-bottom: 0in"><a href="#impnotes"><font size="3" style="font-size: 12pt">General
+	Implementation Notes </font></a>
+	</p>
+	<li><p style="margin-bottom: 0in"><a href="#errors"><font size="3" style="font-size: 12pt">Error
+	Messages</font></a></p>
+	<li><p style="margin-bottom: 0in"><a href="#langspec"><font size="3" style="font-size: 12pt">Language
+	Specification </font></a>
+	</p>
+	<ul>
+		<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#data">Data
+		Types and Values</a> </font>
+		</p>
+		<li><p style="margin-bottom: 0in"><a href="#variables"><font size="3" style="font-size: 12pt">Variables
+		</font></a>
+		</p>
+		<li><p style="margin-bottom: 0in"><a href="#operators"><font size="3" style="font-size: 12pt">Operators
+		</font></a>
+		</p>
+		<ul>
+			<li><p style="margin-bottom: 0in"><a href="#op1"><font size="3" style="font-size: 12pt">Arithmetic
+			unary operators: + -</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#op2"><font size="3" style="font-size: 12pt">Arithmetic
+			binary operators: + - * / \ </font></a>
+			</p>
+			<li><p style="margin-bottom: 0in"><a href="#op3"><font size="3" style="font-size: 12pt">Arithmetic
+			relational operators: &gt; &lt; </font></a>
+			</p>
+			<li><p style="margin-bottom: 0in"><a href="#op4"><font size="3" style="font-size: 12pt">String
+			binary operator: _ </font></a>
+			</p>
+			<li><p style="margin-bottom: 0in"><a href="#op5"><font size="3" style="font-size: 12pt">String
+			relational operators: = [ ] ?</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#op6"><font size="3" style="font-size: 12pt">Logical
+			operators: &amp;, ! ' </font></a>
+			</p>
+		</ul>
+		<li><p style="margin-bottom: 0in"><a href="#commands"><font size="3" style="font-size: 12pt">Commands
+		</font></a>
+		</p>
+		<ul>
+			<li><p style="margin-bottom: 0in"><a href="#co1"><font size="3" style="font-size: 12pt">BREAK
+			(abbreviation: B)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co2"><font size="3" style="font-size: 12pt">CLOSE
+			(abbreviation: C)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co3"><font size="3" style="font-size: 12pt">DO
+			(abbreviation: D)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co4"><font size="3" style="font-size: 12pt">ELSE
+			(abbreviation: E)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co5"><font size="3" style="font-size: 12pt">FOR
+			(abbreviation: F)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co6"><font size="3" style="font-size: 12pt">GOTO
+			(abbreviation: G)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co7"><font size="3" style="font-size: 12pt">HALT
+			(abbreviation: H)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co8"><font size="3" style="font-size: 12pt">HANG
+			(abbreviation: H)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co9"><font size="3" style="font-size: 12pt">IF
+			(abbreviation: I)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co10"><font size="3" style="font-size: 12pt">JOB
+			(abbreviation: J)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co11"><font size="3" style="font-size: 12pt">KILL
+			(abbreviation: K)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co12"><font size="3" style="font-size: 12pt">LOCK
+			(abbreviation: L)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co13"><font size="3" style="font-size: 12pt">OPEN
+			(abbreviation: O)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co14"><font size="3" style="font-size: 12pt">QUIT
+			(abbreviation: Q)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co15"><font size="3" style="font-size: 12pt">READ
+			(abbreviation: R)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co16"><font size="3" style="font-size: 12pt">USE
+			(abbreviation: U)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co17"><font size="3" style="font-size: 12pt">VIEW
+			(abbreviation: V)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co18"><font size="3" style="font-size: 12pt">WRITE
+			(abbreviation: W)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co19"><font size="3" style="font-size: 12pt">XECUTE
+			(abbreviation: X)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#co20"><font size="3" style="font-size: 12pt">Z
+			(abbreviation: Z)</font></a></p>
+		</ul>
+		<li><p style="margin-bottom: 0in"><a href="#functions"><font size="3" style="font-size: 12pt">Functions
+		</font></a>
+		</p>
+		<ul>
+			<li><p style="margin-bottom: 0in"><a href="#fn1"><font size="3" style="font-size: 12pt">$ASCII(e1)
+			or $ASCII(e1,i2) </font></a>
+			</p>
+			<li><p style="margin-bottom: 0in"><a href="#fn1a"><font size="3" style="font-size: 12pt">$BACK(e1)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn2"><font size="3" style="font-size: 12pt">$CHAR(i1)
+			or $CHAR(i1,i2) or $CHAR(i1,i2,...)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn3"><font size="3" style="font-size: 12pt">$DATA(vn)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn4"><font size="3" style="font-size: 12pt">$EXTRACT(e1,i2)
+			or $EXTRACT(e1,i2,i3)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn5"><font size="3" style="font-size: 12pt">$FIND(e1,e2)
+			or $FIND(e1,e2,i3)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn6"><font size="3" style="font-size: 12pt">$JUSTIFY(e1,i2)
+			or $JUSTIFY(e1,i2,i3)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn7"><font size="3" style="font-size: 12pt">$LEN(e1)
+			or $LEN(e1,e2)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn8"><font size="3" style="font-size: 12pt">$NEXT(vn)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn9"><font size="3" style="font-size: 12pt">$ORDER(vn)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn10"><font size="3" style="font-size: 12pt">$PIECE(e1,e2,i3)
+			or $PIECE(e1,e2,i3,i4)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn11"><font size="3" style="font-size: 12pt">$RANDOM(i1)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn12"><font size="3" style="font-size: 12pt">$SELECT(t1:e1,t2:e2,...tn:en)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn13"><font size="3" style="font-size: 12pt">$TEXT(l1)
+			or $TEXT(L1+I2) or $TEXT(+I1)</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn14"><font size="3" style="font-size: 12pt">$VIEW</font></a></p>
+			<li><p style="margin-bottom: 0in"><a href="#fn15"><font size="3" style="font-size: 12pt">$Z...
+			Functions</font></a></p>
+			<ul>
+				<li><p style="margin-bottom: 0in"><a href="#zfn02"><font size="3" style="font-size: 12pt">$ZODBC(...)Data
+				base interface</font></a></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn03">$ZABsolute(arg)</a>Absolute
+				value</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn04">$ZBlanks(arg)
+				</a>Remove blanks</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn05">$ZCDumps</a>
+				Dump globals</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn06">$ZCLload</a>
+				Load globals</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn08">$ZDate</a>
+				Date function</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn09">$ZD1</a>
+				Date function</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn10">$ZD2(InternalDate)</a>
+				Date function</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn11">$ZD3(Year,Month,Day)</a>
+				Date function</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn12">$ZD4(Year,DayOfYear)</a>
+				Date function</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn13">$ZD5(Year,
+				Month, Day)</a> Date function</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn14">$ZD6</a>
+				Date function</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn15">$ZD7</a>
+				Date function</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn16">$ZD8</a>
+				Date function</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn16a">$ZD9</a>
+				Date function</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn17">$ZFile(arg)</a>
+				File exists</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn18">$ZGlobal</a>
+				Global file size</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn19">$ZHtml(arg)</a>
+				HTML encode</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn20">$ZL(arg)</a>
+				Natural log</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn21">$ZL(arg1,arg2)</a>
+				Pad with </font><span style="font-variant: normal"><font size="3" style="font-size: 12pt"><span style="font-style: normal">blanks
+				to the left</span></font></span></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn22">$ZM(global)</a>
+				Next global array row</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn23">$ZN(arg)</a>
+				Word normalization</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn24">$ZP(arg1,arg2)</a>
+				Left ju stify</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn25">$ZRoot(arg)</a>
+				Square root</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn26">$ZShell(arg)</a>
+				Execute shell</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn27">$ZSQuare(arg)</a>
+				Square </font>
+				</p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn28">$ZTell</a>
+				Byte offset in file</font></p>
+				<li><p style="margin-bottom: 0in"><a href="#zfn29a"><font size="3" style="font-size: 12pt">$ZV1(arg)</font></a></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn30">$ZWInit(arg)</a>
+				Line buffering</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn31">$ZWNext</a>
+				Line buffering</font></p>
+				<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#zfn31a">$ZWParse</a>
+				Line buffering</font></p>
+			</ul>
+		</ul>
+		<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt"><a href="#builtin">Builtin
+		Variables</a> </font>
+		</p>
+	</ul>
+	<li><p><a href="#license"><font size="3" style="font-size: 12pt">GNU
+	GPL License</font></a></p>
+</ul>
+<hr/>
+
+<p><a name="introduction"></a><font size="3" style="font-size: 12pt"><b>Introduction
+</b></font>
+</p>
+<p><font size="3" style="font-size: 12pt">The purpose of this
+document is to present an overview of the MumpsVM implementation of
+the Mumps language. This package consists of the source code for a
+virtual machine (interpreter) for various operating systems for a
+dialect of the Mumps language. Usage of the MumpsVM interpreter is
+entirely at the user's risk. The MumpsVM software packages described
+herein are not warranted in any manner whatsoever. The licenser
+disclaims responsibility for any and all damages, either direct or
+consequential, which may arise through use of these packages. The
+Linux and Sun versions were developed with the GNU C++ compiler. The
+other versions were developed with the Watcom 10.6 C++ compiler. </font>
+</p>
+<hr/>
+
+<p><a name="install"></a><font size="3" style="font-size: 12pt"><b>Installing
+the Virtual Machine</b> </font>
+</p>
+<ul>
+	<li><p><font size="3" style="font-size: 12pt">Windows 95/98 and
+	Windows NT </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">If you are going to use
+	MumpsVM in standalone mode (i.e., without a web server), copy the
+	executable to a directory that is in your execution path, for
+	example, \windows. The global arrays reside in two files, normally
+	called &quot;key.dat&quot; and &quot;data.dat&quot;. The naming and
+	location of these files is controlled by compile time defined
+	symbols and/or by the contents of a file named </font><em><font size="3" style="font-size: 12pt">mps.cfg</font></em><font size="3" style="font-size: 12pt">.
+	</font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">Linux and Solaris </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">Copy the mumps executable
+	to a directory in your search path. The global arrays reside in two
+	files, normally called &quot;key.dat&quot; and &quot;data.dat&quot;.
+	The naming and location of these files is controlled by compile time
+	defined symbols and/or by the contents of a file named </font><em><font size="3" style="font-size: 12pt">mps.cfg</font></em><font size="3" style="font-size: 12pt">.
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">When used with a Web
+	server, the Mumps executable or a link to it normally resides in a
+	directory which the web server has access to. Be certain to give
+	these adequate permissions for web server access. If permissions are
+	not correctly set, the MumpsVM will hang. If the MumpsVM runs as a
+	task of the web server, the global files (and directory) must be
+	read/write accessible to the web server. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">All Systems </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The global array files are
+	normally called <b>key.dat </b>and <b>data.dat. </b>To recreate the
+	file system, first delete these files. The MumpsVM will recreate
+	them when it next runs. When you recreate the globals, recheck the
+	file permissions and ownerships. Alternatively, the <b>ZG</b>
+	command will delete and rebuild the globals. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">If you are using a VM in
+	conjunction with a web server, you need to copy the executable
+	MumpsVM module to the directory in which the server can execute
+	cgi-bin programs. Depending on the settings of your web server, you
+	may need a special extension on the executable such as <i>.cgi</i>. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">In each directory from
+	which you expect to execute a MumpsVM, you should install a program
+	named init.mps which the MumpsVM will execute if you invoke Mumps
+	without specifying any particular routine to execute. MumpsVM will
+	execute this file only when it is invoked interactively. The file is
+	ignored if Mumps is invoked by a Web server or shell script
+	containing the environment variable </font><em><font size="3" style="font-size: 12pt">QUERY_STRING</font></em><font size="3" style="font-size: 12pt">.
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">MumpsVM will terminate on
+	any - repeat - any error when invoked by a web server (or by a shell
+	script containing the environment variable </font><em><font size="3" style="font-size: 12pt">QUERY_STRING</font></em><font size="3" style="font-size: 12pt">..
+	Were they to return to interactive prompt mode after an error, they
+	would hang the invoking web servers. Thus, </font><font size="3" style="font-size: 12pt"><b>all
+	errors result in termination.</b></font> 
+	</p>
+	<p><font size="3" style="font-size: 12pt">In standalone mode, the
+	init.mps file will execute and control will be returned to your
+	terminal when it has finished. MumpsVM is ready to accept direct
+	mode input as denoted by the &quot;&gt;&quot; prompt. You may exit
+	by the <b>ze</b> or <b>halt</b> commands. In interactive mode, any
+	MumpsVM command may be entered. Interactive mode input lines may
+	contain multiple commands. </font>
+	</p>
+</ul>
+<hr/>
+
+<p><a name="compile"></a><font size="3" style="font-size: 12pt"><b>Compiling
+the Virtual Machine (interpreter)</b> </font>
+</p>
+<p><font size="3" style="font-size: 12pt">The command to compile the
+source code for Linux is: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">gcc -O2 -o mumps mumps.c
+mathf.c parse.c sys1.c btree.c zfcn.c sym.c -lm </font>
+</p>
+<p><font size="3" style="font-size: 12pt">System parameters are set
+in the <i>memsize.h</i> header file. </font>
+</p>
+<p><a name="global"></a><font size="3" style="font-size: 12pt"><b>Global
+Arrays</b> </font>
+</p>
+<p><font size="3" style="font-size: 12pt">Global arrays are
+automatically created and initialized when you start the MumpsVM for
+the first time or when you use MumpsVM for the first time after you
+have deleted the global array file system. All global arrays reside
+in two global array files usually named <i>key.dat</i> and <i>data.dat</i>.
+The actual names of these files is controlled by compile time defined
+constants and/or by the contents of <i>cfg.mps</i>. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">Global array references may
+contain either string or numeric subscripts. Only printable ASCII
+characters are permitted as values for global array subscripts. No
+subscript may consist of a zero or negative number. The global array
+files will grow in size as elements are added. These files may be
+copied for backups. Global arrays are normally collated in strict
+ASCII collating sequence except if the <b>zn </b>command has been
+entered. </font>
+</p>
+<hr/>
+
+<p><a name="websvr"></a><font size="3" style="font-size: 12pt"><b>Using
+MumpsVM with a Web Server </b></font>
+</p>
+<p><font size="3" style="font-size: 12pt">To use MumpsVM with a web
+server, install the MumpsVM in the server's cgi-bin (or other
+appropriate directory). From HTML documents, you will reference
+MumpsVM with lines of the form: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">&lt;A
+HREF=&quot;/cgi-bin/mumps.cgi?prog=^pgmname.mps&amp;var1=11111&amp;var2=123&quot;&gt;
+test &lt;/A&gt; </font>
+</p>
+<p><font size="3" style="font-size: 12pt">Here, the name of the Mumps
+interpreter is taken to be </font><em><font size="3" style="font-size: 12pt">mumps.cgi
+</font></em><font size="3" style="font-size: 12pt">but in some
+systems it may need to be different. Check your web server
+documentation to determine if executable files require a specific
+extension. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">The name of the Mumps
+program to execute is given in the &quot;prog=&quot; field and the
+starting values of variables are given next. Note the &quot;^&quot;
+character. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">Upon initialization of the
+MumpsVM, the variables appearing in the HREF (var1 and var2 in the
+above) will exist in the MumpsVM symbol table and have the values
+provided by the browser usually as a result of FORMS input. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">When the Web server
+receives a request such as that above, it invokes the MumpsVM
+interpreter and passes to it the parameters (everything following the
+&quot;?&quot; character. These are encoded in an operating system
+environment variable named QUERY_STRING. The total length of the
+parameter string may not exceed 1024 bytes. The MumpsVM interpreter
+decodes QUERY_STRING and executes the named program. The value of
+QUERY_STRING is contained in the MumpsVM variable &quot;%QS&quot;
+during execution. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">When MumpsVM initiates, it
+looks for QUERY_STRING. If it finds it, it surpresses the welcome
+message and sets an internal flag to indicate that this session
+appears to be a Web server session. The executing MumpsVM script may
+also determine this by testing for the existence of &quot;%QS&quot;. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">You may invoke the MumpsVM
+in simulated Web server mode by calling it from a shell script such
+as the following (for the Linux Bash Shell): </font>
+</p>
+<pre class="western"><font size="3" style="font-size: 12pt">#!/bin/bash</font>
+<font size="3" style="font-size: 12pt">QUERY_STRING=&quot;prog=^progname.mps&amp;var1=value1&amp;var2=value2&quot;</font>
+<font size="3" style="font-size: 12pt">export QUERY_STRING</font>
+<font size="3" style="font-size: 12pt">mumpsvm.cgi</font>
+<font size="3" style="font-size: 12pt">unset QUERY_STRING</font></pre><p>
+<font size="3" style="font-size: 12pt">Here, MumpsVM will execute the
+script file <i>progname.mps</i> and pass to it parameters var1 and
+var2. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">If the values of the
+variables passed through QUERY_STRING need to contain blanks or
+special characters, they must be encoded in the manner prescribed by
+the HTML standard. From a MumpsVM program, the MumpsVM builtin
+function <i>$ZH</i> can be used for this purpose (see below). </font>
+</p>
+<p><font size="3" style="font-size: 12pt">Be certain to Halt or ZE at
+the end of a program in order to terminate the interpreter. If you do
+not correctly terminate the interpreter, the web server may hang. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">The MumpsVM interpreter
+insures that only one copy is running at any given time on any given
+database files. MumpsVM opens the database files for exclusive
+access. Thus, MumpsVM programs should be short, transaction oriented
+jobs that do not delay the server. Note: since only one copy of the
+MumpsVM is ever running for a given database, all file accesses are
+also exclusive. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">In order to prevent the
+MumpsVM from failing to halt after a user programming error and
+thereby hang the web server, the MumpsVM when used with a web server
+is set to terminate its execution if it detects a user error. In
+non-Web server mode, MumpsVM returns to interactive mode after an
+error. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">MumpsVM determines that it
+was invoked by a web server by detecting the QUERY_STRING environment
+variable. If you create this variable and invoke MumpsVM (as shown
+above), MumpsVM will assume it has been invoked by a web server. </font>
+</p>
+<hr/>
+
+<p><a name="termination"></a><font size="3" style="font-size: 12pt"><b>Uncontrolled
+Termination </b></font>
+</p>
+<p><font size="3" style="font-size: 12pt">If you halt a VM with a
+control-C or other external Kill command, the global array data base
+may be corrupted. Back up copies of critical data should be
+maintained. A dump function exists that copies the global arrays to
+an ASCII text file which can be used to reload the data base.
+Generally speaking, programs that do not access the globals or access
+them only to read their contents, do not corrupt the global arrays if
+forcibly terminated. </font>
+</p>
+<hr/>
+
+<p><a name="pgmfmts"></a><font size="3" style="font-size: 12pt"><b>Program
+Formats </b></font>
+</p>
+<p><font size="3" style="font-size: 12pt">MumpsVM programs may be
+created with any standard system editor which does not introduce
+embedded control codes into the program. They are ordinary ASCII
+files with the following conventions: </font>
+</p>
+<ul type="circle">
+	<li><p><font size="3" style="font-size: 12pt">If a command line does
+	not contain a label, the first character is a TAB character.
+	<b>Important: MumpsVM command lines must use the tab character. </b>If
+	a line begins with a pound sign (#), the line is treated as a
+	comment. If the line begins with any other character and has no TAB
+	character, it is assumed to be HTML code and it is written to
+	standard output. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">If the line contains a
+	label, the label is followed immediately by a TAB character followed
+	by the program text. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">Each line is
+	terminated by a line feed. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">No line may exceed 255
+	characters in length. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">The program should not
+	exceed the available user MumpsVM buffer space. Although the buffer
+	space is 30,000 bytes, the user should be aware that this area not
+	only contains the program but also the MumpsVM base program, the
+	symbol table and intermediate result stack storage. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">If a line contains no
+	TAB characters, it will be written directly to the standard out,
+	after substitution of expressions and new line characters. (see
+	below) </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">If a line written
+	directly to the output contains an ampersand followed immediately by
+	an exclamation point, a line feed will be inserted into the output
+	line in its place. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">If a line written
+	directly to the output contains an ampersand followed immediately by
+	a tilde (~) followed by a valid MumpsVM expression, followed by a
+	tilde character, the enclosed expression will be evaluated and
+	resulting value of the expression will be substituted in the output
+	line. Please Note: the closing tilde is required or erratic results
+	will occur as the VM attempts to parse the HTML code. You have been
+	warned. </font>
+	</p>
+</ul>
+<hr/>
+
+<p><a name="impnotes"></a><font size="3" style="font-size: 12pt"><b>General
+Implementation Notes </b></font>
+</p>
+<ul type="circle">
+	<li><p><font size="3" style="font-size: 12pt">The default IO unit
+	number is 5. Unit 5 refers to the console terminal (usually a CRT).
+	Units 1 through 4 may be used by the user for sequential file
+	structures. Unit 5 may not be opened. An attempt to do so will
+	result in an error message. Units 1 through 4 require a file name
+	after the unit number expression in the OPEN statement. The unit
+	number expression must be followed by a colon and the file name must
+	follow the colon. The file name may be represented as a variable or
+	literal constant. Literal constant file names are enclosed in
+	quotation marks (&quot;). The file name must be followed, either
+	within the quotes if given as a literal or as part of the value if
+	given as a variable, by either &quot;,OLD&quot; or &quot;,NEW&quot;.
+	This parameter indicates whether the file is to be created (output
+	implied) or read (input implied). For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">OPEN 1:&quot;MYFILE.DAT,NEW&quot;
+	<br/>
+OPEN 2:&quot;TABLE.DAT,OLD&quot; </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">In the first of these, the
+	file will be created and only output (WRITE) operations are
+	permitted. In the second, the file is presumed to exist and only
+	input operations will be permitted. If the NEW option is given, any
+	previous generation of the file is deleted. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">When a program
+	terminates for any reason, the files are not always closed. Open
+	files remain open and the last value of $IO persists. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">If you halt a MumpsVM
+	with the Halt or ZE command without closing files that you opened
+	(with the CLOSE command), the files may be lost or parts of the
+	files may be missing. The CLOSE command is necessary to unload the
+	MumpsVM's buffers and make the file permanent in the system
+	directory. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">READ operations to
+	units one through 4 may not use the time-out or direct mode option.
+	All READ operations involving time-outs or direct mode options take
+	place to the console terminal. READ operations to units 1 through 4
+	also may not involve output formats or strings. If used, these will
+	generate fatal errors. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">During READ operations
+	to units one through four, the end of file condition is signaled by
+	the return of a null string and the setting of $TEST to zero when
+	the input is exhausted. A READ operation which is successful sets
+	the $TEST variable to one. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">The ASCII NUL (0)
+	character may not be used. Usage will result in parser error. No
+	ASCII character of value greater than 200 may be generated or used. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">No string, program
+	line or intermediate result may exceed 255 characters in length. An
+	attempt to create a string of length greater than 255 will result in
+	truncation without an error message. The user should also note that
+	when functions are evaluated, the length of the function is the
+	length of its name, parentheses, commas and arguments after
+	evaluation. Global array references (keys) can be up to 255
+	characters long. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">The name of the
+	variable used in a &quot;setpiece&quot; function must be 63 or fewer
+	characters in length. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">Arguments the the
+	$NEXT function must exist except for those arguments whose last
+	index is -1. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">Numbers may not
+	contain more than 20 characters including leading zeros, plus and
+	minus signs, and decimal points. Numeric quantities are stored
+	internally as float variables. Some round-off may occur in certain
+	operations in the usual manner. MumpsVM thus maintain slightly more
+	than seven digits of precision in single precision mode. Other math
+	routines than floating point are included with the source code. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">The $ORDER function is
+	not implemented. $NEXT presents numeric subscripts in character, not
+	numeric, collating sequence except if you use the ZNUMBER command
+	(see below). </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">The naked indicator is
+	not implemented. </font>
+	</p>
+</ul>
+<hr/>
+
+<p><a name="errors"></a><font size="3" style="font-size: 12pt"><b>Error
+Messages</b> </font>
+</p>
+<p><font size="3" style="font-size: 12pt">1 Multiple adjacent
+operators <br/>
+2 Unmatched quotes <br/>
+3 Global not found <br/>
+4
+Missing comma <br/>
+5 Argument not permitted <br/>
+6 Bad character
+after post-conditional <br/>
+7 Invalid quote <br/>
+8 Label not found
+<br/>
+9 Too many/few fcn arguments <br/>
+10 Invalid number <br/>
+11
+Missing operator <br/>
+12 Unrecognized operator <br/>
+13 Keyword <br/>
+14
+Argument list <br/>
+15 Divide by zero <br/>
+16 Invalid expression <br/>
+17
+Variable not found <br/>
+18 Invalid reference <br/>
+19 Logical table
+space overflow <br/>
+23 Symbol table full <br/>
+24 Function argument
+error <br/>
+25 Global not permitted <br/>
+26 File error <br/>
+27 $N
+error <br/>
+29 at line: <br/>
+30 Function not found <br/>
+31 Program
+space exceeded <br/>
+32 Stack overflow </font>
+</p>
+<hr/>
+
+<ul>
+	<li><p><font size="3" style="font-size: 12pt">Automatic opening of
+	global arrays </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The global arrays are
+	automatically opened when the interpreter begins execution and they
+	are closed upon normal termination of the interpreter. If the global
+	arrays are already in use by another instance of the interpreter,
+	your instance of the interpreter will wait. </font>
+	</p>
+	<li><p><a name="nr10"></a><font size="3" style="font-size: 12pt">Global
+	array files </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The global arrays occupy
+	two files. By default these are <i>key.dat</i> and <i>data.dat</i>.
+	If you want to use other files, you need to change the defined
+	constants UDAT and UKEY in the <i>memsize.h</i> file. You may select
+	any names supported by your system. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">Alternatively, the names
+	of the global array files may be read in when the interpreter is
+	run. If you set the defined variable </font><em><font size="3" style="font-size: 12pt">UseConfigDB</font></em>
+	<font size="3" style="font-size: 12pt">to 1 in </font><font size="3" style="font-size: 12pt"><i>memsize.h</i></font><font size="3" style="font-size: 12pt">,
+	the interpreter will look for and read a file named </font><font size="3" style="font-size: 12pt"><i>mps.cfg</i></font>
+	<font size="3" style="font-size: 12pt">when the interpreter is
+	loaded. The file should contain two lines. One should contain the
+	keyword </font><em><font size="3" style="font-size: 12pt">DATA</font></em>
+	<font size="3" style="font-size: 12pt">followed by a file name and
+	the other line should contain the keyword </font><em><font size="3" style="font-size: 12pt">KEY</font></em>
+	<font size="3" style="font-size: 12pt">followed by a file name. File
+	names may contain path descriptions. The file names will be used for
+	the data and key portions of the global arrays. You may want to
+	place the files on different disks to improve performance. One
+	(UKEY) contains the btree and the other (UDAT) contains data stored
+	at nodes. </font>
+	</p>
+	<li><p><a name="nr11"></a><font size="3" style="font-size: 12pt">Initializing
+	global arrays </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">If you want to
+	reinitialize global arrays, delete the old files and run the
+	interpreter. The interpreter will create new ones. Be certain to
+	delete both files - otherwise the system will improperly create the
+	new globals. If your MumpsVM program terminates without properly
+	closing the global arrays, they are corrupt and must be recreated.
+	Dump and restore functions (</font><em><font size="3" style="font-size: 12pt">$zcd,
+	$zcl</font></em><font size="3" style="font-size: 12pt">) are
+	provided that will dump and reload the contents of the globals
+	arrays to/from a sequential, ASCII file. If your application
+	frequently deletes globals arrays, you may want to periodically dump
+	them, delete the old arrays, and restore in order to remove holes
+	from the file space. While the interpreter attempts to reuse space,
+	it is not possible to reclaim all data. </font>
+	</p>
+</ul>
+<hr/>
+
+<p align="center"><a name="langspec"></a><font size="3" style="font-size: 12pt"><b>Language
+Specification</b></font></p>
+<p><font size="3" style="font-size: 12pt"><b>Introduction</b> </font>
+</p>
+<p><font size="3" style="font-size: 12pt">The purpose of this section
+is to provide you with an introduction to the Mumps language in
+general MumpsVM in particular. The Mumps language originated in the
+mid-60's at the Massachusetts General Hospital. The acronym stands
+for &quot;Massachusetts General Hospital Utility Multi-Programming
+System&quot;. It is a language which is similar in some respects to
+BASIC but it contains many additional features not found in BASIC, or
+for that matter, in most other languages. In its full form, MumpsVM
+is an interpretive language. In fact, parts of the language
+specification require that it can never fully become a &quot;compiled&quot;
+language such as FORTRAN, COBOL or PL/I. See above for details. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">Among the features which
+make MumpsVM attractive for both bio-medical and general scientific
+applications are: </font>
+</p>
+<p><font size="3" style="font-size: 12pt"><i>Hierarchical data base
+facility.</i> MumpsVM data sets are not only organized along
+traditional sequential and direct access methods, but also as
+hierarchical trees whose data nodes are addressed as path
+descriptions in a manner which is easy for a programmer to master in
+a relatively short time. </font>
+</p>
+<p><font size="3" style="font-size: 12pt"><i>Flexible and powerful
+string manipulation facilities.</i> MumpsVM built-in string
+manipulation operators and functions provide programmer's with access
+to efficient means to effect complex string manipulation and pattern
+matching operations. </font>
+</p>
+<p><font size="3" style="font-size: 12pt"><i>Transportability to
+widely different systems</i> Mumps presently runs under a large
+number of operating systems on many machine architectures. These
+systems range in size from small home micro-computers to the largest
+central time sharing systems. Through efforts that have taken place
+by the Mumps Development Committee over the years, a well organized
+language definition has been written and formally published. This
+standard provides for a far tighter specification for system
+performance and linguistic definition than is normally the case. As a
+result, programs written under a Mumps system can be moved with
+relatively little effort from one system to another. </font>
+</p>
+<p><font size="3" style="font-size: 12pt"><i>Full numeric data
+handling facilities</i> MumpsVM provides, in addition to string
+handling facilities, a full range of fixed and floating point
+computational facilities. </font>
+</p>
+<p><a name="data"></a><font size="3" style="font-size: 12pt"><b>Data
+Types and Values</b> </font>
+</p>
+<p><font size="3" style="font-size: 12pt">Basically, MumpsVM has only
+one data type: string, although it does allow integer and floating
+point computations as well as logical expressions. A string variable
+is restricted to 255 characters in length or less (20 characters or
+less if it is being used as a number. Note: this is a restriction of
+this implementation of MumpsVM; see above for a detailed list of such
+restrictions). The values in a string may be any ASCII code from 1 to
+128 (decimal) inclusive with the exception that an ASCII 1 may not be
+used in a string index to a global array. MumpsVM does not permit
+usage of the ASCII zero character (). Ordinarily, strings will
+contain ASCII printable characters. String constants are enclosed in
+double quote marks (&quot;). A double quote mark can be included in
+the usual manner with two adjacent quote marks (&quot;&quot;). A
+constant containing only numerics (and, optionally, plus, minus and
+decimal point), need not be enclosed by quotes (although doing so has
+no effect). The following are examples of valid MumpsVM character
+string constants: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">&quot;THE SEAS DIVIDE AND
+MANY A TIDE&quot; <br/>
+&quot;123.45&quot; <br/>
+&quot;BRIDGET
+O'SHAUNESSEY? YOU'RE NOT MAKING THAT UP?&quot; <br/>
+&quot;&quot;&quot;THE
+TIME HAS COME,&quot;&quot; THE WALRUS SAID&quot; </font>
+</p>
+<p><font size="3" style="font-size: 12pt">When a string is being used
+as a number (e.g., in addition), the numeric portion must be 20
+characters or less in length. Numeric constants are restricted to
+integer or decimal values (positive or negative). &quot;E-type&quot;
+notation is not permitted. If a string begins with a number but ends
+with non-numeric characters, only the numeric leading portion will
+participate in operations requiring numeric operands (e.g., add,
+subtract, etc.); the trailing non-numeric portion is lost. On the
+other hand, if a string begins with non-numeric characters, its value
+will be interpreted as 0. The following are examples: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">1+2 will be evaluated as 3.
+<br/>
+&quot;ABC&quot;+2 will be evaluated as 2. <br/>
+&quot;1AB&quot;+2
+will be evaluated as 3. <br/>
+&quot;AA1&quot;+2 will be evaluated as
+2. <br/>
+&quot;1&quot;+&quot;2&quot; will be evaluated as 3. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">Although &quot;string&quot;
+is the basic data type, MumpsVM converts strings internally to
+floating point values for calculations. Consequently, numbers are of
+approximately 7 digit precision. A number may range in magnitude from
+10**-19 to 10**19. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">Logical values in MumpsVM
+are special cases of the numerics. A numeric value of zero is
+interpreted as false while a non-zero value is interpreted as true.
+Logical operators yield either zero or one and their results can be
+treated like any other numeric. Similarly, the numeric result of any
+numeric operator can be used as a logical operand. The results of
+string operators are interpreted either as zero (leading characters
+non-numeric) or some value (leading characters numeric). Strings and
+the results of string operations can therefore participate as the
+operands of logical operators. </font>
+</p>
+<p><a name="variables"></a><font size="3" style="font-size: 12pt"><b>Variables</b>
+</font>
+</p>
+<p><font size="3" style="font-size: 12pt">Variables are named in
+MumpsVM in much the same manner they are named in other languages. A
+MumpsVM variable name must begin with a letter (A through Z) or
+percent sign (%) and may be followed by either letters or numbers. In
+general, variable names should be nine or fewer characters in length
+(the maximum variable name length is 255 characters). Unlike most
+languages, MumpsVM variables are not automatically data typed by
+their first letter. MumpsVM, in effect has only one data type so any
+variable name may be any value. All MumpsVM variables are varying
+length strings (length may range from 0 to 255 characters). </font>
+</p>
+<p><font size="3" style="font-size: 12pt">In the VM there are no data
+declaration statements. Variables come into existence through
+assignment statements (SET) or the &quot;READ&quot; command and pass
+from existence through the &quot;KILL&quot; command. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">In the VM, there are two
+kinds of arrays: internal arrays and global arrays. The following
+pertains to internal arrays: arrays are not dimensioned. A name used
+as an array variable may also, at the same time, be used as a scalar.
+Array values are created by assignment or appearance in a &quot;READ&quot;
+statement. If you create an element of an array, let us say element
+10, it does not mean that MumpsVM has created any other elements:
+that is, it does not imply that there exist elements 1 through 9. You
+may specifically create these or not. Array indices may be positive
+or negative numbers or character strings. Arrays in MumpsVM may have
+multiple dimensions. The following are some examples of arrays: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">SET A(1,2,3)=&quot;ARRAY&quot;
+<br/>
+READ TEST(22) <br/>
+WRITE TEST(22) <br/>
+SET I=10 SET A(I)=10
+<br/>
+SET A(&quot;TEST&quot;)=100 <br/>
+SET I=&quot;TESTING&quot; SET
+A(I)=1001 <br/>
+SET A(&quot;Mumps&quot;,&quot;USERS'&quot;,&quot;GROUP&quot;)=&quot;MUG&quot;
+</font>
+</p>
+<p><font size="3" style="font-size: 12pt">Global arrays are unique to
+MumpsVM. As a programmer, you will work with them as though they were
+arrays. The system, however, interprets them as tree path
+descriptions for the system's external data files. A global array is
+distinguished by beginning with the circumflex character (^). The
+remainder of the specification is the same as an internal array.
+global arrays are not dimensioned and they may appear anywhere an
+ordinary variable may appear (except in certain forms of the &quot;KILL&quot;
+command). A typical global array specification consists of the array
+name followed by some number of indices (indices may be constants,
+variables [including internal or global arrays] or expressions of
+string, numeric or mixed type). For example: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">SET ^A(1,43,5,99)=&quot;TEST&quot;
+<br/>
+SET ^SHIP(&quot;1ST FLEET&quot;,&quot;BOSTON&quot;,&quot;FLAG&quot;)=&quot;CONSTITUTION&quot;
+<br/>
+SET ^CAPTAIN(^SHIP(&quot;1ST FLEET&quot;,&quot;BOSTON&quot;,&quot;FLAG&quot;))=&quot;JONES&quot;
+<br/>
+SET ^HOME(^CAPTAIN(^SHIP(&quot;1ST FLEET&quot;,&quot;BOSTON&quot;,&quot;FLAG&quot;)))=
+<br/>
+... &quot;PORTSMOUTH&quot; <br/>
+WRITE ^SHIP(&quot;1ST
+FLEET&quot;,&quot;BOSTON&quot;,&quot;FLAG&quot;) <br/>
+...
+CONSTITUTION <br/>
+WRITE ^CAPTAIN(&quot;CONSTITUTION&quot;) <br/>
+...
+JONES <br/>
+WRITE ^HOME(&quot;JONES&quot;) <br/>
+... PORTSMOUTH
+<br/>
+WRITE ^HOME(^CAPTAIN(&quot;CONSTITUTION&quot;)) <br/>
+...
+PORTSMOUTH </font>
+</p>
+<p><font size="3" style="font-size: 12pt">The system files are viewed
+as trees. Each global array name (&quot;A&quot;, &quot;SHIP&quot;,
+&quot;CAPTAIN&quot;, and &quot;HOME&quot; in the above) is the root
+of a tree. The indices are thought of as path descriptions to leaves.
+For example, out of the root &quot;A&quot; there may be many
+branches, the above specifies to take the branch labeled &quot;1&quot;
+(note: this does not mean the &quot;first&quot; branch out of the
+node - it means the branch with label &quot;1&quot;). At the second
+level the specification says to take the branch labeled &quot;43&quot;
+(note: this does not imply that branches 1 through 42 necessarily
+exist). The path description is followed (or, possibly, created if
+the global array specification appears on the left hand side of an
+assignment statement or in a &quot;READ&quot; statement) to a final
+node. The value at the node is either retrieved or a new value stored
+depending upon the context in which the global array specification
+was used. The indices of global arrays may be numeric or character
+strings. The second sequence of examples above illustrates this
+usage. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">Both string and character
+indices may be mixed in the same path description. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">A value may be stored at
+any position in the tree. For example: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">SET ^A(1,43,5)=22 <br/>
+SET
+^A(1,43)=&quot;TEST MIDDLE LEVEL&quot; </font>
+</p>
+<p><a name="operators"></a><font size="3" style="font-size: 12pt"><b>Operators</b>
+</font>
+</p>
+<ol>
+	<li><p><a name="op1"></a><font size="3" style="font-size: 12pt">Arithmetic
+	unary operators: + - </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The arithmetic unary
+	operators are: + and -. The plus operator (+) has no effect other
+	than to force the expression to its right to be interpreted as
+	numeric. The minus operator forces numeric interpretation and
+	negates the result. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">SET I=&quot;123 ELM
+	STREET&quot; <br/>
+WRITE +I yields 123 <br/>
+WRITE -I yields -123 </font>
+	</p>
+	<li><p><a name="op2"></a><font size="3" style="font-size: 12pt">Arithmetic
+	binary operators: + - * / \ ** </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The addition (+),
+	subtraction (-), multiplication (*) and exponentiation (**)
+	operators perform in the normal manner. Operands are given a numeric
+	interpretation if necessary. Operands may be either expressions,
+	constants, variables or array references. Results are computed in
+	floating point if appropriate. MumpsVM has two division operators:
+	full division (/) and integer division (\). Full division give
+	results which may have fractional parts. Integer division truncates
+	the answer to an integer. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The modulo operator (#)
+	gives the left operand modulo the right operand. The following are
+	examples: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">2+3 yields 5 <br/>
+2.31+1
+	yields 3.31 <br/>
+3-5 yields -2 <br/>
+7/4 yields 1.75 <br/>
+7\4
+	yields 1 <br/>
+11#3 yields 2 (please see notes) </font>
+	</p>
+	<li><p><a name="op3"></a><font size="3" style="font-size: 12pt">Arithmetic
+	relational operators: &gt; &lt; </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The greater than (&gt;)
+	and less than (&lt;) relational operators compare numbers. If the
+	operands are not numbers, they are given a numeric interpretation.
+	The result is either zero for FALSE or one for TRUE. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">1 &gt; 2 yields 0 <br/>
+2
+	&gt; 1 yields 1 <br/>
+1 &lt; 2 yields 1 <br/>
+2 &lt; 1 yields 0 </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">Both operators may be
+	negated producing not greater than ('&gt;) and not less than ('&lt;)
+	(note: the single quote mark is the negating operator). There is no
+	&quot;less than or equals&quot; or &quot;greater than or equals&quot;
+	operators as such. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">1' &gt; 2 yields 1 <br/>
+2'
+	&gt; 1 yields 0 <br/>
+1' &lt; 2 yields 0 <br/>
+2' &lt; 1 yields 1 </font>
+	</p>
+	<li><p><a name="op4"></a><font size="3" style="font-size: 12pt">String
+	binary operator: _ </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The only binary string
+	operator is concatenation (_) represented by an underscore
+	character. The following are examples: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">&quot;ABC&quot;_&quot;XYZ&quot;
+	yields &quot;ABCXYZ&quot; <br/>
+&quot;ABC&quot;_123 yields &quot;ABC123&quot;
+	<br/>
+123_456 yields 123456 </font>
+	</p>
+	<li><p><a name="op5"></a><font size="3" style="font-size: 12pt">String
+	relational operators: = [ ] ? </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The equals relational
+	operator (=) tests for equality as in the following example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">IF &quot;ABC&quot;=&quot;ABC&quot;
+	WRITE &quot;EQUALS&quot; </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">We would expect that
+	&quot;EQUALS&quot; would be written to the terminal. The not-equals
+	operator if formed by the single quote mark and the equals sign. The
+	equals and not-equals operator may be used with strings or numbers. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The contains operator ([)
+	determines if the right hand operand is contained in the left hand
+	argument. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">SET A=&quot;NOW IS THE
+	TIME&quot; <br/>
+IF A[&quot;THE&quot; WRITE &quot;YES&quot; </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The word &quot;YES&quot;
+	would by printed on the terminal. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The follows operator (])
+	is used to test if the left hand operand follows the right hand
+	operand in the collating sequence. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">SET A=&quot;ABC&quot; <br/>
+IF
+	A]&quot;AAA&quot; WRITE &quot;YES&quot; </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The word &quot;YES&quot;
+	would be printed at the terminal. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The pattern matching
+	operator (?) is used to determine if a string conforms to a certain
+	pattern. The patterns are: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">A for the entire upper and
+	lower case alphabet. <br/>
+C for the 33 control characters. <br/>
+E
+	for any of the 128 ASCII characters. <br/>
+L for the 26 lower case
+	letters. <br/>
+N for the numerics <br/>
+P for the 33 punctuation
+	characters. <br/>
+U for the 26 upper case characters. <br/>
+A
+	literal string. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">A pattern code is made up
+	of one or more of the above, each preceded by a count specifier. The
+	count specifier indicates how many of the named item must be
+	present. Alternatively, an indefinite specifier - a decimal point -
+	may be used to indicate any count (including zero). For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">SET A=&quot;032-34-6304&quot;
+	<br/>
+IF A?3N1&quot;-&quot;2N1&quot;-&quot;4N WRITE &quot;OK&quot;
+	<br/>
+SET A=&quot;JONES, J. L.&quot; <br/>
+IF A?.A1&quot;,&quot;.A
+	WRITE &quot;OK&quot; </font>
+	</p>
+	<li><p><a name="op6"></a><font size="3" style="font-size: 12pt">Logical
+	operators: &amp;, ! ' </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The logical operators AND
+	(&amp;), OR (!) and NOT (') may be applied in the usual manner. The
+	user should note, however, that since MumpsVM has strict t
+	left-to-right precedence, the results can sometimes be odd: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">1 &amp; 1 yields 1 <br/>
+2
+	&amp; 1 yields 1 <br/>
+1 &amp; 0 yields 0 <br/>
+1!1 yields 1 <br/>
+1!0
+	yields 1 <br/>
+0!0 yields 0 <br/>
+2!0 yields 1 <br/>
+1 &amp; 0 &lt;
+	1 yields 0 <br/>
+1 &amp; (0 &lt; 1) yields 1 </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The &quot;NOT&quot;
+	operator may be used in conjunction with other operators to form
+	compound operators. The resulting compound operators are: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">'&lt; not less than <br/>
+'&gt;
+	not greater than <br/>
+'= not equal <br/>
+'[ not contains <br/>
+']
+	not follows <br/>
+'? not pattern </font>
+	</p>
+</ol>
+<p><a name="commands"></a><font size="3" style="font-size: 12pt"><b>Commands</b>
+</font>
+</p>
+<p><font size="3" style="font-size: 12pt">Each statement in MumpsVM
+begins with a unique command word. Most of the time, to save space in
+the VM, the command word is abbreviated to a single character. The
+single character abbreviations are unique for all commands except
+those which begin with the letter &quot;Z&quot;. For commands not
+beginning with the letter &quot;Z&quot;, MumpsVM does not check the
+spelling of the command word if more than one character of the
+spelling is given. The first letter is used to determine the command.
+Thus &quot;WRITE&quot;, &quot;W&quot;, and &quot;WRIGHT&quot; all
+have the same meaning. When you run MumpsVM, you are initially in
+direct mode. That is, if you type a command, the VM executes it
+immediately. You can tell that you're in direct mode by the &quot;&gt;&quot;
+character which the VM places at the left-hand side of the screen. In
+direct mode you may enter a line which contains multiple commands.
+The syntax of the command portion of a line of MumpsVM code consists
+(in t he general case - there are exceptions) of the command word or
+letter followed (optionally) by a post-conditional, followed by
+exactly one blank followed by the arguments to the command. Most
+commands can have multiple arguments. Multiple arguments are
+delimited by commas. If a line is to have more than one command, the
+first command is delimited by exactly one blank and the next command
+word or letter follows immediately. Blanks are very significant in
+MumpsVM. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">As noted above, most
+commands may be &quot;post-conditionalized&quot;. A post-conditional
+is a logical expression which is used to determine if the command
+(and all its arguments) should be executed. It is like a small &quot;IF&quot;
+statement. In the VM, some commands, such as &quot;DO&quot; and
+&quot;GOTO&quot;, may not only be post-conditionalized at the command
+level, but also at the argument level: that is, a separate
+post-conditional may be specified for each argument. A
+post-conditional appears as a colon followed by an expression. If the
+expression evaluates to 0 (false), the command (or argument) is not
+executed. If the expression evaluates non-zero, the command or
+argument is executed. </font>
+</p>
+<p><font size="3" style="font-size: 12pt">The following are examples
+of the above: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">an ordinary assignment
+statement: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">SET I=10*5 </font>
+</p>
+<p><font size="3" style="font-size: 12pt">same as above with command
+word abbreviation: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">S I=10*5 </font>
+</p>
+<p><font size="3" style="font-size: 12pt">an assignment statement
+with multiple arguments: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">S I=10*5,J=5,K=I+J (K will
+equal 55) </font>
+</p>
+<p><font size="3" style="font-size: 12pt">an assignment statement
+post-conditionalized: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">S:I=10 J=0 (set J to zero
+if I equals 10) </font>
+</p>
+<p><font size="3" style="font-size: 12pt">a multiple command line: </font>
+</p>
+<p><font size="3" style="font-size: 12pt">S I=10*5 S j=5 S S=I+J
+(same as above) </font>
+</p>
+<p><font size="3" style="font-size: 12pt"><b>Table of Commands</b> </font>
+</p>
+<ol>
+	<li><p><a name="co1"></a><font size="3" style="font-size: 12pt">BREAK
+	(abbreviation: B) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">Not used in MumpsVM. It is
+	normally used to trigger a program halt. </font>
+	</p>
+	<li><p><a name="co2"></a><font size="3" style="font-size: 12pt">CLOSE
+	(abbreviation: C) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The CLOSE command closes a
+	unit number and makes it available for other uses. It also frees the
+	system buffers for other uses. The argument must evaluate to a
+	number which corresponds to an open unit. In MumpsVM this must be in
+	the range of 1 to 4 (other values will terminate your program). An
+	output file must be closed explicitly. Failure to do so may result
+	in loss of some or all of the file. The close command may be
+	post-conditionalized and it may have multiple arguments. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">C 4 <br/>
+C I <br/>
+C:K=J
+	1,2 </font>
+	</p>
+	<li><p><a name="co3"></a><font size="3" style="font-size: 12pt">DO
+	(abbreviation: D) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The DO command causes the
+	VM to branch to the label specified and continue execution beginning
+	at that label. Execution proceeds until the end of the program is
+	reached or a QUIT command is encountered. When either of these
+	terminating conditions is achieved, the VM returns to the original
+	DO command and executes subsequent arguments or commands on that
+	line and following lines. DO commands may have multiple arguments.
+	They specify multiple routines to be executed. The DO command may be
+	post-conditionalized and each of its arguments may be
+	post-conditionalized. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">In the interpreters, an
+	argumentless DO may be used. It causes the code on the immediately
+	following line to be executed. This group must be terminated by a
+	QUIT. An argumentless DO must be followed by two blanks (unless it
+	is the last command on a line). It may be Post-Conditionalized. This
+	feature is normally used in connection with line level indicators.
+	For example: </font>
+	</p>
+	<pre class="western"><font size="3" style="font-size: 12pt">For i=1:1:10 Do  Write &quot;Line &quot;,i</font>
+<font size="3" style="font-size: 12pt">. Write &quot;This is a Do group&quot;,!</font>
+<font size="3" style="font-size: 12pt">. If i=5 Do</font>
+<font size="3" style="font-size: 12pt">.. Write &quot;This is a sub block&quot;,!</font>
+<font size="3" style="font-size: 12pt">.. Quit</font>
+<font size="3" style="font-size: 12pt">. Write &quot;It executes at line level 2&quot;,!</font>
+<font size="3" style="font-size: 12pt">. Quit</font></pre><p>
+	<font size="3" style="font-size: 12pt">The level 2 block executes 10
+	times. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">Interpreter only: </font>
+	</p>
+	<ul>
+		<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt">DO
+		LAB1 </font>
+		</p>
+		<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt">DO
+		LAB1,LAB2 </font>
+		</p>
+		<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt">DO:I=J
+		LAB1,LAB2 </font>
+		</p>
+		<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt">DO
+		LAB1:I=J,LAB2:K=L </font>
+		</p>
+		<li><p><font size="3" style="font-size: 12pt">DO </font>
+		</p>
+	</ul>
+	<p><font size="3" style="font-size: 12pt">The arguments to a DO
+	command are normally program labels. They may, however, be file
+	names. If they are file names, MumpsVM loads the named file,
+	executes it, and returns to the invoking DO command. Invoked files
+	may invoke other files up to the internal storage limit of the VM.
+	After an invoked file has executed and returned to the calling
+	routine, the invoked routine is erased from the user's partition.
+	This space is available for additional routines. An invoked routine
+	has access to the entire symbol table. Any variables which it
+	creates remain in the symbol table unless explicitly removed with
+	the KILL command. A file name is indicated by the circumflex
+	preceding the file name. The file name may be either a literal
+	(optionally enclosed in quotes) or contained in a variable name. If
+	the file name to be executed is contained in a variable name, the
+	variable name must be preceded by an at-sign (@). The variable named
+	must contain a circumflex immediately followed by the file name.
+	File names must conform to the naming conventions of the machine on
+	which you are operating. Normally, this will be a name beginning
+	with an alphabetic character, followed by alphabetic or numeric
+	characters up to a limit of six, followed by a period followed by
+	the file extension &quot;MPS&quot;. Note: MumpsVM does not assume
+	any file extension by default. Both file name arguments and internal
+	label arguments may be used in the same command. File name argument
+	forms may be individually postconditionalized. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">DO PGM1.MPS <br/>
+DO:I=J
+	&quot;PGM1.MPS&quot; <br/>
+DO &quot;PGM1.MPS&quot;:I=K <br/>
+DO
+	&quot;PGM1.MPS&quot;:I=J,&quot;PGM2.MPS&quot;:K=L <br/>
+DO
+	LAB1:I=10;&quot;PGM1.MPS&quot; <br/>
+SET A=&quot;PGM1.MPS&quot; <br/>
+DO
+	@A </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">There are two more forms
+	of the DO: they permit you to specify both a file and a label within
+	the file to be executed and an offset from a label. (The MumpsVM VM
+	does not permit offsets from labels but these are permitted in
+	Standard MumpsVM). These constructions may also be contained in a
+	variable name: the variable name is preceded by an at-sign (@) in
+	the DO command. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">DO LAB3^&quot;PGM1.MPS&quot;
+	<br/>
+S A=&quot;LAB3^PGM.MPS&quot; <br/>
+DO @A <br/>
+DO LAB1+2 <br/>
+DO
+	LAB1+2^&quot;PGM1.MPS&quot; <br/>
+DO LAB1+I*K <br/>
+DO
+	LAB1+I*K^&quot;PGM1.MPS&quot; </font>
+	</p>
+	<li><p><a name="co4"></a><font size="3" style="font-size: 12pt">ELSE
+	(abbreviation: E) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The ELSE command tests the
+	value of the system wide built-in variable $TEST. If $TEST
+	(abbreviated as $T) is zero, the remainder of the line on which the
+	ELSE appears is executed. If $T is not zero, the remainder of the
+	line is not executed. $TEST is set, among other ways, by the IF
+	statement. Since ELSE does not take arguments, it must be followed
+	by two blanks. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">ELSE S I=10 </font>
+	</p>
+	<li><p><a name="co5"></a><font size="3" style="font-size: 12pt">FOR
+	(abbreviation: F) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">In the VM, the FOR command
+	specifies repeated execution of the current line with a selected
+	value for an index variable. There are three formats: the first is
+	one in which a local variable (i.e., a global may not be used here)
+	is set successively to values in a list for each execution of the
+	portion of the current line following the FOR; the second is one in
+	which a local variable is set to an initial numeric value,
+	incremented by a fixed amount and the portion of the current line
+	remaining after the FOR is executed until the local variable exceeds
+	an upper limit; the final form is an infinite loop form with a local
+	variable being incremented by a fixed amount with no upper limit
+	test being performed. A given FOR command may have multiple
+	arguments: each argument may be in any of the above formats. The FOR
+	command has scope only for the remaining portion of the current
+	line. A line containing a FOR command may invoke other lines of
+	code, however, by means of a DO or XECUTE command. In these cases
+	the index (or indices) are valid in the remote code executed.
+	Multiple FOR commands may appear nested on the same line. A QUIT
+	command may be used to prematurely terminate the execution of a FOR
+	command. If there are nested FOR commands on the line, a QUIT
+	applies to the most recent FOR. A QUIT used in the context of a FOR
+	command will not cause a return to a DO command. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">F I=1,2,5,99 </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The remainder of the above
+	line will be executed 4 times. The variable I will, successively,
+	have the values 1, 2, 5 and 99. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">F J=2:4:20 </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">In the above, the
+	remaining portion of the line on which the FOR command appears will
+	be executed 5 times with the value of J being 2, 6, 10, 14, and 18.
+	Note that the first part (2) is the starting value; the second (4)
+	is the increment; and the third (20) is the termination condition. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">F K=1:1 </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The above specifies an
+	infinite loop. K will be incremented by one with no upper limit. The
+	user must QUIT, HALT or GOTO to exit the loop. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">F L=10:-1:0,13,15:1 </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The above uses three
+	arguments. The first specifies a loop with L ranging from 10 to zero
+	stepping by minus one (10, 9, 8, ... 0); then L has the value 13;
+	then L cycles with no upper limit from 15 upwards with an increment
+	of one. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">F
+	I=&quot;ABC&quot;,&quot;XYZ&quot;,1:1:20,&quot;XXX&quot; </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">&quot;I&quot; will have
+	the values ABC, AND XYZ (strings); then it will cycle from one to
+	twenty by one; then, finally, it will have the value XXX (string). </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">F A(99)=1:1:20 </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The local array element
+	A(99) will cycle from one to twenty in steps of one. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">F I=J+1:K*L:A(9,3,2,1) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">In the above, expressions
+	are used to specify the parameters to an iterative form of the FOR
+	statement. Any valid expression may be used, including those
+	involving global array references. If the iterative forms are used,
+	the expressions will be interpreted as numerics. </font>
+	</p>
+	<li><p><a name="co6"></a><font size="3" style="font-size: 12pt">GOTO
+	(abbreviation: G) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The GOTO command causes
+	unconditional transfer of control. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">For the VM, arguments are
+	specified in the same manner as the DO command listed above. You may
+	post-conditionalize both the command word and the individual
+	arguments. You may specify a label, a variable containing a label
+	(variable name must be preceded by an at-sign [@]), a file name
+	(preceded by circumflex with the file name optionally contained in a
+	quoted field), a label and a file name, or a variable name
+	containing a file name or a label and file name (preceded by an
+	at-sign [@]). If you specify one of the file name forms, the named
+	file completely replaces the transferring program. The symbol table
+	is, however, left intact. Any open devices remain open and may be
+	used by the newly loaded program. The only way to return to the
+	original program is by another transfer of control (either a DO or
+	GOTO). The MumpsVM VM does not permit numeric offsets from labels
+	(as in the second, third and seventh examples below) although these
+	are permitted in full Standard Mumps. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">GOTO LAB1 GOTO LAB1+10 G
+	LAB1+I*K G ^PGM1.MPS G:I-J ^&quot;PGM1.MPS&quot; G LAB1^&quot;PGM1.MPS&quot;
+	G LAB1+I^&quot;PGM1.MPS&quot; S A=&quot;LAB1^PGM.MPS&quot; G @A </font>
+	</p>
+	<li><p><a name="co7"></a><font size="3" style="font-size: 12pt">HALT
+	(abbreviation: H) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The HALT command
+	terminates execution of the MumpsVM VM and returns you to the
+	operating system or web server. It may be post-conditionalized. For
+	example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">H:I=3 </font>
+	</p>
+	<li><p><a name="co8"></a><font size="3" style="font-size: 12pt">HANG
+	(abbreviation: H) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The HANG instruction
+	suspends execution of your program for a specified period of time
+	(in seconds). It takes as an argument the number of seconds to wait.
+	It may be post-conditionalized. The HANG instruction differs from
+	the HALT instruction only in the argument: a HANG without an
+	argument is a HALT instruction. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">H:I=J 2*K </font>
+	</p>
+	<li><p><a name="co9"></a><font size="3" style="font-size: 12pt">IF
+	(abbreviation: I) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The IF command permits
+	conditional execution. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">It has two forms: the
+	first takes no arguments and the second takes one or more arguments.
+	In the first form, the value of $TEST is examined. If $TEST is 1
+	(true), the remainder of the current line is executed. If $TEST is 0
+	(false), the remainder of the current line is not executed. If the
+	no-argument form of the IF is specified, you must include two blanks
+	following the letter I or the word IF to signify the omitted
+	arguments. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The other form of the IF
+	command takes arguments. The arguments are evaluated and their
+	result is used to set $TEST. If an argument expression evaluates as
+	non-zero, $TEST is set to 1 (true). If an argument expression
+	evaluates to zero, $TEST is set to 0 (false). If multiple argument
+	expressions are present, they, in effect, are and'ed to produce a
+	final result. The final result in $TEST is used to determine whether
+	the remainder of the line should be executed. Note: there need not
+	be any other commands on the line. The IF statement may be used
+	solely to set $TEST. Note also that expressions are evaluated left
+	to right. This sometimes causes problems for people used to dealing
+	with FORTRAN or BASIC. For example, the expression: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">I=0&amp;J&lt;0 </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">is always false since it
+	is parsed as: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">(((I=0)&amp;J)&lt;0) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">if I is zero, the first
+	expression is true (value of 1); if J is less than zero, then J is
+	interpreted as true giving, as a result of the AND operation (&amp;),
+	a value of 1 which is not less than zero - therefore false. If I is
+	not zero then, regardless of the value of J, the AND operation
+	results in false (value of zero) which is not less than zero -
+	therefore false. The expression should have been written as: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">(I=0)&amp;(J&lt;0) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">Note that the IF command
+	may have multiple arguments. These are equivalent to AND'ed
+	expressions. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">IF A=10,B=20 ... </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The above is the same as
+	saying: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">IF (A=10)&amp;(B=20) ... </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">Either form is acceptable.
+	The OR operator may also be used: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">IF (A=10)!(B=20) ... </font>
+	</p>
+	<li><p><a name="co10"></a><font size="3" style="font-size: 12pt">JOB
+	(abbreviation: J) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The JOB command is not
+	implemented. </font>
+	</p>
+	<li><p><a name="co11"></a><font size="3" style="font-size: 12pt">KILL
+	(abbreviation: K) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The KILL command is used
+	to prune the symbol table and to delete parts of the global arrays. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">There are three forms of
+	the KILL command: the first deletes all entries in the local (i.e.,
+	non-global) symbol table; the second deletes specific elements from
+	the local symbol table or specific elements from the global arrays;
+	and the third is used to delete all elements from the local symbol
+	table except for certain named symbols. All forms may be
+	post-conditionalized. The first form - delete the entire local
+	symbol table - is denoted by the KILL command alone: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">KILL </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The second form appears as
+	a list of references (note: indirection for the names is permitted):
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">KILL A,B,^G(1,2,33) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The above would delete
+	variables A, B and the global array node ^G(1,2,33). Note: if the
+	global array node ^G(1,2,33) has descendants, they are also deleted.
+	Also, if a local array node is deleted, any of its descendants are
+	also deleted. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The final form of the KILL
+	may be used to delete all elements from the local symbol table
+	except for certain protected elements. It has the following format: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">KILL (A,B(1,1),K) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">In the above, the local
+	symbol table will be deleted except for variables A, B(1,1) and K.
+	All other variables will be lost. Global array nodes may not be used
+	in this form of the KILL statement. Indirection is permitted. </font>
+	</p>
+	<li><p><a name="co12"></a><font size="3" style="font-size: 12pt">LOCK
+	(abbreviation: L) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The LOCK command gains
+	exclusive access to a portion of the data base for an individual
+	user. A LOCK with no arguments frees all prior LOCK's. </font>
+	</p>
+	<li><p><a name="co13"></a><font size="3" style="font-size: 12pt">OPEN
+	(abbreviation: O) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The OPEN command opens
+	sequential files and associates them with unit numbers. Opened files
+	may be read or written. This implementation permits unit numbers 1,
+	2, 3, and 4 to be used by the programmer. Unit 5 is reserved for the
+	normal user console and unit 6 is reserved for Unix full screen
+	console I/O. The open command takes a device number (either a number
+	or an expression which evaluates to a number in the range of 1 to 4)
+	and a file name. The file name must either be a variable name or a
+	quoted literal. The file name consists of a valid file name followed
+	by either /NEW /APPEND or /OLD </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">If followed by /NEW, the
+	VM assumes you are opening the file for output: any previous files
+	with this name are lost You may only write to this file. If you open
+	the file with the /OLD option, the VM assumes the file exists and
+	opens it for input only (reads). If you specify /APPEND, the file is
+	opened for output with all new data written to the file appearing
+	after the previously existing data. If an error takes place, $test
+	is set to zero and the remainder of the command is not inspected. If
+	no error takes place, $test will be one. The user should not attempt
+	to reference units for which the OPEN command returned a $test value
+	of 0. For example: </font>
+	</p>
+	<p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt">For
+	the VM: </font>
+	</p>
+	<ul>
+		<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt">OPEN
+		1:&quot;DATA.DAT/OLD&quot; </font>
+		</p>
+		<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt">OPEN
+		2:&quot;DATA.NEW/NEW&quot; </font>
+		</p>
+		<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt">SET
+		I=3 OPEN I:&quot;DATA.MPS/OLD&quot; </font>
+		</p>
+		<li><p><font size="3" style="font-size: 12pt">SET
+		I=4,A=&quot;DATA.TXT/NEW&quot; OPEN I:A </font>
+		</p>
+	</ul>
+	<p><font size="3" style="font-size: 12pt">You should be careful to
+	CLOSE any file you have opened for output in order not to loose any
+	of the file's contents. You must CLOSE an open unit number before
+	re-using the unit number in another OPEN command. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">In cases where the file
+	name contains &quot;/&quot; characters, a comma may replace the &quot;/&quot;
+	prior to the NEW, OLD, or APPEND. </font>
+	</p>
+	<li><p><a name="co14"></a><font size="3" style="font-size: 12pt">QUIT
+	(abbreviation: Q) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">In the VM, the QUIT
+	command provides an exit point for a FOR, DO or XECUTE commands. It
+	may be post-conditionalized. It takes no arguments (therefore, you
+	need two spaces after it if there are any commands following it on
+	the same line). In the FOR case, the QUIT terminates the nearest
+	loop. In the DO case, the QUIT returns to the most recently invoking
+	command. In the XECUTE case, execution of the XECUTE text is
+	terminated and control is returned to the original command line. </font>
+	</p>
+	<li><p><a name="co15"></a><font size="3" style="font-size: 12pt">READ
+	(abbreviation: R) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The READ command reads
+	data into variables. It may be post-conditionalized. Ordinarily the
+	READ command reds from the user's terminal (unit number 5). The READ
+	command can be redirected to other devices and files, however, by
+	use of the USE command (see below). It is a common source of error -
+	sometimes quite destructive errors - for the user to READ or WRITE
+	to the wrong device. Many MumpsVM programmers explicitly place the
+	USE command immediately prior to the READ or WRITE commands.
+	Ordinarily, the READ command takes one or more arguments which may
+	be local scalar variables, local array elements, or global array
+	elements. Each of these is read successively from the input device.
+	When more than one argument is present, a carriage return / line
+	feed is taken as the delimiter between the successive input values.
+	For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">READ A,B,^A(1,3,99) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">If the input is derived
+	from the user's terminal, the user might type the following sequence
+	in response to the above: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">22 <br/>
+38 <br/>
+NOW IS
+	THE TIME </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The READ command may also
+	write before it reads. This mode is only permitted at the user's
+	console. The options permitted for &quot;write before read&quot;
+	are: a literal constant in quotes; and a tab, new line, or new page
+	operation. A tab operation is specified by a question mark followed
+	by an expression which is interpreted as arithmetic. The effect is
+	to cause the cursor to move to the named column on the page or
+	screen. The new line operation is caused by typing an exclamation
+	point (!). The VM will generate a carriage return / line feed pair.
+	A new page is induced by the pound-sign (#) character. For example,
+	if you wish to read name, social security number and password with
+	user input from column 20, the following might be appropriate: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">R
+	&quot;NAME&quot;,?20,N,&quot;SSN&quot;,?20,S,&quot;PASS&quot;,?20,P </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">After the above, the
+	variable N will contain the name, S the social security number and P
+	the password. The READ command also permits single character input.
+	That is, a read operation will be satisfied as soon as the user
+	strikes any character on the keyboard: no carriage return is
+	required. The variable will contain a number which is the equivalent
+	of the ASCII character struck. This mode is denoted by preceding the
+	variable to be read by an asterisk. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">READ &quot;ENTER A LETTER
+	&quot;,*A </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The READ is satisfied when
+	any character is struck. There is also another form of the READ:
+	that which contains &quot;time-outs&quot;. Time-outs permit the
+	programmer to specify a maximum interval of time which the VM should
+	wait for the user to reply to the READ operation. The time-out may
+	be used with either the regular or character by character mode. The
+	time-out is specified by placing a colon after the variable followed
+	by an expression which will be interpreted as numeric. The value of
+	the expression is the amount of time in seconds to wait for a user
+	response to this operation. If the user fails to respond in the
+	required interval, the $TEST built-in variable is set false (0) and
+	the variable contains nothing. If the user does respond in time,
+	$TEST is set true (1) and the variable contains the user's reply.
+	For non-character by character mode input, the user must type the
+	carriage return for the input to be valid. If the time-out expires
+	before the user type the carriage return, all input is lost. For
+	example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">AGAIN READ &quot;ENTER
+	NAME &quot;,N:20 IF '$TEST GOTO AGAIN </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">SET (abbreviation: S) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The SET command is the
+	assignment command for MumpsVM. The expression to the right hand
+	side of the equals sign is evaluated and placed in the storage
+	associated with the variable on the left hand side. Global variables
+	may be used on the left hand side. The SET command may be
+	post-conditionalized. The $Piece function may be used on the left
+	hand side of an expression. For example, if the variable a contains
+	the value &quot;aaa.bbb.ccc&quot;, the command: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$P(a,&quot;.&quot;,2)=&quot;xxx&quot;
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">will result in the value
+	of a becoming &quot;aaa.xxx.ccc&quot; </font>
+	</p>
+	<li><p><a name="co16"></a><font size="3" style="font-size: 12pt">USE
+	(abbreviation: U) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The USE command tells the
+	VM which device (unit) number to use for input output operations
+	(READs and WRITEs). The unit designated as the input/output device
+	remains in effect until changed by the USE again or an error occurs.
+	If the VM detects an error it always resets the the current device
+	number to 5 - the number associated with the user's console
+	terminal. The valid range of unit numbers in MumpsVM is 1 through 5.
+	The current unit number can be determined from the $IO
+	(abbreviation: $I) built-in variable. The command is specified as
+	the letter U or the word USE followed by an expression which is
+	interpreted as numeric. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">USE 1 </font>
+	</p>
+	<li><p><a name="co17"></a><font size="3" style="font-size: 12pt">VIEW
+	(abbreviation: V) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The VIEW command is not
+	used in this implementation. </font>
+	</p>
+	<li><p><a name="co18"></a><font size="3" style="font-size: 12pt">WRITE
+	(abbreviation: W) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The WRITE command
+	transmits data to an output device. Normally output is directed to
+	the user's console terminal. By the USE command, however, data may
+	be directed to another unit number and its associated file. A unit
+	number must be opened prior to writing to it. The WRITE command
+	takes as arguments either literals in quotes, numeric constants,
+	variable names: both local and global, and control codes and
+	expressions for tab, new line and new page operations. The control
+	operations are the same as those discussed above for the READ
+	operation. Output is stream oriented: that is, each WRITE does not
+	begin on a new line: it begins where the last line left off.
+	Wrap-around occurs at your terminal depending upon the current
+	terminal monitor level width setting. You may specify single
+	character output by an asterisk followed by a decimal number. The
+	system will send the ASCII character associated with the number you
+	specify (e.g., *7 will send the BELL character). For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">WRITE &quot;NAME OF
+	PATIENT&quot;,?25,NAME <br/>
+WRITE !,&quot;AGE&quot;,?20,AGE </font>
+	</p>
+	<li><p><a name="co19"></a><font size="3" style="font-size: 12pt">XECUTE
+	(abbreviation: X) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The XECUTE command can
+	take one or more arguments. The arguments must be strings. The
+	XECUTE executes each of the arguments in order: that is, it causes
+	the values in the string arguments to be interpreted as MumpsVM
+	command lines. As such, the strings may contain any valid MumpsVM
+	code including XECUTEs (be careful though). For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">SET A=&quot;FOR I=1:1:20 W
+	!,I&quot; <br/>
+XECUTE A </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The above XECUTE will
+	cause the numbers 1, 2, 3, ... 20 to be printed down the side of the
+	terminal. You may construct strings in local or global variables. </font>
+	</p>
+	<li><p><a name="co20"></a><font size="3" style="font-size: 12pt">Z
+	(abbreviation: Z) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The Z in ANSI Mumps
+	permits the implementer to add special commands. </font>
+	</p>
+	<ul>
+		<li><p><font size="3" style="font-size: 12pt">ZASCII - Form this
+		point on, store global array numeric subscripts according to the
+		ASCII collating sequence (This is the startup default). </font>
+		</p>
+		<li><p><font size="3" style="font-size: 12pt">ZE </font>
+		</p>
+		<p><font size="3" style="font-size: 12pt">The ZE command may be
+		used to terminate a VM. It may be executed either from direct or
+		program mode. The ZE command causes immediate termination. It
+		should be the only command on a line. The Halt command may also be
+		used to terminate execution. When executing with a web server, it
+		is important that your program ultimately terminate a VM. Simply
+		ending a program (Quit) and returning to interactive mode will
+		cause your web server to crash. </font>
+		</p>
+		<li><p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt">ZNUMERIC
+		- From this point on, store global array subscripts according to
+		numeric collating sequence. Only works with positive integer
+		subscripts of 8 or fewer digits. This is not the startup default. </font>
+		</p>
+		<li><p><font size="3" style="font-size: 12pt">ZP </font>
+		</p>
+		<p><font size="3" style="font-size: 12pt">The ZP command is used to
+		pass the head of a logical predicate to the logic VM. If the logic
+		analyzer evaluates the predicate as true, $TEST is set to 1, 0
+		otherwise. Variables in the VM symbol table may also be created or
+		altered as a result of the logic VM's execution. This feature is
+		not presently enabled. </font>
+		</p>
+		<li><p><font size="3" style="font-size: 12pt">ZSEEK </font>
+		</p>
+		<p><font size="3" style="font-size: 12pt">ZSeek address repositions
+		the currently open file system to the byte address given by
+		address. This is equivalent to the C language lseek() function. </font>
+		</p>
+	</ul>
+</ol>
+<p><a name="functions"></a><font size="3" style="font-size: 12pt"><b>Functions</b>
+</font>
+</p>
+<ol>
+	<li><p><a name="fn1"></a><font size="3" style="font-size: 12pt">$ASCII(e1)
+	or $ASCII(e1,i2) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$ASCII returns the numeric
+	value of an ASCII character. The string is specified in e1. If no i2
+	is specified, the first character of e1 is used. If i2 is specified,
+	the i2'th character of e1 is chosen. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$ASCII(&quot;ABC&quot;)
+	YIELDS 65 <br/>
+$ASCII(&quot;ABC&quot;,1) YIELDS 65 <br/>
+$ASCII(&quot;ABC,2)
+	YIELDS 66 <br/>
+$ASCII(&quot;&quot;) YIELDS -1 </font>
+	</p>
+	<li><p><a name="fn1a"></a><font size="3" style="font-size: 12pt">$BACK(gbl)
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">Like $Order() except it
+	gives the previous value of the last global array index.
+	(non-standard function). </font>
+	</p>
+	<li><p><a name="fn2"></a><font size="3" style="font-size: 12pt">$CHAR(i1)
+	or $CHAR(i1,i2) or $CHAR(i1,i2,...) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$CHAR translates numeric
+	arguments to ASCII character strings. Numeric values greater that
+	128 will generate errors. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$CHAR(65) yields &quot;A&quot;
+	<br/>
+$CHAR(65,66) yields &quot;AB&quot; </font>
+	</p>
+	<li><p><a name="fn3"></a><font size="3" style="font-size: 12pt">$DATA(vn)
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$DATA returns an integer
+	which indicates whether the variable vn is defined. The value
+	returned is 0 if vn is undefined, 1 if vn is defined and has no
+	associated array descendants; 10 if vn is defined but has no
+	associated value (but does have descendants); and 11 is vn is
+	defined and has descendants. The argument vn may be either a local
+	or global variable. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$DATA(A) <br/>
+$DATA(A(1,1))
+	</font>
+	</p>
+	<li><p><a name="fn4"></a><font size="3" style="font-size: 12pt">$EXTRACT(e1,i2)
+	or $EXTRACT(e1,i2,i3) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$EXTRACT returns a
+	substring of the first argument. The substring begins at the
+	position noted by the second operand. If the third operand is
+	omitted, the substring consists only of the i2'th character of e1.
+	If the third argument is present, the substring begins at position
+	i2 and ends at position i3. Note that this differs from the usual
+	SUBSTR function in PL/I. If only &quot;e1&quot; is given, the
+	function returns the first character of the string &quot;e1&quot;.
+	If i3 specifies a position beyond the end of e1, the substring ends
+	at the end of e1. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$EXTRACT(&quot;ABC&quot;,2)
+	YIELDS &quot;B&quot; <br/>
+$EXTRACT(&quot;ABCDEF&quot;,3,5) YIELDS
+	&quot;CDE&quot; </font>
+	</p>
+	<li><p><a name="fn5"></a><font size="3" style="font-size: 12pt">$FIND(e1,e2)
+	or $FIND(e1,e2,i3) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$FIND searches the first
+	argument for an occurrence of the second argument. If one is found,
+	the value returned is one greater than the end position of the
+	second argument in the first argument. If i3 is specified, the
+	search begins at position i3 in argument 1. If the second argument
+	is not found, the value returned is 0. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$FIND(&quot;ABC&quot;,&quot;B&quot;)
+	YIELDS 3 <br/>
+$FIND(&quot;ABCABC&quot;,&quot;A&quot;,3) YIELDS 5 </font>
+	</p>
+	<li><p><a name="fn6"></a><font size="3" style="font-size: 12pt">$JUSTIFY(e1,i2)
+	or $JUSTIFY(e1,i2,i3) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$JUSTIFY right justifies
+	the first argument in a string field whose length is given by the
+	second argument. In the two operand form, the first argument is
+	interpreted as a string. In the three argument form, the first
+	argument is right justified in a filed whose length is given by the
+	second argument with i3 decimal places. The three argument form
+	imposes a numeric interpretation upon the first argument. For
+	example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$JUSTIFY(39,3) YIELDS &quot;
+	39&quot; <br/>
+$JUSTIFY(&quot;TEST&quot;,7) YIELDS &quot; TEST&quot;
+	<br/>
+$JUSTIFY(39,4,1) YIELDS &quot;39.0&quot; </font>
+	</p>
+	<li><p><a name="fn7"></a><font size="3" style="font-size: 12pt">$LEN(e1)
+	or $LEN(e1,e2) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The $LEN function returns
+	the string length of its argument. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$LEN(&quot;ABC&quot;)
+	YIELDS 3 <br/>
+$LEN(22.5) YIELDS 4 .DE If a second argument is
+	given, the function returns the number of non-overlapping
+	occurrences of &quot;e2&quot; in &quot;e1&quot; plus 1. </font>
+	</p>
+	<li><p><a name="fn8"></a><font size="3" style="font-size: 12pt">$NEXT(vn)
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The $NEXT function gives
+	the next higher value for the last index in an array (local or
+	global). If there is no higher value, $NEXT returns -1. You may find
+	the first value for the last index by invoking the function with -1
+	in the last position. Remember, MumpsVM arrays are sparse and not
+	all index values necessarily exist. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$NEXT(A(1,1)) yields 3 if
+	A(1,3) exists and A(1,2) does not. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$NEXT(A(1,1)) yields 99 if
+	A(1,99) exists and no node exists between A(1,1) and A(1,99). </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$NEXT(A(-1)) yields 1 if
+	A(1) is the first index value for the first index level. </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">See details above under
+	&quot;Implementation Notes&quot; concerning the collating sequence.
+	Numeric subscripts are presented in alphabetic, not numeric,
+	collating sequence. </font>
+	</p>
+	<li><p><a name="fn9"></a><font size="3" style="font-size: 12pt">$ORDER(vn)
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">Next ascending value of
+	the last index of the global array reference. Returns the empty
+	string when there are none remaining. Does not take a second
+	parameter for reverse searches. See the $BACK() function. Global
+	array order is ASCII.</font></p>
+	<li><p><a name="fn10"></a><font size="3" style="font-size: 12pt">$PIECE(e1,e2,i3)
+	or $PIECE(e1,e2,i3,i4) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The $PIECE function
+	returns a substring of the first argument delimited by the instances
+	of the second argument. The substring returned in the three argument
+	case is that substring of the first argument that lies between the
+	i3'th minus one and i3'th occurrence of the second argument. In the
+	four argument form, the string returned is that substring of the
+	first argument delimited by the i3'th minus one instance of the
+	second argument and the i4'th instance of the second argument. If
+	only two arguments are given, i3 is assumed to be 1. For example: </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$PIECE(&quot;A.BX.Y&quot;,&quot;.&quot;,2)
+	YIELDS &quot;BX&quot; <br/>
+$PIECE(&quot;A.BX.Y&quot;,&quot;,&quot;,1)
+	YIELDS &quot;A&quot; <br/>
+$PIECE(&quot;A.BX.Y&quot;,&quot;.&quot;,2,3)
+	YIELDS &quot;BX&quot; </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">In the VM, $P can be used
+	on the left hand side of a SET command or as an argument in a READ
+	command. In these cases, the first argument must be a local or
+	global variable. The contents of this variable are altered to the
+	value of the right hand side of the SET statement or the value read
+	by the READ statement. The entire contents of the local or global
+	variable are not altered, only the part which would have been
+	extracted by the $P function. </font>
+	</p>
+	<li><p><a name="fn11"></a><font size="3" style="font-size: 12pt">$RANDOM(i1)
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$RANDOM returns an integer
+	in the range zero through i1-1. For example: $RANDOM(100) yields a
+	value between 0 and 99 </font>
+	</p>
+	<li><p><a name="fn12"></a><font size="3" style="font-size: 12pt">$SELECT(t1:e1,t2:e2,...tn:en)
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The $SELECT function takes
+	a variable number of arguments delimited by commas. Each argument
+	consists of two parts: a logical expression and a result expression.
+	The function evaluates in sequence each of the logical expressions
+	(shown above as t1, t2, ...tn - note: these can be any expression in
+	reality: a zero result is called false and a non-zero result is
+	called true). If a logical expression is true, the result expression
+	(e1, e2, ... en) is evaluated and becomes the value for the
+	function. </font>
+	</p>
+	<li><p><a name="fn13"></a><font size="3" style="font-size: 12pt">$TEXT(l1)
+	or $TEXT(L1+I2) or $TEXT(+I1) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$TEXT returns a line of
+	source program text. If just a label is given, the source program
+	text at the label is returned. If a label plus an offset expression
+	(numeric result) is given, then the line of source text returned is
+	some number of lines forward of the line with the noted label. If an
+	arithmetic expression are given, then the line of source text I1
+	lines from the beginning of the program is returned. In this version
+	of MumpsVM, the value of a label is its line number. </font>
+	</p>
+	<li><p><a name="fn14"></a><font size="3" style="font-size: 12pt">$VIEW
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$VIEW is not supported. </font>
+	</p>
+	<li><p><a name="fn15"></a><font size="3" style="font-size: 12pt">$Z...
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$Z functions are
+	extensions added by the implementer. The MumpsVM VM has several $Z
+	functions: </font>
+	</p>
+	<ol>
+		<li><p><a name="zfn01"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZA(</b><i><b>arg</b></i><b>) </b>see $ZN below. </font>
+		</p>
+		<li><p><a name="zfn02"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZODBC(...)</b> function accesses a data base server. Details
+		are given below. </font>
+		</p>
+		<li><p><a name="zfn03"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZAB(</b><i><b>arg</b></i><b>) </b>function returns the absolute
+		value of its numeric argument. </font>
+		</p>
+		<li><p><a name="zfn04"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZB(</b><i><b>arg</b></i><b>) </b>function returns a string in
+		which leading and all multiple blanks have been replaced by single
+		blanks. </font>
+		</p>
+		<li><p><a name="zfn05"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZCD </b>function dumps the globals to a sequential ASCII file
+		in the current directory. The file name is of the form <i>number.dmp</i>
+		where <i>number</i> is the high order 8 digits of the value of the
+		C <i>time()</i> function at the time of the dump. </font>
+		</p>
+		<li><p><a name="zfn06"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZCL </b>function restores the globals from the file named <i>dump.</i>
+		Create this file by using the $ZCD function and renaming the output
+		file to <i>dump. </i>Please note this name. It is different than
+		the names used by the dump function. </font>
+		</p>
+		<li><p><a name="zfn08"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZDATE</b> (or <b>$ZD </b>) function returns the system date and
+		time in standard system printable format. This includes: day of
+		week, month, day of month, time (hour:minute:second), and year (4
+		digits). </font>
+		</p>
+		<li><p><a name="zfn09"></a><font size="3" style="font-size: 12pt">The
+		function <b>$ZD1 </b>returns the number of seconds since January 1,
+		1970 - a standard used in Unix. This number may be used to
+		accurately correlate events. </font>
+		</p>
+		<li><p><a name="zfn10"></a><font size="3" style="font-size: 12pt">The
+		function <b>$ZD2(</b><i><b>InternalDate</b></i><b>)</b> translates
+		the Unix time from $ZD1 into standard system printable format. The
+		argument is a Unix format time value. </font>
+		</p>
+		<li><p><a name="zfn11"></a><font size="3" style="font-size: 12pt">The
+		function <b>$ZD3(</b><i><b>Year,Month,Day</b></i><b>)</b> returns
+		the day of the year (Julian date) for the Gregorian date argument. </font>
+		</p>
+		<li><p><a name="zfn12"></a><font size="3" style="font-size: 12pt">The
+		function <b>$ZD4(</b><i><b>Year,DayOfYear</b></i><b>)</b> returns
+		the Gregorian date for the Julian date argument. </font>
+		</p>
+		<li><p><a name="zfn13"></a><font size="3" style="font-size: 12pt">The
+		function <b>$ZD5(</b><i><b>Year, Month, Day</b></i><b>)</b> returns
+		a string consisting of the year, a comma, the day of year, and the
+		number of days since Sunday (Monday is 1). </font>
+		</p>
+		<li><p><a name="zfn14"></a><font size="3" style="font-size: 12pt">The
+		function <b>$ZD6 </b>returns a string consisting of the hour, a
+		colon, and the minute. </font>
+		</p>
+		<li><p><a name="zfn15"></a><font size="3" style="font-size: 12pt">The
+		function <b>$ZD7 </b>returns a string consisting of the year,
+		hyphen, month, hyphen, and day of month. If an argument is given in
+		the form of the number of seconds since Jan 1, 1970, the result
+		returned will reflect the argument date. </font>
+		</p>
+		<li><p><a name="zfn16"></a><font size="3" style="font-size: 12pt">The
+		function <b>$ZD8 </b>returns a string consisting of the year,
+		hyphen, month, hyphen, and day of month, comma, and time in HH:MM
+		format. If an argument is given in the form of the number of
+		seconds since Jan 1, 1970, the result returned will reflect the
+		argument date. </font>
+		</p>
+		<li><p><a name="zfn16a"></a><font size="3" style="font-size: 12pt">The
+		function <b>$ZD9 </b>returns a string consisting of the year,
+		hyphen, month, hyphen, and day of month, comma, day of week and
+		time in HH:MM format. If an argument is given in the form of the
+		number of seconds since Jan 1, 1970, the result returned will
+		reflect the argument date. </font>
+		</p>
+		<li><p><a name="zfn17"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZF(</b><i><b>arg</b></i><b>) </b>function returns a zero or one
+		indicating if the file given as the argument exists. </font>
+		</p>
+		<li><p><a name="zfn18"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZG </b>function gives a profile of the global file systems. It
+		returns 6 values, separated by blanks, that give the the address of
+		the file system root block, the size of the DATA file, the size of
+		the KEY file, the number of internal buffers in use, the file
+		system mask in hexadecimal and the version number. The files are
+		limited to 2 gigabytes each at present. </font>
+		</p>
+		<li><p><a name="zfn19"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZH(</b><i><b>arg</b></i><b>) </b>function encodes its argument
+		in the form necessary to be a cgi-bin parameter. That is,
+		alphabetics remain unchanged, blanks become plus signs and all
+		other characters become hexadecimal values, preceded by a percent
+		sign. </font>
+		</p>
+		<li><p><a name="zfn20"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZL(</b><i><b>arg</b></i><b>) </b>function returns the natural
+		log of its numeric argument. </font>
+		</p>
+		<li><p><a name="zfn21"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZL(</b><i><b>arg1,arg2</b></i><b>) </b>function returns a
+		string consisting of the string given as arg1 padded to the right
+		with blanks to the length given as arg2. </font>
+		</p>
+		<li><p><a name="zfn22"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZM(</b><i><b>global</b></i><b>)</b> function returns the next
+		row of the global array matrix. </font>
+		</p>
+		<li><p><a name="zfn23"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZN(</b><i><b>arg</b></i><b>) </b>function normalizes word
+		content for use with information storage and retrieval systems. It
+		converts the word passed as an argument to upper case, removes
+		non-alphabetics, and removes word stems. The result is returned as
+		the value of the function. </font>
+		</p>
+		<li><p><a name="zfn24"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZP(</b><i><b>arg1,arg2</b></i><b>)</b> function left justifies
+		the first argument in a string whose length is given by the second
+		argument, padding to the right with blanks. </font>
+		</p>
+		<li><p><a name="zfn25"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZR(</b><i><b>arg</b></i><b>) </b>function returns the square
+		root of its numeric argument. </font>
+		</p>
+		<li><p><a name="zfn26"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZS(</b><i><b>arg</b></i><b>)</b> function takes one argument
+		string which it passes to a shell for execution. Output is sent to
+		standard out. </font>
+		</p>
+		<li><p><a name="zfn27"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZSQR(</b><i><b>arg</b></i><b>) </b>functions return the square
+		of its numeric argument. (Both functions are identical) </font>
+		</p>
+		<li><p><a name="zfn28"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZT</b> function returns the byte offset in the currently open
+		file. Similar to the C ftell() function. </font>
+		</p>
+		<li><p><a name="zfn29a"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZV1(</b><i><b>arg</b></i><b>)</b> function determines whether
+		the argument is a valid variable name format and returns 1 if true,
+		0 if false. </font>
+		</p>
+		<li><p><a name="zfn30"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZWInit(</b><i><b>arg</b></i><b>) </b>function loads an internal
+		buffer with the string given as the argument. The contents of this
+		buffer are returned by the $ZWN function. </font>
+		</p>
+		<li><p><a name="zfn31"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZWNext </b>function returns successive words from the internal
+		buffer delimited by blanks. When no more words remain, it returns
+		an empty string (string of length zero). </font>
+		</p>
+		<li><p><a name="zfn31a"></a><font size="3" style="font-size: 12pt">The
+		<b>$ZWParse </b>function returns successive words from the internal
+		buffer delimited by blanks and punctuation characters. When no more
+		words remain, it returns an empty string (string of length 0)</font></p>
+	</ol>
+</ol>
+<p><a name="builtin"></a><font size="3" style="font-size: 12pt">Built-in
+Variables </font>
+</p>
+<ol>
+	<li><p><font size="3" style="font-size: 12pt">$HOROLOG (Abbreviation
+	$H) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The $H built-in variable
+	returns a string consisting of two numbers. The first is the number
+	of days since December 31, 1840 and the second is the number of
+	seconds since the most recent midnight. The variable may not appear
+	as the target of an assignment or READ command. The MumpsVM gives
+	these values relative to Greenwich Mean Time. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">$IO (Abbreviation: $I)
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">$IO gives the current unit
+	number. MumpsVM I/O is, at any given time, directed to a given unit
+	number. In MumpsVM, i/o, by default, is directed to unit 5 - the
+	user's console. This is the unit from which all read's and write's
+	will take place. If the user open's another unit number for further
+	file operations, the use command is used to redirect the read and
+	write commands to this unit. The $IO variable indicates the current
+	i/o unit number. It may not appear as the target of an assignment
+	statement or as an argument of a write command although it may
+	appear in both contexts as a source argument such as in computation
+	of an index of a target array. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">$JOB (Abbreviation $J)
+	</font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The $JOB variable returns
+	the system job number. This is the process PID. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">$STORAGE (Abbreviation
+	$S) </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The $storage variable
+	returns the amount of free space remaining in the user's area. In
+	this implementation, the user partition is normally 30,000
+	characters in length. The symbol table is located at the top of this
+	area and the user program is located at the bottom. The symbol
+	table, as it grows due to the creation of variables and the increase
+	in string values of variables, grows downwards while the program
+	space grows upwards. the $S variable indicates the amount of space
+	remaining between the two areas. The user should note that the area
+	between the program and symbol table is used by the parser for
+	intermediate expression evaluation. Thus, even though storage may
+	exist between the two areas before and after a command, a command,
+	due to expression evaluation may cause the free space to be
+	exhausted. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">$X </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The $X variable gives the
+	current horizontal position of the record in the current unit
+	number. For terminals, this is the horizontal cursor position. For
+	other files, it is the number of characters since the start of the
+	current record. </font>
+	</p>
+	<li><p><font size="3" style="font-size: 12pt">$Y </font>
+	</p>
+	<p><font size="3" style="font-size: 12pt">The $Y variable gives the
+	vertical position of the current unit number. It is pre-set to zero
+	for each top of forms format control used. </font>
+	</p>
+</ol>
+<p><br/>
+<br/>
+
+</p>
+<hr/>
+
+<p style="page-break-before: always"><br/>
+<br/>
+
+</p>
+<pre class="western"><a name="license"></a>
+     <font size="3" style="font-size: 12pt">GNU GENERAL PUBLIC LICENSE</font>
+        <font size="3" style="font-size: 12pt">Version 2, June 1991</font>
+
+<font size="3" style="font-size: 12pt">Copyright (C) 1989, 1991 Free Software Foundation, Inc.</font>
+                      <font size="3" style="font-size: 12pt">59 Temple Place, Suite 330, Boston, MA  02111-1307  USA</font>
+<font size="3" style="font-size: 12pt">Everyone is permitted to copy and distribute verbatim copies</font>
+<font size="3" style="font-size: 12pt">of this license document, but changing it is not allowed.</font>
+
+      <font size="3" style="font-size: 12pt">Preamble</font>
+
+ <font size="3" style="font-size: 12pt">The licenses for most software are designed to take away your</font>
+<font size="3" style="font-size: 12pt">freedom to share and change it.  By contrast, the GNU General Public</font>
+<font size="3" style="font-size: 12pt">License is intended to guarantee your freedom to share and change free</font>
+<font size="3" style="font-size: 12pt">software--to make sure the software is free for all its users.  This</font>
+<font size="3" style="font-size: 12pt">General Public License applies to most of the Free Software</font>
+<font size="3" style="font-size: 12pt">Foundation's software and to any other program whose authors commit to</font>
+<font size="3" style="font-size: 12pt">using it.  (Some other Free Software Foundation software is covered by</font>
+<font size="3" style="font-size: 12pt">the GNU Library General Public License instead.)  You can apply it to</font>
+<font size="3" style="font-size: 12pt">your programs, too.</font>
+
+ <font size="3" style="font-size: 12pt">When we speak of free software, we are referring to freedom, not</font>
+<font size="3" style="font-size: 12pt">price.  Our General Public Licenses are designed to make sure that you</font>
+<font size="3" style="font-size: 12pt">have the freedom to distribute copies of free software (and charge for</font>
+<font size="3" style="font-size: 12pt">this service if you wish), that you receive source code or can get it</font>
+<font size="3" style="font-size: 12pt">if you want it, that you can change the software or use pieces of it</font>
+<font size="3" style="font-size: 12pt">in new free programs; and that you know you can do these things.</font>
+
+ <font size="3" style="font-size: 12pt">To protect your rights, we need to make restrictions that forbid</font>
+<font size="3" style="font-size: 12pt">anyone to deny you these rights or to ask you to surrender the rights.</font>
+<font size="3" style="font-size: 12pt">These restrictions translate to certain responsibilities for you if you</font>
+<font size="3" style="font-size: 12pt">distribute copies of the software, or if you modify it.</font>
+
+ <font size="3" style="font-size: 12pt">For example, if you distribute copies of such a program, whether</font>
+<font size="3" style="font-size: 12pt">gratis or for a fee, you must give the recipients all the rights that</font>
+<font size="3" style="font-size: 12pt">you have.  You must make sure that they, too, receive or can get the</font>
+<font size="3" style="font-size: 12pt">source code.  And you must show them these terms so they know their</font>
+<font size="3" style="font-size: 12pt">rights.</font>
+
+ <font size="3" style="font-size: 12pt">We protect your rights with two steps: (1) copyright the software, and</font>
+<font size="3" style="font-size: 12pt">(2) offer you this license which gives you legal permission to copy,</font>
+<font size="3" style="font-size: 12pt">distribute and/or modify the software.</font>
+
+ <font size="3" style="font-size: 12pt">Also, for each author's protection and ours, we want to make certain</font>
+<font size="3" style="font-size: 12pt">that everyone understands that there is no warranty for this free</font>
+<font size="3" style="font-size: 12pt">software.  If the software is modified by someone else and passed on, we</font>
+<font size="3" style="font-size: 12pt">want its recipients to know that what they have is not the original, so</font>
+<font size="3" style="font-size: 12pt">that any problems introduced by others will not reflect on the original</font>
+<font size="3" style="font-size: 12pt">authors' reputations.</font>
+
+ <font size="3" style="font-size: 12pt">Finally, any free program is threatened constantly by software</font>
+<font size="3" style="font-size: 12pt">patents.  We wish to avoid the danger that redistributors of a free</font>
+<font size="3" style="font-size: 12pt">program will individually obtain patent licenses, in effect making the</font>
+<font size="3" style="font-size: 12pt">program proprietary.  To prevent this, we have made it clear that any</font>
+<font size="3" style="font-size: 12pt">patent must be licensed for everyone's free use or not licensed at all.</font>
+
+ <font size="3" style="font-size: 12pt">The precise terms and conditions for copying, distribution and</font>
+<font size="3" style="font-size: 12pt">modification follow.</font>
+<font size="3" style="font-size: 12pt">&lt;&gt;</font>
+     <font size="3" style="font-size: 12pt">GNU GENERAL PUBLIC LICENSE</font>
+  <font size="3" style="font-size: 12pt">TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION</font>
+
+ <font size="3" style="font-size: 12pt">0. This License applies to any program or other work which contains</font>
+<font size="3" style="font-size: 12pt">a notice placed by the copyright holder saying it may be distributed</font>
+<font size="3" style="font-size: 12pt">under the terms of this General Public License.  The &quot;Program&quot;, below,</font>
+<font size="3" style="font-size: 12pt">refers to any such program or work, and a &quot;work based on the Program&quot;</font>
+<font size="3" style="font-size: 12pt">means either the Program or any derivative work under copyright law:</font>
+<font size="3" style="font-size: 12pt">that is to say, a work containing the Program or a portion of it,</font>
+<font size="3" style="font-size: 12pt">either verbatim or with modifications and/or translated into another</font>
+<font size="3" style="font-size: 12pt">language.  (Hereinafter, translation is included without limitation in</font>
+<font size="3" style="font-size: 12pt">the term &quot;modification&quot;.)  Each licensee is addressed as &quot;you&quot;.</font>
+
+<font size="3" style="font-size: 12pt">Activities other than copying, distribution and modification are not</font>
+<font size="3" style="font-size: 12pt">covered by this License; they are outside its scope.  The act of</font>
+<font size="3" style="font-size: 12pt">running the Program is not restricted, and the output from the Program</font>
+<font size="3" style="font-size: 12pt">is covered only if its contents constitute a work based on the</font>
+<font size="3" style="font-size: 12pt">Program (independent of having been made by running the Program).</font>
+<font size="3" style="font-size: 12pt">Whether that is true depends on what the Program does.</font>
+
+ <font size="3" style="font-size: 12pt">1. You may copy and distribute verbatim copies of the Program's</font>
+<font size="3" style="font-size: 12pt">source code as you receive it, in any medium, provided that you</font>
+<font size="3" style="font-size: 12pt">conspicuously and appropriately publish on each copy an appropriate</font>
+<font size="3" style="font-size: 12pt">copyright notice and disclaimer of warranty; keep intact all the</font>
+<font size="3" style="font-size: 12pt">notices that refer to this License and to the absence of any warranty;</font>
+<font size="3" style="font-size: 12pt">and give any other recipients of the Program a copy of this License</font>
+<font size="3" style="font-size: 12pt">along with the Program.</font>
+
+<font size="3" style="font-size: 12pt">You may charge a fee for the physical act of transferring a copy, and</font>
+<font size="3" style="font-size: 12pt">you may at your option offer warranty protection in exchange for a fee.</font>
+
+ <font size="3" style="font-size: 12pt">2. You may modify your copy or copies of the Program or any portion</font>
+<font size="3" style="font-size: 12pt">of it, thus forming a work based on the Program, and copy and</font>
+<font size="3" style="font-size: 12pt">distribute such modifications or work under the terms of Section 1</font>
+<font size="3" style="font-size: 12pt">above, provided that you also meet all of these conditions:</font>
+
+   <font size="3" style="font-size: 12pt">a) You must cause the modified files to carry prominent notices</font>
+   <font size="3" style="font-size: 12pt">stating that you changed the files and the date of any change.</font>
+
+   <font size="3" style="font-size: 12pt">b) You must cause any work that you distribute or publish, that in</font>
+   <font size="3" style="font-size: 12pt">whole or in part contains or is derived from the Program or any</font>
+   <font size="3" style="font-size: 12pt">part thereof, to be licensed as a whole at no charge to all third</font>
+   <font size="3" style="font-size: 12pt">parties under the terms of this License.</font>
+
+   <font size="3" style="font-size: 12pt">c) If the modified program normally reads commands interactively</font>
+   <font size="3" style="font-size: 12pt">when run, you must cause it, when started running for such</font>
+   <font size="3" style="font-size: 12pt">interactive use in the most ordinary way, to print or display an</font>
+   <font size="3" style="font-size: 12pt">announcement including an appropriate copyright notice and a</font>
+   <font size="3" style="font-size: 12pt">notice that there is no warranty (or else, saying that you provide</font>
+   <font size="3" style="font-size: 12pt">a warranty) and that users may redistribute the program under</font>
+   <font size="3" style="font-size: 12pt">these conditions, and telling the user how to view a copy of this</font>
+   <font size="3" style="font-size: 12pt">License.  (Exception: if the Program itself is interactive but</font>
+   <font size="3" style="font-size: 12pt">does not normally print such an announcement, your work based on</font>
+   <font size="3" style="font-size: 12pt">the Program is not required to print an announcement.)</font>
+<font size="3" style="font-size: 12pt">&lt;&gt;</font>
+<font size="3" style="font-size: 12pt">These requirements apply to the modified work as a whole.  If</font>
+<font size="3" style="font-size: 12pt">identifiable sections of that work are not derived from the Program,</font>
+<font size="3" style="font-size: 12pt">and can be reasonably considered independent and separate works in</font>
+<font size="3" style="font-size: 12pt">themselves, then this License, and its terms, do not apply to those</font>
+<font size="3" style="font-size: 12pt">sections when you distribute them as separate works.  But when you</font>
+<font size="3" style="font-size: 12pt">distribute the same sections as part of a whole which is a work based</font>
+<font size="3" style="font-size: 12pt">on the Program, the distribution of the whole must be on the terms of</font>
+<font size="3" style="font-size: 12pt">this License, whose permissions for other licensees extend to the</font>
+<font size="3" style="font-size: 12pt">entire whole, and thus to each and every part regardless of who wrote it.</font>
+
+<font size="3" style="font-size: 12pt">Thus, it is not the intent of this section to claim rights or contest</font>
+<font size="3" style="font-size: 12pt">your rights to work written entirely by you; rather, the intent is to</font>
+<font size="3" style="font-size: 12pt">exercise the right to control the distribution of derivative or</font>
+<font size="3" style="font-size: 12pt">collective works based on the Program.</font>
+
+<font size="3" style="font-size: 12pt">In addition, mere aggregation of another work not based on the Program</font>
+<font size="3" style="font-size: 12pt">with the Program (or with a work based on the Program) on a volume of</font>
+<font size="3" style="font-size: 12pt">a storage or distribution medium does not bring the other work under</font>
+<font size="3" style="font-size: 12pt">the scope of this License.</font>
+
+ <font size="3" style="font-size: 12pt">3. You may copy and distribute the Program (or a work based on it,</font>
+<font size="3" style="font-size: 12pt">under Section 2) in object code or executable form under the terms of</font>
+<font size="3" style="font-size: 12pt">Sections 1 and 2 above provided that you also do one of the following:</font>
+
+   <font size="3" style="font-size: 12pt">a) Accompany it with the complete corresponding machine-readable</font>
+   <font size="3" style="font-size: 12pt">source code, which must be distributed under the terms of Sections</font>
+   <font size="3" style="font-size: 12pt">1 and 2 above on a medium customarily used for software interchange; or,</font>
+
+   <font size="3" style="font-size: 12pt">b) Accompany it with a written offer, valid for at least three</font>
+   <font size="3" style="font-size: 12pt">years, to give any third party, for a charge no more than your</font>
+   <font size="3" style="font-size: 12pt">cost of physically performing source distribution, a complete</font>
+   <font size="3" style="font-size: 12pt">machine-readable copy of the corresponding source code, to be</font>
+   <font size="3" style="font-size: 12pt">distributed under the terms of Sections 1 and 2 above on a medium</font>
+   <font size="3" style="font-size: 12pt">customarily used for software interchange; or,</font>
+
+   <font size="3" style="font-size: 12pt">c) Accompany it with the information you received as to the offer</font>
+   <font size="3" style="font-size: 12pt">to distribute corresponding source code.  (This alternative is</font>
+   <font size="3" style="font-size: 12pt">allowed only for noncommercial distribution and only if you</font>
+   <font size="3" style="font-size: 12pt">received the program in object code or executable form with such</font>
+   <font size="3" style="font-size: 12pt">an offer, in accord with Subsection b above.)</font>
+
+<font size="3" style="font-size: 12pt">The source code for a work means the preferred form of the work for</font>
+<font size="3" style="font-size: 12pt">making modifications to it.  For an executable work, complete source</font>
+<font size="3" style="font-size: 12pt">code means all the source code for all modules it contains, plus any</font>
+<font size="3" style="font-size: 12pt">associated interface definition files, plus the scripts used to</font>
+<font size="3" style="font-size: 12pt">control compilation and installation of the executable.  However, as a</font>
+<font size="3" style="font-size: 12pt">special exception, the source code distributed need not include</font>
+<font size="3" style="font-size: 12pt">anything that is normally distributed (in either source or binary</font>
+<font size="3" style="font-size: 12pt">form) with the major components (compiler, kernel, and so on) of the</font>
+<font size="3" style="font-size: 12pt">operating system on which the executable runs, unless that component</font>
+<font size="3" style="font-size: 12pt">itself accompanies the executable.</font>
+
+<font size="3" style="font-size: 12pt">If distribution of executable or object code is made by offering</font>
+<font size="3" style="font-size: 12pt">access to copy from a designated place, then offering equivalent</font>
+<font size="3" style="font-size: 12pt">access to copy the source code from the same place counts as</font>
+<font size="3" style="font-size: 12pt">distribution of the source code, even though third parties are not</font>
+<font size="3" style="font-size: 12pt">compelled to copy the source along with the object code.</font>
+<font size="3" style="font-size: 12pt">&lt;&gt;</font>
+ <font size="3" style="font-size: 12pt">4. You may not copy, modify, sublicense, or distribute the Program</font>
+<font size="3" style="font-size: 12pt">except as expressly provided under this License.  Any attempt</font>
+<font size="3" style="font-size: 12pt">otherwise to copy, modify, sublicense or distribute the Program is</font>
+<font size="3" style="font-size: 12pt">void, and will automatically terminate your rights under this License.</font>
+<font size="3" style="font-size: 12pt">However, parties who have received copies, or rights, from you under</font>
+<font size="3" style="font-size: 12pt">this License will not have their licenses terminated so long as such</font>
+<font size="3" style="font-size: 12pt">parties remain in full compliance.</font>
+
+ <font size="3" style="font-size: 12pt">5. You are not required to accept this License, since you have not</font>
+<font size="3" style="font-size: 12pt">signed it.  However, nothing else grants you permission to modify or</font>
+<font size="3" style="font-size: 12pt">distribute the Program or its derivative works.  These actions are</font>
+<font size="3" style="font-size: 12pt">prohibited by law if you do not accept this License.  Therefore, by</font>
+<font size="3" style="font-size: 12pt">modifying or distributing the Program (or any work based on the</font>
+<font size="3" style="font-size: 12pt">Program), you indicate your acceptance of this License to do so, and</font>
+<font size="3" style="font-size: 12pt">all its terms and conditions for copying, distributing or modifying</font>
+<font size="3" style="font-size: 12pt">the Program or works based on it.</font>
+
+ <font size="3" style="font-size: 12pt">6. Each time you redistribute the Program (or any work based on the</font>
+<font size="3" style="font-size: 12pt">Program), the recipient automatically receives a license from the</font>
+<font size="3" style="font-size: 12pt">original licensor to copy, distribute or modify the Program subject to</font>
+<font size="3" style="font-size: 12pt">these terms and conditions.  You may not impose any further</font>
+<font size="3" style="font-size: 12pt">restrictions on the recipients' exercise of the rights granted herein.</font>
+<font size="3" style="font-size: 12pt">You are not responsible for enforcing compliance by third parties to</font>
+<font size="3" style="font-size: 12pt">this License.</font>
+
+ <font size="3" style="font-size: 12pt">7. If, as a consequence of a court judgment or allegation of patent</font>
+<font size="3" style="font-size: 12pt">infringement or for any other reason (not limited to patent issues),</font>
+<font size="3" style="font-size: 12pt">conditions are imposed on you (whether by court order, agreement or</font>
+<font size="3" style="font-size: 12pt">otherwise) that contradict the conditions of this License, they do not</font>
+<font size="3" style="font-size: 12pt">excuse you from the conditions of this License.  If you cannot</font>
+<font size="3" style="font-size: 12pt">distribute so as to satisfy simultaneously your obligations under this</font>
+<font size="3" style="font-size: 12pt">License and any other pertinent obligations, then as a consequence you</font>
+<font size="3" style="font-size: 12pt">may not distribute the Program at all.  For example, if a patent</font>
+<font size="3" style="font-size: 12pt">license would not permit royalty-free redistribution of the Program by</font>
+<font size="3" style="font-size: 12pt">all those who receive copies directly or indirectly through you, then</font>
+<font size="3" style="font-size: 12pt">the only way you could satisfy both it and this License would be to</font>
+<font size="3" style="font-size: 12pt">refrain entirely from distribution of the Program.</font>
+
+<font size="3" style="font-size: 12pt">If any portion of this section is held invalid or unenforceable under</font>
+<font size="3" style="font-size: 12pt">any particular circumstance, the balance of the section is intended to</font>
+<font size="3" style="font-size: 12pt">apply and the section as a whole is intended to apply in other</font>
+<font size="3" style="font-size: 12pt">circumstances.</font>
+
+<font size="3" style="font-size: 12pt">It is not the purpose of this section to induce you to infringe any</font>
+<font size="3" style="font-size: 12pt">patents or other property right claims or to contest validity of any</font>
+<font size="3" style="font-size: 12pt">such claims; this section has the sole purpose of protecting the</font>
+<font size="3" style="font-size: 12pt">integrity of the free software distribution system, which is</font>
+<font size="3" style="font-size: 12pt">implemented by public license practices.  Many people have made</font>
+<font size="3" style="font-size: 12pt">generous contributions to the wide range of software distributed</font>
+<font size="3" style="font-size: 12pt">through that system in reliance on consistent application of that</font>
+<font size="3" style="font-size: 12pt">system; it is up to the author/donor to decide if he or she is willing</font>
+<font size="3" style="font-size: 12pt">to distribute software through any other system and a licensee cannot</font>
+<font size="3" style="font-size: 12pt">impose that choice.</font>
+
+<font size="3" style="font-size: 12pt">This section is intended to make thoroughly clear what is believed to</font>
+<font size="3" style="font-size: 12pt">be a consequence of the rest of this License.</font>
+<font size="3" style="font-size: 12pt">&lt;&gt;</font>
+ <font size="3" style="font-size: 12pt">8. If the distribution and/or use of the Program is restricted in</font>
+<font size="3" style="font-size: 12pt">certain countries either by patents or by copyrighted interfaces, the</font>
+<font size="3" style="font-size: 12pt">original copyright holder who places the Program under this License</font>
+<font size="3" style="font-size: 12pt">may add an explicit geographical distribution limitation excluding</font>
+<font size="3" style="font-size: 12pt">those countries, so that distribution is permitted only in or among</font>
+<font size="3" style="font-size: 12pt">countries not thus excluded.  In such case, this License incorporates</font>
+<font size="3" style="font-size: 12pt">the limitation as if written in the body of this License.</font>
+
+ <font size="3" style="font-size: 12pt">9. The Free Software Foundation may publish revised and/or new versions</font>
+<font size="3" style="font-size: 12pt">of the General Public License from time to time.  Such new versions will</font>
+<font size="3" style="font-size: 12pt">be similar in spirit to the present version, but may differ in detail to</font>
+<font size="3" style="font-size: 12pt">address new problems or concerns.</font>
+
+<font size="3" style="font-size: 12pt">Each version is given a distinguishing version number.  If the Program</font>
+<font size="3" style="font-size: 12pt">specifies a version number of this License which applies to it and &quot;any</font>
+<font size="3" style="font-size: 12pt">later version&quot;, you have the option of following the terms and conditions</font>
+<font size="3" style="font-size: 12pt">either of that version or of any later version published by the Free</font>
+<font size="3" style="font-size: 12pt">Software Foundation.  If the Program does not specify a version number of</font>
+<font size="3" style="font-size: 12pt">this License, you may choose any version ever published by the Free Software</font>
+<font size="3" style="font-size: 12pt">Foundation.</font>
+
+ <font size="3" style="font-size: 12pt">10. If you wish to incorporate parts of the Program into other free</font>
+<font size="3" style="font-size: 12pt">programs whose distribution conditions are different, write to the author</font>
+<font size="3" style="font-size: 12pt">to ask for permission.  For software which is copyrighted by the Free</font>
+<font size="3" style="font-size: 12pt">Software Foundation, write to the Free Software Foundation; we sometimes</font>
+<font size="3" style="font-size: 12pt">make exceptions for this.  Our decision will be guided by the two goals</font>
+<font size="3" style="font-size: 12pt">of preserving the free status of all derivatives of our free software and</font>
+<font size="3" style="font-size: 12pt">of promoting the sharing and reuse of software generally.</font>
+
+      <font size="3" style="font-size: 12pt">NO WARRANTY</font>
+
+ <font size="3" style="font-size: 12pt">11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY</font>
+<font size="3" style="font-size: 12pt">FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN</font>
+<font size="3" style="font-size: 12pt">OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES</font>
+<font size="3" style="font-size: 12pt">PROVIDE THE PROGRAM &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED</font>
+<font size="3" style="font-size: 12pt">OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF</font>
+<font size="3" style="font-size: 12pt">MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS</font>
+<font size="3" style="font-size: 12pt">TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE</font>
+<font size="3" style="font-size: 12pt">PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,</font>
+<font size="3" style="font-size: 12pt">REPAIR OR CORRECTION.</font>
+
+ <font size="3" style="font-size: 12pt">12. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING</font>
+<font size="3" style="font-size: 12pt">WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR</font>
+<font size="3" style="font-size: 12pt">REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,</font>
+<font size="3" style="font-size: 12pt">INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING</font>
+<font size="3" style="font-size: 12pt">OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED</font>
+<font size="3" style="font-size: 12pt">TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY</font>
+<font size="3" style="font-size: 12pt">YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER</font>
+<font size="3" style="font-size: 12pt">PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE</font>
+<font size="3" style="font-size: 12pt">POSSIBILITY OF SUCH DAMAGES.</font>
+
+      <font size="3" style="font-size: 12pt">END OF TERMS AND CONDITIONS</font>
+<font size="3" style="font-size: 12pt">&lt;&gt;</font>
+    <font size="3" style="font-size: 12pt">How to Apply These Terms to Your New Programs</font>
+
+ <font size="3" style="font-size: 12pt">If you develop a new program, and you want it to be of the greatest</font>
+<font size="3" style="font-size: 12pt">possible use to the public, the best way to achieve this is to make it</font>
+<font size="3" style="font-size: 12pt">free software which everyone can redistribute and change under these terms.</font>
+
+ <font size="3" style="font-size: 12pt">To do so, attach the following notices to the program.  It is safest</font>
+<font size="3" style="font-size: 12pt">to attach them to the start of each source file to most effectively</font>
+<font size="3" style="font-size: 12pt">convey the exclusion of warranty; and each file should have at least</font>
+<font size="3" style="font-size: 12pt">the &quot;copyright&quot; line and a pointer to where the full notice is found.</font>
+
+   <font size="3" style="font-size: 12pt">&lt;one line to give the program's name and a brief idea of what it does.&gt;</font>
+   <font size="3" style="font-size: 12pt">Copyright (C) 19yy  &lt;name of author&gt;</font>
+
+   <font size="3" style="font-size: 12pt">This program is free software; you can redistribute it and/or modify</font>
+   <font size="3" style="font-size: 12pt">it under the terms of the GNU General Public License as published by</font>
+   <font size="3" style="font-size: 12pt">the Free Software Foundation; either version 2 of the License, or</font>
+   <font size="3" style="font-size: 12pt">(at your option) any later version.</font>
+
+   <font size="3" style="font-size: 12pt">This program is distributed in the hope that it will be useful,</font>
+   <font size="3" style="font-size: 12pt">but WITHOUT ANY WARRANTY; without even the implied warranty of</font>
+   <font size="3" style="font-size: 12pt">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</font>
+   <font size="3" style="font-size: 12pt">GNU General Public License for more details.</font>
+
+   <font size="3" style="font-size: 12pt">You should have received a copy of the GNU General Public License</font>
+   <font size="3" style="font-size: 12pt">along with this program; if not, write to the Free Software</font>
+   <font size="3" style="font-size: 12pt">Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA</font>
+
+
+<font size="3" style="font-size: 12pt">Also add information on how to contact you by electronic and paper mail.</font>
+
+<font size="3" style="font-size: 12pt">If the program is interactive, make it output a short notice like this</font>
+<font size="3" style="font-size: 12pt">when it starts in an interactive mode:</font>
+
+   <font size="3" style="font-size: 12pt">Gnomovision version 69, Copyright (C) 19yy name of author</font>
+   <font size="3" style="font-size: 12pt">Gnomovision comes with ABSOLUTELY NO WARRANTY; for details type `show w'.</font>
+   <font size="3" style="font-size: 12pt">This is free software, and you are welcome to redistribute it</font>
+   <font size="3" style="font-size: 12pt">under certain conditions; type `show c' for details.</font>
+
+<font size="3" style="font-size: 12pt">The hypothetical commands `show w' and `show c' should show the appropriate</font>
+<font size="3" style="font-size: 12pt">parts of the General Public License.  Of course, the commands you use may</font>
+<font size="3" style="font-size: 12pt">be called something other than `show w' and `show c'; they could even be</font>
+<font size="3" style="font-size: 12pt">mouse-clicks or menu items--whatever suits your program.</font>
+
+<font size="3" style="font-size: 12pt">You should also get your employer (if you work as a programmer) or your</font>
+<font size="3" style="font-size: 12pt">school, if any, to sign a &quot;copyright disclaimer&quot; for the program, if</font>
+<font size="3" style="font-size: 12pt">necessary.  Here is a sample; alter the names:</font>
+
+ <font size="3" style="font-size: 12pt">Yoyodyne, Inc., hereby disclaims all copyright interest in the program</font>
+ <font size="3" style="font-size: 12pt">`Gnomovision' (which makes passes at compilers) written by James Hacker.</font>
+
+ <font size="3" style="font-size: 12pt">&lt;signature of Ty Coon&gt;, 1 April 1989</font>
+ <font size="3" style="font-size: 12pt">Ty Coon, President of Vice</font>
+
+<font size="3" style="font-size: 12pt">This General Public License does not permit incorporating your program into</font>
+<font size="3" style="font-size: 12pt">proprietary programs.  If your program is a subroutine library, you may</font>
+<font size="3" style="font-size: 12pt">consider it more useful to permit linking proprietary applications with the</font>
+<font size="3" style="font-size: 12pt">library.  If this is what you want to do, use the GNU Library General</font>
+<font size="3" style="font-size: 12pt">Public License instead of this License.</font></pre>
+<hr/>
+
+<p style="margin-bottom: 0in"><font size="3" style="font-size: 12pt">In
+March, July, October and May, the Ides fall on the fifteenth day. </font>
+</p>
+<hr/>
+
+</body>
+</html>

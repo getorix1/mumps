@@ -1,0 +1,4 @@
+#!/bin/bash
+
+gcc -w -O3 -o mumps -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE \
+	mumps.c mathf.c parse.c sys1.c btree.c zfcn.c sym.c -lm -lreadline -lsqlite3

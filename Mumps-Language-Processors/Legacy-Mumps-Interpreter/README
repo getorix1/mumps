@@ -1,0 +1,69 @@
+March 15, 2022
+
+Legacy Mumps Interpreter
+
+This is a legacy single user Mumps interpreter
+from 2000 (with some updates). At, present, it
+only supports a pre-1995 dialect of Mumps.
+
+The script file:
+
+"compile.script" 
+
+contains the command to compile the programs. 
+The software, as distributed, is set to compile 
+under Linux. 
+
+Much of the original code was written in Fortran and 
+converted to C.  Consequently, you will notice heavy
+array usage, all beginning at index position 1!.
+
+This is a single-user interpreter.
+
+Documentation is in HTML format in interpreter.html
+
+You will need to install the gcc compiler and libraries
+and the 'readline' utility to compile this program.
+
+If you have the full version of Mumps installed, you may
+want to notice that running this version will probably
+require the command:
+
+./mumps
+
+because the command
+
+mumps
+
+will probably invoke the system installed full version.
+
+You can make a Mumps file executable by:
+
+1. chmod u+x myfile.mps
+
+2. inserting a line like:
+
+   #!/home/yourname/Desktop/mumps/Legacy-Mumps-Interpreter/mumps
+
+   at the beginning of 'myfile.mps'. Adjust the path description
+   to the executable 'mumps' as needed.
+
+The default is the native b-tree database (files key.dat and data.dat).
+If you define SQLITE (and undefine NATIVE) in btree.c, an Sqlite 
+database will be used. You must first create this database with the
+CreateSqliteDB.script script file. You must also install the sqlite3 
+database code. Sqlite is slower but has a number of extra features.
+See the Sqlite documentation in the full version of Mumps for details
+as to how the Mumps global arrays are mapped to the relational database.
+
+Note: the SQL commands and functions for the full version of Mumps
+are not presently available in the legacy interpreter.
+
+Kevin C. O'Kane, Ph.D.
+Computer Science Department
+University of Northern Iowa
+Cedar Falls, IA 50614-0507
+kc.okane@gmail.com
+https://threadsafebooks.com/
+https://www.cs.uni.edu/~okane
+
