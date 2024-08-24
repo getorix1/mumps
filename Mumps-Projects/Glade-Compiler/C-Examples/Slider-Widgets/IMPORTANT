@@ -1,0 +1,15 @@
+August 27, 2022
+
+Remove old on.* files if you want the GtkCompiler to re-create them.
+
+If you do not, existing on.* files will not be over-written.
+
+The Makefile as configured deletes existing on.* files. Fix this
+if you do not want the on.* files deleted each time.
+
+You need a link to ../../gtk.css in oreder for application of CSS
+decorations. If it is not present, create it:
+
+	ln -s ../../gtk.css gtk.css
+
+The Makefile will do this.
