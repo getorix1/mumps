@@ -1,0 +1,228 @@
+#!/bin/bash
+
+# index.script
+# Copyright 2014, 2022, 2024 Kevin C. O'Kane
+
+# March 25, 2024
+
+segtabs () {
+
+	for (( i=0 ; i<$task ; i++ ));
+        	do
+        	printf "\t" "" 1>&2
+        	done
+	}
+
+tabprint () {
+        printf "%-9s\r" "$1" 1>&2
+        }
+
+echo
+echo "index.script `date`"
+echo
+
+#-----------------
+#	settings
+#-----------------
+
+max_docs=10000000
+
+export max_docs
+
+SQL="no"
+SQLite="no"
+compile="yes"
+
+zipf="no"
+export zipf
+
+kwic="no"
+export kwic
+
+discrim="no"
+export discrim
+
+proximity="yes"
+export proximity
+
+doc_doc_matrix="no"
+export doc_doc_matrix
+
+document_cluster="no" # requires doc_doc_matrix
+export document_cluster
+
+tt_correlations="yes"
+export tt_correlations
+
+if [ -z $1 ]
+	then
+	echo "	Database name not given - default ohsu database used"
+		DB="ohsu"
+	else
+		DB=$1
+	fi
+
+export DB
+
+#----------------------------------------------------------------------------------
+#	DocumentTermMarix settings"
+#
+#	Max Number of Docs: max_docs
+#
+#	min_word_length: Words must be longer than: min_word_length
+#
+#	min_doc_vector_word_count: Kill docs with fewer than 
+#		min_doc_vector_word_count words
+#
+#	min_doc_word_count: A word must appear in at least 
+#		min_doc_word_count separate docs
+#
+#	max_collection_word_count: A word may appear in no more 
+#		than: max_collection_word_count docs
+#
+#	min_doc_word_count: delete documents with fewer than: min_doc_word_count
+#----------------------------------------------------------------------------------
+
+	min_word_length=4
+	min_doc_vector_word_count=20
+	min_word_count=5
+	max_word_count=$((max_docs/5))
+	min_doc_word_count=5
+
+	export min_word_length
+	export min_doc_vector_word_count
+	export min_word_count
+	export max_word_count
+	export min_doc_word_count
+
+#-------------------------------------------------------------------------
+#	Inverse Document Frequency settings"
+#
+#	Delete docs after IDF with fewer than: min_idf_vector_count words
+#-------------------------------------------------------------------------
+
+	min_idf_vector_count=$min_doc_word_count
+	export min_idf_vector_count
+
+#-------------------------------------------------------------
+#	Document weights
+#
+#	delete words with weight less than: min_doc_weight
+#	delete documents with fewer than: min_doc_word_count
+#-------------------------------------------------------------
+
+	min_doc_weight=10
+	export min_doc_weight
+
+#-----------------------------------------------------------------------
+#	Term-Term matrix settings
+#
+#	Related terms must have this correlation: min_tt_correlation
+#	Min co-occurances for term-term matrix: min_tt_cooccur
+#-----------------------------------------------------------------------
+
+	min_tt_correlation=0.250
+	min_tt_cooccur=3
+
+	export min_tt_correlation
+	export min_tt_cooccur
+
+#----------------------------------------------------------------
+#	Proximity matrix settings
+#
+#	Proximity matrix min count: proximity_min_count
+#	Proximity distance factor: prox_dist_factor
+#----------------------------------------------------------------
+
+	proximity_min_count=5
+	prox_dist_factor=30
+
+	export proximity_min_count
+	export prox_dist_factor
+
+#-----------------------------------------------------------------
+#	Document-document matrix settings
+#
+#	Doc Words in common for inclusion: min_doc_doc_cooccur
+#	Min doc-doc matrix cosine: min_dd_cosine
+#	Min doc-doc matrix cosine: min_dd_cohesion
+#-----------------------------------------------------------------
+
+	min_doc_doc_cooccur=5                    	
+	min_dd_cosine=0.25
+	min_dd_cohesion=.10
+
+	export min_doc_doc_cooccur                  	
+	export min_dd_cosine
+	export min_dd_cohesion
+
+#-------------------------------------
+#	Jaccard term-term settings
+#`
+#	Jaccard minimum: jaccard_min
+#-------------------------------------
+
+	jaccard_min=0.001
+	export jaccard_min
+
+#----------------------------------------------------
+#	Clusterdd settings
+#
+#	Minimum doc-doc cosine: min_cluster_cosine
+#----------------------------------------------------
+
+	min_cluster_cosine=$min_dd_cosine
+	export min_cluster_cosine
+
+#-------------------------------------------
+#	Hypercluster settings
+#
+#	Hyper cluser min cosine: hyper_min
+#-------------------------------------------
+
+	hyper_min=.3
+	hyper_wgt=.3
+
+	export hyper_min
+	export hyper_wgt
+
+#----------------------------------------------------------
+#	Term-term cluster settings
+#
+#	Min term-term cluster correlation: min_tt_cluster
+#----------------------------------------------------------
+
+	min_tt_cluster=.1
+	export min_tt_cluster
+
+# set -v
+# set -x
+# $1 is DB
+
+if [ -z $2 ]
+        then
+                task=""
+        else
+                task=$2
+        fi
+
+echo "task $task "
+echo "max_docs $max_docs"
+echo
+
+echo
+echo "Start isr "
+echo
+
+ln -s isr isr$task
+
+echo "start  $task"
+
+export task
+
+./isr$task
+
+rm -f *.tmp
+rm -f *.stemmed
+rm -f tmp tmp1
+

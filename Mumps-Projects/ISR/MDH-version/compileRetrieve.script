@@ -1,0 +1,9 @@
+#!/bin/bash
+
+g++ -o medlineRetrieve -O3 -pipe medlineRetrieve.cpp load-params.cpp \
+	-w -fpermissive \
+	-I /usr/lib/include -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE \
+	-lm -lreadline -L/usr/lib -lmpscpp -lmumps -lmpsglobal_native -lpcre  \
+	`pkg-config --libs glib-2.0` -lpthread \
+	`pkg-config --cflags --libs gtk+-3.0` -export-dynamic
+

@@ -1,0 +1,112 @@
+#!/bin/bash
+
+#*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Internet Radio Automation & Encoding Toolkit
+#+
+#+     Copyright (C) 
+#+	2018, 2019, 2020, 2021, 2022, 2023, 2024
+#+	 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://www.cs.uni.edu/~okane
+#+     https://threadsafebooks.com/
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#+
+#+ April 18, 2024
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+echo
+date
+
+echo
+echo "Example retrieve sequences"
+echo
+
+cpu_count=`grep processor /proc/cpuinfo | wc -l`
+echo "Number or processing elements: $cpu_count"
+
+cpu_count=1
+
+make -j $cpu_count
+
+rm -f rslt.tmp1 rslt.tmp2
+
+for (( i=0 ; i<$cpu_count ; i++ ));
+        do
+	rm -f segment$i/*.rslt
+	rm -f segment$i/rslt
+	rm -f segment$i/*.tmp
+	rm -f segment$i/tstquery
+	rm -f segment$i/full.seq
+	done
+
+if [ -z $1 ]
+        then
+                echo "File containing query not supplied. Using tstquery instead"
+		query="tstquery"
+        else
+		echo "Query containd in file $1"
+		query=$1
+        fi
+
+echo
+echo "Query: "
+cat $query
+echo
+echo "Searching ..."
+
+starttime.mps
+
+for (( i=0 ; i<$cpu_count ; i++ ));
+        do
+	cd segment$i
+	rm -f *.rslt
+	cp ../$query tstquery
+	../RetrieveMedlineMumps < tstquery > rslt &
+	cd ..
+	done
+
+wait
+
+cp segment0/rslt.1 rslt.tmp1
+
+for (( i=1 ; i<$cpu_count ; i++ ));
+        do
+	cat segment$i/rslt.1 >> rslt.tmp1
+	done
+
+sort -n rslt.tmp1 | tail -20 > rslt.tmp2
+
+# cat rslt.tmp2 # show intermediate results
+
+show-rslts.mps "`cat $query`" < rslt.tmp2
+
+exit
+
+rm -f rslt.tmp1 rslt.tmp2
+
+for (( i=0 ; i<$cpu_count ; i++ ));
+        do
+	rm -f segment$i/*.rslt
+	rm -f segment$i/rslt
+	rm -f segment$i/*.tmp
+	rm -f segment$i/tstquery
+	rm -f segment$i/full.seq
+	done
+
+endtime.mps

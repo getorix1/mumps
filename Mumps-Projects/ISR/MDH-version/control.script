@@ -1,0 +1,179 @@
+#!/bin/bash
+
+
+#------------------------------
+#	(c) Kevin C. O'Kane
+#	June 6, 2024
+#------------------------------
+
+tabs 10
+
+segtabs () {
+
+for (( i=0 ; i<$task ; i++ ));
+        do
+        printf "\t" "" 1>&2
+        done
+}
+
+tabprint () {
+        printf "%s\r" "$1" 1>&2
+        }
+
+echo
+echo "-----------------------------------------------"
+
+cpu_count=`grep processor /proc/cpuinfo | wc -l`
+echo "Number of processing elements: $cpu_count"
+export cpu_count
+
+make -j $cpu_count -B
+
+echo
+echo "-----------------------------------------------"
+
+DB="ohsu"
+
+if [ -z $1 ]
+	then
+		in_docs=1000000
+	else
+		in_docs=$1
+	fi
+
+compile="yes"
+
+FILE="../$DB.converted"
+TITLES="../titles.list"
+
+if [ ! -f "$FILE" ] || [ ! -f "$TITLES" ]; then
+
+	echo
+	echo "Creating $DB.converted. This may take a long time"
+	rm -f titles.list ../titles.list 
+	rm -f ../$DB.converted
+
+        if [ "$compile" = "yes" ]; then
+                ./reformat < ../$DB.medline > ../$DB.converted
+        else
+                ./reformat.mps < ../$DB.medline > ../$DB.converted
+        fi
+else
+        echo "  Database not created - using existing database."
+./endtime.mps
+fi
+
+echo "  `./showcount.mps ../$DB.converted`"
+echo "	`./showcount.mps ../titles.list`"
+
+max_docs=$((in_docs / cpu_count))
+
+total_docs=$((cpu_count*max_docs))
+echo "Processing $total_docs total docs"
+echo
+
+head -$total_docs ../titles.list > titles.list
+echo "  title.list line count: `./showcount.mps titles.list`"
+echo
+
+# to separate the file into cpu_count sections and
+# prrocess the first max_docs in each, use the following
+# which provides a sampling across the entire database.
+# If you use this, change the above so all titles from
+# titles.data are copies to titles.list.
+
+	# in_file="../$DB.converted"
+
+# to process the first max_docs*cpu_count docs from the database,
+# use the following.
+
+	total_docs=$((max_docs*cpu_count))
+	head -$total_docs ../$DB.converted > db.tmp
+	in_file="db.tmp"
+
+# the number of lines per chunk will vary but the total will
+# be correct. this is because the chunk files sizes are approx
+# equal but the constutent lines vary in length thus a variation
+# in total line count.
+
+split -n l/$cpu_count --numeric-suffixes=10 $in_file
+
+echo
+echo "Segment data bases"
+wc x*
+echo
+
+starttime.mps
+
+echo
+
+for (( task=0 ; task<$cpu_count ; task++ ));
+        do
+        segtabs
+        tabprint "Task $task"
+        done
+
+echo
+
+for (( task=0 ; task<$cpu_count ; task++ ));
+        do
+        segtabs
+        tabprint "---------"
+        done
+
+echo
+
+for (( i=0 ; i<$cpu_count ; i++ )); 
+	do
+
+#	echo "Starting segment $i"
+
+	rm -r -f segment$i
+	mkdir -p segment$i
+	cd segment$i
+
+	dbx=$(($i + 10))
+#	echo "database $dbx"
+	mv ../x$dbx ohsu.converted
+
+	cp ../index.script .
+	ln -s ../basic.stop.words basic.stop.words
+	ln -s ../titles.list titles.list
+
+	for pgm in ../*.cpp
+		do
+		filename="${pgm%.*}"
+		filename=$(basename -- "$filename")
+		ln -s ../$filename $filename
+		done
+
+	for pgm in ../*.mps
+		do
+		filename="${pgm%.*}"
+		filename=$(basename -- "$filename")
+		ln -s $pgm $filename.mps
+		done
+
+#	nohup index.script $1 ohsu $i &
+	rm -f output
+	index.script ohsu $i > output &
+
+	cd ..
+
+	done
+
+wait
+echo
+
+for (( task=0 ; task<$cpu_count ; task++ ));
+        do
+        segtabs
+        tabprint "----------"
+        done
+echo
+endtime.mps
+# reset tabs
+tabs -8
+echo
+echo
+
