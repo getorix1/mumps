@@ -1,0 +1,5 @@
+Concatenate the split files into one file named 
+
+idf-weights-sorted.dat
+
+The file is not tared and not gzipped. 
