@@ -1,0 +1,191 @@
+#!/bin/bash
+
+# May 6, 2024
+
+SHELL=/bin/sh
+INSTALL=install
+
+PREFIX=@prefix@
+
+INCLUDEDIR=$PREFIX/include
+BINDIR=$PREFIX/bin
+LIBDIR=$PREFIX/@LIB@
+
+ARGS=$*
+
+FLAGS="-w -pipe -I $INCLUDEDIR @CPPFLAGS@ @LDFLAGS@ @sqlite_cflags@" 
+
+FILEBITS="@file64@"
+
+MUMPS_COMPILER=$BINDIR/mumps2c
+GBLLIB=@gbllib@
+MUMPSLIB=mumps
+
+USAGE="usage: $0 [-h|-?|--help|-v|--ver|-n|--native|-b|-sT|-sU|-g|-p|--server=udp|tcp|--debug] file ..."
+
+POSTGRESDEF=""
+FILE_FOUND=n
+CPP="g++"
+Cflg=0
+
+echo
+
+MFLAG=0
+
+for var in $* 
+      do
+      if [ $var = "--help" -o $var = "-h" -o $var = "-?" -o $var = "-v" -o $var = "--ver" ]
+            then
+            mumps2c -v
+            echo "Copyrights: (see individual modules for details)"
+            echo "License: GNU GPL and GNU LGPL (see individual modules)"
+            echo
+            echo "mumpsc [options] filename.mps"
+            echo "mumpsc [options] filename.cpp"
+            echo
+            echo " Options: "
+            echo "  -h|-?|-v|--help|--ver     This help display"
+            echo
+            echo " Output: filename.cpp and filename"
+            echo
+            exit
+            fi
+
+      done
+
+objs=''
+
+# compiling with object modules?
+
+for arg in $ARGS
+do
+
+	base=`basename $arg`
+	ext=${base#*.}
+
+	if [ $ext = 'o' ]
+		then
+		objs="$objs $arg"
+		fi
+
+done
+
+#------------------------------------------------------------------------------------------
+# @mathLink@ will contain "-lgmp -Lx86-64-linux-gnu -lmpfr" if hardware math is turned off.
+#------------------------------------------------------------------------------------------
+
+common_libs="-lm -lreadline -L$LIBDIR -lmpscpp -l$MUMPSLIB -l$GBLLIB -lpcre @mathLink@"
+
+for arg in $ARGS 
+	do
+
+	base=`basename $arg`
+	ext=${base#*.}
+
+	if [ "$ext" = 'mps' -o "$ext" = 'cpp' ]
+		then
+
+		FILE_FOUND=y
+		infile_dir=`dirname $arg`
+		infile_base=`basename $arg .mps`
+		infile="$infile_dir/$infile_base"
+		infileB="$infile"
+
+		if [ $ext = 'mps' ]
+			then
+
+			echo "Compiling from Mumps source ..."
+
+			Cflg=1
+
+#----------------------------------------------
+#			compile .mps program
+#----------------------------------------------
+
+			$MUMPS_COMPILER $infile.mps
+
+#-----------------------------------------
+#			format cpp code
+#			if this option is enabled, mumpsc
+#			can only be invoked one at a time
+#-----------------------------------------
+
+#			astyle -q -A6 -T $infile_base.cpp
+
+#-------------------------------------------------
+#			delete intermediate code
+#-------------------------------------------------
+
+			rm -f $infile.m
+
+			if [ $? != 0 ]
+				then
+
+				echo "terminating due to compiler detected source code error"
+				exit 16
+				fi
+
+			infile_base=`basename $arg .mps`
+			infile="$infile.cpp"
+			fi
+
+		if [ $ext = 'cpp' ]
+			then
+
+			Cflg=0
+			infile_base=`basename $arg .cpp`
+			infile="$infile_dir/$infile_base.cpp"
+			echo "Compiling C++ source"
+			echo "Compiling " $infile 
+			FLAGS="$FLAGS -D_MDH_"
+
+			fi
+
+		if [ $? = 0 ]
+			then
+
+			if [ $Cflg = 1 ]
+				then
+				echo Compiling generated C++ code...
+				else
+				echo Compiling MDH file...
+				fi
+
+#			$CPP -O3 -fpermissive $DEBUG $POSTGRESDEF $FLAGS -pthread \
+
+			if [ -z "`which astyle`" ]
+				then
+				echo "Please install astyle"
+				else
+				astyle -A6 $infile
+				fi
+
+			$CPP @optmain@ \
+				-fdiagnostics-color=never -fpermissive \
+				$DEBUG $POSTGRESDEF $FLAGS -pthread \
+				`pkg-config --cflags --libs glib-2.0` -L$LIBDIR $FILEBITS \
+				-o $infile_base $infile \
+				@profile@ $objs -lmumps $common_libs @sqlite_cppflags@ \
+				`pkg-config --libs glib-2.0` -lpthread \
+				`pkg-config --cflags --libs gtk+-3.0` -export-dynamic
+			exit $?
+
+			else
+
+			echo C compilation surpressed.
+			echo 
+			# Uncomment the following if you wish to halt a batch
+			# compilation if a single file fails to compile
+			#
+			exit 16
+
+			fi
+		fi
+done
+
+if [ $FILE_FOUND = n ]
+	then
+	echo $USAGE
+	fi
+
+exit 0

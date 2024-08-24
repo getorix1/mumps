@@ -1,0 +1,33 @@
+#!/bin/bash
+
+echo
+echo "Mumps Sqlite3 Database Creation Routine"
+echo
+
+ while true; do
+	read -p "This will delete any prior contents of the database. Proceed? y/n " yn
+	echo
+        case $yn in
+             [Yy]* ) 	break;;
+             [Nn]* ) 	echo "exiting..."
+			exit
+			;;
+             * ) 	echo "Please answer yes or no.";;
+             esac
+	done
+
+echo "pragma page_size=1024;" > tmp
+
+echo "create table mumps (a1 varchar(64), a2 varchar(64), a3 varchar(64), a4 varchar(64), a5 varchar(64), a6 varchar(64), a7 varchar(64), a8 varchar(64), a9 varchar(64), a10 varchar(128));" >> tmp
+
+echo "create index MI on mumps (a1, a2);" >> tmp
+
+echo ".save mumps.sqlite" >> tmp
+echo ".schema" >> tmp
+
+echo ".quit" > tmp1
+
+rm -f mumps.sqlite
+
+sqlite3 -cmd ".read tmp" < tmp1
+

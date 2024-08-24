@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cat /dev/null > out
+for i in *.cpp.in; do
+ echo "---------------------- $i ------------------------" >> out
+ echo >> out
+diff $i /home/okane/Desktop/mumps.xxx/Mumps-Language-Processors/Mumps-Interpreter-Compiler-Library/$i >> out
+ done

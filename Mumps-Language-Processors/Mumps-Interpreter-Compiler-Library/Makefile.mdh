@@ -1,0 +1,116 @@
+#
+#	make 
+#
+#	make install
+#	
+
+SHELL       = /bin/sh
+INSTALL     = install
+VERSION     = 5.06
+PREFIX	= /root/mumps_compiler
+
+# Note: -D_FILE_OFFSET_BITS=64 and -D_LARGEFILE_SOURCE in CFLAGS 
+# permit large file sizes. 
+#
+# manual fill-in:
+# PREFIX    = /usr
+# PREFIX      = $(HOME)/mumps_compiler
+INCLUDEDIR  = $(PREFIX)/include
+BINDIR      = $(PREFIX)/bin
+LIBDIR      = $(PREFIX)/lib
+DOCDIR      = $(PREFIX)/share/doc/mumpsc
+MANDIR      = $(PREFIX)/share/man
+MAN1DIR     = $(MANDIR)/man1
+SRCDIR      = mumpsc
+# manual fill-in:
+# PGSQL       = -DPOSTGRES
+PGSQL 	= 
+
+LIBMUMPS_OBJS   = arith.o bifs.o bstring.o interp.o pm.o \
+                  stem.o strmanip.o sym.o sysfunc.o lock.o bmgsubs.o
+LIBMPSCPP_OBJS = libmpscpp.o
+LIBMPSRDBMS_OBJS = libmpsrdbms.o
+
+CFLAGS    =  -O3 -Iinclude/   -finline-functions
+CPPFLAGS    = -Iinclude/ 
+HEADERS   = include/mumpsc/*.h
+
+LIBRARIES = libmumps.a libmpsglobal_bdb.a libmpsglobal_native.a libmpscpp.a libmpsrdbms.a
+MANPAGES  = doc/*.1
+
+all: $(LIBRARIES)
+
+############################################################################
+#                                 Libraries                                #
+############################################################################
+
+libmpscpp.a: $(LIBMPSCPP_OBJS)
+	$(AR) rcs libmpscpp.a $(LIBMPSCPP_OBJS)
+
+libmpsrdbms.a: $(LIBMPSRDBMS_OBJS)
+	$(AR) rcs libmpsrdbms.a $(LIBMPSRDBMS_OBJS)
+
+libmumps.a: $(LIBMUMPS_OBJS)
+	$(AR) rcs libmumps.a $(LIBMUMPS_OBJS)
+
+libmpsglobal_bdb.a: global.o
+	$(AR) rcs libmpsglobal_bdb.a global.o
+
+libmpsglobal_native.a: globalb.o btree.o
+	$(AR) rcs libmpsglobal_native.a globalb.o btree.o
+
+############################################################################
+#                                Object files                              #
+############################################################################
+pgbifs.o: bifs.c
+	$(CC) $(CFLAGS) $(PGSQL) -c -o pgbifs.o bifs.c
+
+############################################################################
+install: install-common
+	$(INSTALL) -m 644 libmumpsp.a $(LIBDIR)
+
+nopsqlinstall: install-common
+
+install-common:
+	$(INSTALL) -d        $(PREFIX)
+	$(INSTALL) -d        $(BINDIR)
+	$(INSTALL) -d        $(INCLUDEDIR)
+	$(INSTALL) -d        $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -d        $(MANDIR)
+	$(INSTALL) -d        $(MAN1DIR)
+	$(INSTALL) -d        $(LIBDIR)
+	$(INSTALL) -d        $(DOCDIR)
+	$(INSTALL) -m 755 -s $(BINARIES)               $(BINDIR)
+	$(INSTALL) -m 755    mumpsc                    $(BINDIR)/mumpsc
+	$(INSTALL) -m 755    mumpsx                    $(BINDIR)/mumpsx
+	$(INSTALL) -m 755    mpp                       $(BINDIR)/mpp
+	$(INSTALL) -m 755    mumpslib                  $(BINDIR)/mumpslib
+	$(INSTALL) -m 644    $(LIBRARIES)              $(LIBDIR)
+	$(INSTALL) -m 644    include/mumpsc/*.h        $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -d        $(DOCDIR)/examples/
+	$(INSTALL) -m 644    doc/compiler.html         $(DOCDIR)
+	$(INSTALL) -m 644    doc/glade*.jpg            $(DOCDIR)
+	$(INSTALL) -m 644    doc/tree*.jpg             $(DOCDIR)
+	$(INSTALL) -m 644    doc/mdh.html              $(DOCDIR)
+	$(INSTALL) -d        $(MAN1DIR)
+	$(INSTALL) -m 644    $(MANPAGES)               $(MAN1DIR)
+	$(INSTALL) -m 644    doc/examples/*.mps        $(DOCDIR)/examples
+
+uninstall:
+	cd $(BINDIR) && $(RM) $(BINARIES) mumpsc
+	cd $(LIBDIR) && $(RM) $(LIBRARIES) libmumpsp.a
+	cd $(MAN1DIR) && $(RM) mumpsc.1 mumps-tcp-server.1 mumps-udp-server.1 \
+                   mumps-ssl-server.1
+	$(RM) -r $(DOCDIR)
+	$(RM) -r $(INCLUDEDIR)/mumpsc/
+
+clean:
+	$(RM) *.[oas] $(BINARIES)
+
+distclean: clean
+	find . -type d -name CVS | xargs $(RM) -r
+
+dist: distclean
+	$(RM) *.tar.gz
+	cd .. && tar cpvf $(SRCDIR)/mumpscompiler-$(VERSION).src.tar $(SRCDIR)
+	gzip -9 mumpscompiler-$(VERSION).src.tar

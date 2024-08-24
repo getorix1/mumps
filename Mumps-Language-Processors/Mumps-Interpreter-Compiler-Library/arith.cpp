@@ -52,11 +52,11 @@ using namespace std;
 
 // floatSize will or will not define BIGFLOAT
 
-@floatSize@
+
 
 // intLong defined next if 32 bit ints wanted
 
-@intLong@
+#define intLong
 
 void sigint(int);
 
@@ -66,17 +66,17 @@ void sigint(int);
 #ifdef GCVT
 
 #ifdef BIGFLOAT
-#define gcvt_wrapper(x,a) qgcvt(x, @fp_digits@ , a)
+#define gcvt_wrapper(x,a) qgcvt(x, 6 , a)
 #else
-#define gcvt_wrapper(x,a) gcvt(x, @fp_digits@ , a)
+#define gcvt_wrapper(x,a) gcvt(x, 6 , a)
 #endif
 
 #else
 
 #ifdef BIGFLOAT
-#define gcvt_wrapper(x,a) sprintf(a, "%.@fp_digits@Lg", x)
+#define gcvt_wrapper(x,a) sprintf(a, "%.6Lg", x)
 #else
-#define gcvt_wrapper(x,a) sprintf(a, "%.@fp_digits@g", x)
+#define gcvt_wrapper(x,a) sprintf(a, "%.6g", x)
 #endif
 
 #endif
@@ -150,7 +150,7 @@ void mps_log2(char *a, char *b) {
             }
       mpfr_set_str (fb, b, 10, MPFR_RNDN);
       mpfr_log2(fa,fb,MPFR_RNDN);
-      mpfr_sprintf(a,"%.@fp_digits@RNg",fa);
+      mpfr_sprintf(a,"%.6RNg",fa);
 #endif
       return;
       }
@@ -180,7 +180,7 @@ void mps_log10(char *a, char *b) {
             }
       mpfr_set_str (fb, b, 10, MPFR_RNDN);
       mpfr_log10(fa,fb,MPFR_RNDN);
-      mpfr_sprintf(a,"%.@fp_digits@RNg",fa);
+      mpfr_sprintf(a,"%.6RNg",fa);
 #endif
       return;
       }
@@ -210,7 +210,7 @@ void mps_log(char *a, char *b) {
             }
       mpfr_set_str (fb, b, 10, MPFR_RNDN);
       mpfr_log(fa,fb,MPFR_RNDN);
-      mpfr_sprintf(a,"%.@fp_digits@RNg",fa);
+      mpfr_sprintf(a,"%.6RNg",fa);
 #endif
 
       return;
@@ -241,7 +241,7 @@ void mps_cos(char *a, char *b) {
             }
       mpfr_set_str (fb, b, 10, MPFR_RNDN);
       mpfr_cos(fa,fb,MPFR_RNDN);
-      mpfr_sprintf(a,"%.@fp_digits@RNg",fa);
+      mpfr_sprintf(a,"%.6RNg",fa);
 #endif
       return;
       }
@@ -271,7 +271,7 @@ void mps_sin(char *a, char *b) {
             }
       mpfr_set_str (fb, b, 10, MPFR_RNDN);
       mpfr_sin(fa,fb,MPFR_RNDN);
-      mpfr_sprintf(a,"%.@fp_digits@RNg",fa);
+      mpfr_sprintf(a,"%.6RNg",fa);
 #endif
       return;
       }
@@ -301,7 +301,7 @@ void mps_asin(char *a, char *b) {
             }
       mpfr_set_str (fb, b, 10, MPFR_RNDN);
       mpfr_asin(fa,fb,MPFR_RNDN);
-      mpfr_sprintf(a,"%.@fp_digits@RNg",fa);
+      mpfr_sprintf(a,"%.6RNg",fa);
 #endif
       return;
       }
@@ -331,7 +331,7 @@ void mps_acos(char *a, char *b) {
             }
       mpfr_set_str (fb, b, 10, MPFR_RNDN);
       mpfr_acos(fa,fb,MPFR_RNDN);
-      mpfr_sprintf(a,"%.@fp_digits@RNg",fa);
+      mpfr_sprintf(a,"%.6RNg",fa);
 #endif
 
       return;
@@ -362,7 +362,7 @@ void mps_atan(char *a, char *b) {
             }
       mpfr_set_str (fb, b, 10, MPFR_RNDN);
       mpfr_atan(fa,fb,MPFR_RNDN);
-      mpfr_sprintf(a,"%.@fp_digits@RNg",fa);
+      mpfr_sprintf(a,"%.6RNg",fa);
 #endif
 
       return;
@@ -393,7 +393,7 @@ void mps_tan(char *a, char *b) {
             }
       mpfr_set_str (fb, b, 10, MPFR_RNDN);
       mpfr_tan(fa,fb,MPFR_RNDN);
-      mpfr_sprintf(a,"%.@fp_digits@RNg",fa);
+      mpfr_sprintf(a,"%.6RNg",fa);
 #endif
 
       return;
@@ -806,7 +806,7 @@ void mps_exp(char *c, char *a) {
             }
       mpfr_set_str (fa, a, 10, MPFR_RNDN);
       mpfr_exp(fc,fa,MPFR_RNDN);
-      mpfr_sprintf(c,"%.@fp_digits@RNg",fc);
+      mpfr_sprintf(c,"%.6RNg",fc);
       return;
 #endif
       }
@@ -841,7 +841,7 @@ void mps_exp2(char *c, char *a) {
             }
       mpfr_set_str (fa, a, 10, MPFR_RNDN);
       mpfr_exp2(fc,fa,MPFR_RNDN);
-      mpfr_sprintf(c,"%.@fp_digits@RNg",fc);
+      mpfr_sprintf(c,"%.6RNg",fc);
       return;
 #endif
       }
@@ -876,7 +876,7 @@ void mps_exp10(char *c, char *a) {
             }
       mpfr_set_str (fa, a, 10, MPFR_RNDN);
       mpfr_exp2(fc,fa,MPFR_RNDN);
-      mpfr_sprintf(c,"%.@fp_digits@RNg",fc);
+      mpfr_sprintf(c,"%.6RNg",fc);
       return;
 #endif
       }
@@ -950,7 +950,7 @@ void expx(const char *a, const char *b, char *c) {
             mpfr_set_str (fa, a, 10, MPFR_RNDN);
             mpfr_set_str (fb, b, 10, MPFR_RNDN);
             mpfr_pow(fc,fa,fb,MPFR_RNDN);
-            mpfr_sprintf(c,"%.@fp_digits@RNg",fc);
+            mpfr_sprintf(c,"%.6RNg",fc);
             return;
             }
 
@@ -996,8 +996,8 @@ int numcomp(unsigned char *aa, unsigned char *bb) {
             }
 
       else {
-            @intSize@ fa=atoll((char *)aa);
-            @intSize@ fb=atoll((char *)bb);
+            int fa=atoll((char *)aa);
+            int fb=atoll((char *)bb);
             if (fa==fb) return 0;
             if (fa>fb) return 1;
             else return -1;
