@@ -1,0 +1,515 @@
+/* August 2, 2022 */
+
+#EqualizerLabel {
+    font-family: sans;  font-size: 12px; font-weight: bold;
+    color: #ffff22;
+    text-shadow: 0px 0px 0px black;
+    box-shadow: 0px 0px 0px black;
+    }
+
+#EqualizerLabel1 {
+    font-family: sans;  font-size: 14px; font-weight: bold;
+    color: #ffff22;
+    background-color: blue;
+    text-shadow: 0px 0px 0px black;
+    box-shadow: 0px 0px 0px black;
+    }
+
+#EqualizerLabel3 {
+    font-family: sans;  font-size: 14px; font-weight: bold;
+    color: #44ff44;
+    text-shadow: 0px 0px 0px black;
+    box-shadow: 0px 0px 0px black;
+    }
+
+#EqualizerLabel2 {
+    font-family: sans;  font-size: 14px; font-weight: bold;
+    color: #ffff22;
+    text-shadow: 0px 0px 0px black;
+    box-shadow: 0px 0px 0px black;
+    }
+
+#EqualizerLabel4 {
+    font-family: sans;  font-size: 14px; font-weight: bold;
+    color: #ff00ff;
+    text-shadow: 1px 1px 1px white;
+    }
+
+#minorLabel {
+    font-family: sans;  font-size: 12px; font-weight: bold;
+    color: #aaaaaa;
+    text-shadow: 0px 1px 0px black;
+    box-shadow: 0px 0px 5px black;
+    }
+
+#gridText {
+    font-size: 12px; font-weight: bold;
+    color: #000000;
+    text-shadow: 0px 1px 0px red;
+    box-shadow: 0px 0px 5px black;
+    }
+
+#smallLabel {
+    font-family: mono;  font-size: 10px; font-weight: bold;
+    color: #ffff22;
+    text-shadow: 0px 0px 0px blue;
+    box-shadow: 0px 0px 0px blue;
+    }
+
+#smallLabel1 {
+    font-family: sans;  font-size: 11px; font-weight: bold;
+    color: #ffff22;
+    text-shadow: 1px 1px 1px black;
+    box-shadow: 0px 0px 0px black;
+    }
+
+#smallLabel1a {
+    font-family: sans;  font-size: 12px; font-weight: bold;
+    color: #ffff00;
+    text-shadow: 1px 1px 0px black;
+    box-shadow: 0px 0px 0px black;
+    }
+
+#logo {
+    font-family: "Sans", Sans; font-size: 20px; font-weight: bold;
+    color: #ffff22;
+    text-shadow: 0px 1px 0px black;
+    box-shadow: 0px 0px 5px black;
+    }
+
+#labelTime {
+    font-family: sans;  font-size: 11px; font-weight: bold;
+    color: #ffff22;
+    background-color: black;
+    /* text-shadow: 0px 1px 1px black;
+    box-shadow: 0px 0px 0px black; */
+    }
+
+#tilebtn {
+    border-radius: 2px;
+    padding: 1px 1px;
+    }
+
+#sounder {
+    color: #000000;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    padding-right: 4px;
+    padding-left: 4px;
+    font-weight: bold;
+    background-image: radial-gradient(ellipse at center, white 20%, gray 80%);
+    }
+
+#sounder:active {background-image: radial-gradient(ellipse at center, gray 20%, white 80%); }
+
+#slideButton {
+    color: #ffff00;
+    border-color: blue;
+    border-width: 2px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-right: 2px;
+    padding-left: 2px;
+    background: #bbbbff;
+    }
+
+#sw1 {
+    font-family: Arial;  font-size: 12px;
+    font-weight: bold; 
+    min-height: 18px;
+    min-width: 5px; 
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-right: 0px;
+    padding-left: 0px;
+    border-left: 0px;
+    margin-left: 0px;
+    background-color: black;
+    }
+
+/* default coloring of widgets */
+#albumButton {
+    background-color: #bbbbdd;    
+    }
+
+#albumButton {
+    color: #000000;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-radius: 6px;
+    padding-right: 4px;
+    padding-left: 4px;
+    background-image: radial-gradient(ellipse at center, darkblue 10%, blue 90%);
+    }
+
+#smallButton {
+    background: #A0A0A0;
+    color: #000000;
+    padding: 0px 0px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-radius: 0px;
+    padding-right: 0px;
+    padding-left: 0px;
+    padding-top: 2px;
+    min-height: 5px;
+    }
+
+#smallButton:active, #smallButton.toggle-button.selected, #smallButton.toggle-button:active, 
+#smallButton.toggle:checked  {
+	background: #888888; 
+	border-color: #555555;
+	padding-top: 2px;
+	color: #f00000;
+	}
+
+/* rounded button like a radio button */
+
+#smallButton1 {
+    background: #A0A0A0;
+    color: #000000;
+    padding: 2px 2px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-radius: 6px;
+    padding-right: 2px;
+    padding-left: 2px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    min-height: 5px;
+  border: 2px solid ;
+	border-color: #ff8888;
+    }
+
+#smallButton1:active, #smallButton1.toggle-button.selected, #smallButton1.toggle-button:active, 
+#smallButton1.toggle:checked  {
+  border: 2px solid ;
+	background: #a0a0a0; 
+	border-color: #88ff88;
+	color: #000000;
+	}
+
+#smallButton1x {
+    background: #A0A0A0;
+    color: #000000;
+    padding: 2px 2px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-radius: 6px;
+    padding-right: 2px;
+    padding-left: 2px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    min-height: 5px;
+  border: 2px solid ;
+	border-color: #8888ff;
+    }
+
+#smallButton1x:active, #smallButton1x.toggle-button.selected, #smallButton1x.toggle-button:active, 
+#smallButton1x.toggle:checked  {
+  border: 2px solid ;
+	background: #a0a0a0; 
+	border-color: #8888ff;
+	color: #000000;
+	}
+
+#minorButton:active, #minorButton.toggle-button.selected, #minorButton.toggle-button:active, 
+#minorButton.toggle:checked {
+	background: #ffFF00; 
+	border-color: red;
+	}
+
+/* {background-image: radial-gradient(ellipse at center, red 20%, white 80%); } */
+
+#minorButton {
+    color: #000000;
+    font-family: Arial;  font-size: 13px;
+    font-weight: bold; 
+    border-color: red;
+    border-width: 1px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-right: 1px;
+    padding-left: 1px;
+    min-width:10px; 
+    background: #ffff44;
+    }
+
+#BigButton:active {
+	background: #ff00FF; 
+	border-color: red;
+	}
+
+#BigButton {
+    color: #000000;
+    font-family: Arial;  font-size: 18px;
+  	font-weight: bold; 
+    border-color: red;
+    border-width: 1px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-right: 2px;
+    padding-left: 2px;
+    min-width:10px; 
+    background: #ffff44;
+    }
+
+#BigButton1:active {
+	background: #ff00FF; 
+	border-color: red;
+	}
+
+#BigButton1 {
+    color: #000000;
+    font-family: Arial;  font-size: 18px;
+    font-weight: bold; 
+    border-color: red;
+    border-width: 1px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-right: 2px;
+    padding-left: 2px;
+    min-width:10px; 
+    background: #ff0044;
+    }
+
+#sgrSlider * {
+	background-color: #000000;    
+	}
+
+#sgrSlider slider { 
+	border: 0px solid blue; 
+	padding-left: 0px; 
+	padding-right: 0px; 
+	min-width: 15px; 
+	min-height: 14px; 
+	border-radius: 10px; 
+	outline: black; 
+	background: lightgreen; 
+	border-color: black;
+	}
+	 
+#sgrSlider trough {
+	min-width: 4px; 
+	background-color: blue; 
+	border-radius: 10px; 
+	} 
+
+#sgrSlider scrollbar { background: black; }
+
+#sgrSlider1 * {
+	background-color: #000000;    
+	}
+
+#sgrSlider1 slider { 
+	border: 0px solid blue; 
+	padding-left: 0px; 
+	padding-right: 0px; 
+	min-width: 15px; 
+	min-height: 20px; 
+	border-radius: 10px; 
+	outline: black; 
+	background: lightgreen; 
+	border-color: black;
+	}
+	 
+#sgrSlider1 trough {
+	min-width: 4px; 
+	background-color: blue; 
+	border-radius: 10px; 
+	} 
+
+#sgrSlider1 scrollbar { background: black; }
+
+#sgrSlider2 * {
+	background-color: #000000;    
+	}
+
+#sgrSlider2 slider { 
+	border: 0px solid blue; 
+	padding-left: 0px; 
+	padding-right: 0px; 
+	min-width: 20px; 
+	min-height: 6px; 
+	border-radius: 10px; 
+	outline: black; 
+	background: lightgreen; 
+	border-color: black;
+	}
+	 
+#sgrSlider2 trough {
+	min-width: 4px; 
+	background-color: gray; 
+	border-radius: 10px; 
+	} 
+
+#sgrSlider3 scrollbar { background: black; }
+
+#sgrSlider3 * {
+	background-color: #000000;    
+	}
+
+#sgrSlider3 slider { 
+	border: 0px solid blue; 
+	padding-left: 0px; 
+	padding-right: 0px; 
+	min-width: 10px; 
+	min-height: 6px; 
+	border-radius: 0px; 
+	outline: black; 
+	background: yellow; 
+	border-color: black;
+	}
+	 
+#sgrSlider3 trough {
+	min-width: 4px; 
+	background-color: #777777; 
+	box-shadow:  4px 4px 4px black;
+	border-radius: 0px; 
+	} 
+
+#sgrSlider3 scrollbar { background: black; }
+
+#sgrSlider4 scrollbar { background: black; }
+
+#sgrSlider4 * {
+	background-color: #000000;    
+	}
+
+#sgrSlider4 slider { 
+	border: 0px solid blue; 
+	padding-left: 0px; 
+	padding-right: 0px; 
+	min-width: 10px; 
+	min-height: 6px; 
+	border-radius: 10px; 
+	outline: black; 
+	background: red; 
+	border-color: black;
+	}
+	 
+#sgrSlider4 trough {
+	min-width: 4px; 
+	background-color: #777777; 
+	box-shadow:  4px 4px 4px black;
+	border-radius: 0px; 
+	} 
+
+.myentry {
+	background: #666666;  /* text / background */
+	color: #ffffff;
+	border-color: #000000;
+	border-width: 2px;
+	}
+
+.myentry:focus {
+	background-clip: border-box;
+	color: #0000ff; 
+	border-color: #ff0000;
+	background-color: #99bb99; 
+	border-radius: 7px; 
+	}
+
+.win-bgcolor {
+	background-color: #ccccdd;
+	}
+
+.win-fgcolor {
+	color: #ff0000;
+	}
+
+.frame-bgcolor-yellow {
+	background-color: #ffffaa;
+	}
+
+.frame-bgcolor-purple {
+	background-color: #ffaaff;
+	}
+
+.stack-switcher > button {
+    min-width: 8px;
+    border-color: black;
+    border-width: 2px;
+    background: #777777;
+    }
+
+.stack-switcher > button > label {
+    font-weight: bold; 
+    color: black; 
+    background: #aaaaaa;
+    padding-left: 2px;
+    padding-right: 2px; }
+
+.stack-switcher > button:checked > label {
+    font-weight: bold; 
+    color: black; 
+    background: #ffffff;
+    padding-left: 2px;
+    padding-right: 2px; }
+
+.stack-switcher > button:checked {
+    background: lightblue;  /* color of selected button */
+    }
+
+.tiles {
+    font-family: sans;  font-size: 14px; font-weight: bold;
+    text-shadow: 1px 2px 0px black; 
+    box-shadow: 0px 0px 0px black; 
+    color: #ffff00;
+    border-radius: 12px;
+    border-width: 2px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-right: 1px;
+    padding-left: 1px;
+    border: 3px solid red;  
+    background-image: radial-gradient(ellipse at center, lightblue 50%, blue 50%);
+    }
+
+.tiles:hover {
+    color: #ff0000;
+    outline-color: rgba(48, 255, 48, 0.3);
+    border-color: #ff0000;
+    background-color: blue;
+    -gtk-icon-effect: highlight; 
+    }
+
+.tiles:drop(active) {
+    color: #0000ff;
+    border-color: #0000ff;
+    box-shadow: none; 
+    }
+
+.spinner1 {
+        background-color: #0000ff;
+        min-height: 20px;
+        padding-bottom: 0px;
+        padding-top: 0px;
+        border-width: 0px;
+        border-radius: 0px;
+        text-shadow: 1px 1px 1px red;
+        padding-right: 4px;
+        padding-left: 4px;
+        }
+
+.spinner1 label, .spinner1 button, .spinner1 entry, .spinner1 button {
+        min-height: 20px;
+        border-radius: 10px;
+        border-width: 1px;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        padding-right: 4px;
+        padding-left: 4px;
+        background-image: radial-gradient(ellipse at center, white 50%, blue 50%);
+        }
+
