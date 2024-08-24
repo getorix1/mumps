@@ -1,0 +1,178 @@
+July 3, 2022
+
+Boolean Searching with Grep
+
+	This directory contains a number of simple grep scripts to search a converted
+	format database (e.g., ohsu.converted in the above directory).
+
+	It uses some Mumps code to display the final results.
+
+	It requires the following file links:
+
+		data.dat -> ../data.dat
+		DBPREFIX -> ../DBPREFIX
+		get-docs -> ../get-docs
+		key.dat -> ../key.dat
+		MAXDOCS -> ../MAXDOCS
+		ohsu.converted -> ../ohsu.converted
+
+	where the first name is the link name and the second is the pointer to
+	the linked file. These are established by the ln command such as:
+
+		ln -s ../get-docs.mps get-docs.mps
+
+	which creats a link for get-docs-mps in this directory to the original
+	in the parent directory.
+
+	The grep scrip files are:
+
+		and.script
+		a-not-b.script
+		find.script
+		not.script
+		numbers.script
+		or.script
+		xor.script
+
+	Each takes one or more keywords to be searched for and a redirected input
+	file.
+
+	For example:
+
+		find.script keratosis < ohsu.converted
+
+	Which will seach the ohsu.converted database (in the parent directory) for
+	entries that contain the word 'keratosis'. 
+
+	The result output consists of the entries containing the word. Since these
+	entries are very long lines of text, some other representation is probably
+	more useful. For example:
+
+		find.script keratosis < ohsu.converted | wc -l
+
+	yields the result:
+
+		6
+
+	which is the number of entries containing keratosis.
+
+	Alternatively, the command:
+
+		find.script keratosis < ohsu.converted | get-docs
+
+	yields:
+
+		917       Acrokeratosis paraneoplastica (Basex) in a patient with bronchial carcinoid tumo
+		33        Usefulness of etretinate treatment in paraneoplastic plamoplantar hyperkeratosis
+		3926      Acrokeratosis paraneoplastica with esophageal squamous cell carcinoma [letter]
+		52        Solar keratosis: fallacies in measuring remission rate and conversion rate to sq
+		5260      Spectrum of endocrine abnormalities associated with acanthosis nigricans.
+		5691      Malignant disseminated porokeratosis.
+		Only titles in ^title() displayed.
+
+	which is a list of the titles (truncated) of the entries containing keratosis. The leading number
+	is the entry or document number. The program 'get-docs' is a compiled Mumps program in the parent 
+	directory.
+
+	The command:
+
+		find.script keratosis < ohsu.converted | find.script squamous | get-docs
+
+	yields:
+
+		3926      Acrokeratosis paraneoplastica with esophageal squamous cell carcinoma [letter]
+		52        Solar keratosis: fallacies in measuring remission rate and conversion rate to sq
+		5691      Malignant disseminated porokeratosis.
+		Only titles in ^title() displayed.
+
+	That is, the entries output from the first find.script are scanned to see if they contain the term 
+	'squamous' and the resulting titles are printed by get-docs.
+
+	The output of each script file may be piped to another script file.
+
+	The script files are shown below.  Input to each  must be either be a redirected file (< file) or
+	the piped output of a previous command. If you fail to provide an input file, the script will
+	wait on keyboad data.
+
+	Output from each is either empty or one or more entries in the format of the converted database.
+	All input is must be in the same format as the converted databases shown in the parent diorectory.
+
+	and.script key1 key2 < input
+
+		Finds entries containing both key1 and key2. 
+
+		and.script keratosis squamous < ohsu.converted  | get-docs
+
+		3926      Acrokeratosis paraneoplastica with esophageal squamous cell carcinoma [letter]
+		52        Solar keratosis: fallacies in measuring remission rate and conversion rate to sq
+		5691      Malignant disseminated porokeratosis.
+		Only titles in ^title() displayed.
+
+		
+	a-not-b.script key1 key2 < input
+
+		Finds entries containing key but not key2
+
+		a-not-b.script keratosis squamous < ohsu.converted  | get-docs
+
+		917       Acrokeratosis paraneoplastica (Basex) in a patient with bronchial carcinoid tumo
+		33        Usefulness of etretinate treatment in paraneoplastic plamoplantar hyperkeratosis
+		5260      Spectrum of endocrine abnormalities associated with acanthosis nigricans.
+		Only titles in ^title() displayed.
+
+	find.script key1
+
+		Finds entries containing key1
+
+	not.script key1
+		
+		Finds entries not containing key1
+
+		not.script keratosis < ohsu.converted  | wc -l
+
+   		5789
+
+
+	or.script key1 key2
+
+		Finds entries containing key1 or key2
+
+		or.script keratosis squamous < ohsu.converted  | get-docs
+	
+		917       Acrokeratosis paraneoplastica (Basex) in a patient with bronchial carcinoid tumo
+		1094      Neck tumour with syncope due to paroxysmal sympathetic withdrawal.
+		1140      Surgery after initial chemotherapy for localized small-cell carcinoma of the lun
+		...
+		5690      Bowen's disease of the feet. Presence of human papillomavirus 16 DNA in tumor ti
+		5691      Malignant disseminated porokeratosis.
+		5755      Adenosquamous carcinoma and the biology of lung cancer [editorial]
+		5757      Adenosquamous lung carcinoma: clinical characteristics, treatment, and prognosis
+		Only titles in ^title() displayed.
+
+	xor.script key1 key2
+
+		Finds entries in either key1 or key2 but not both.
+
+		xor.script keratosis squamous < ohsu.converted  | get-docs
+
+		917       Acrokeratosis paraneoplastica (Basex) in a patient with bronchial carcinoid tumo
+		1094      Neck tumour with syncope due to paroxysmal sympathetic withdrawal.
+		1140      Surgery after initial chemotherapy for localized small-cell carcinoma of the lun
+		...
+		5689      Epidermodysplasia verruciformis. A case associated with primary lymphatic dyspla
+		5690      Bowen's disease of the feet. Presence of human papillomavirus 16 DNA in tumor ti
+		5755      Adenosquamous carcinoma and the biology of lung cancer [editorial]
+		5757      Adenosquamous lung carcinoma: clinical characteristics, treatment, and prognosis
+		Only titles in ^title() displayed.
+
+	get-docs
+
+	The program get-docs will diplay the titles for entries passed to it (you must
+	have indexed the database in the parent directory first).
+
+	numbers.script will extract  and list the two numbers at the beginning of each 
+	entry. The first number is the offset of the entry in the original file and the
+	second is the document or entry number.
+
+
+

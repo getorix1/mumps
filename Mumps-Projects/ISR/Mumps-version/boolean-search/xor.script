@@ -1,0 +1,25 @@
+#!/bin/bash
+# Copyright 2022 Kevin C. O'Kane
+# boolean-grep-01.script
+# find documents containing either $1 xor $2
+
+if [ -z $1 ]
+        then
+                echo "Missing argument - two keywords required..."
+		exit 16
+        fi
+
+if [ -z $2 ]
+        then
+                echo "Missing argument - two keywords required..."
+		exit 16
+        fi
+
+pid=$$
+
+or.script $1 $2 - > /tmp/$pid.1.tmp
+
+and.script $1 $2 < /tmp/$pid.1.tmp > /tmp/$pid.2.tmp
+
+comm -2 -3 /tmp/$pid.1.tmp /tmp/$pid.2.tmp | sort | uniq
+

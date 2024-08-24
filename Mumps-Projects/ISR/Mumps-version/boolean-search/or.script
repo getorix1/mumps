@@ -1,0 +1,20 @@
+#!/bin/bash
+# Copyright 2022 Kevin C. O'Kane
+# boolean-grep-01.script
+# find documents containing either $1 or $2
+
+if [ -z $1 ]
+        then
+                echo "Missing argument - two keywords required..."
+		exit 16
+        fi
+
+if [ -z $2 ]
+        then
+                echo "Missing argument - two keywords required..."
+		exit 16
+        fi
+
+
+grep "$1[a-z]*\|$2[a-z]*" - | sort | uniq 
+

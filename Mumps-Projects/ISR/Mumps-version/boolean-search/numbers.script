@@ -1,0 +1,15 @@
+#!/bin/bash
+# Copyright 2014 Kevin C. O'Kane
+# boolean-grep-03.script
+
+if [ -f "DBPREFIX" ]
+        then
+        db=`cat DBPREFIX`
+        echo "Using $db.converted"
+else
+        echo "File DBPREFIX not found"
+        exit
+        fi
+
+
+sort - | uniq |  egrep -o "^[0-9]+ [0-9]+ "

@@ -1,0 +1,15 @@
+#!/bin/bash
+# Copyright 2022 Kevin C. O'Kane
+# boolean-grep-01.script
+# find documents containing $1 but not $2
+
+if [ -z $1 ]
+        then
+                echo "Missing argument - two keywords required..."
+		exit
+        fi
+
+pid=$$
+
+grep -i -v "$1[a-z]*" - | sort  | uniq
+

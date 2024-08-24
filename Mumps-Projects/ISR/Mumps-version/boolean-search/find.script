@@ -1,0 +1,14 @@
+#!/bin/bash
+# Copyright 2022 Kevin C. O'Kane
+# boolean-grep-01.script
+# find documents containing $1 
+# July 1, 2022
+
+if [ -z $1 ]
+        then
+                echo "Missing argument - keyword required..."
+		exit 16
+        fi
+
+grep -i "$1[a-z]*" - | sort | uniq 
+
