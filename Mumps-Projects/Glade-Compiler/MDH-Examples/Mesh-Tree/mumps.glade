@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.2 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkAdjustment" id="adjustment1">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkTextBuffer" id="textbuffer1"/>
+  <object class="GtkTreeStore" id="treeStore">
+    <columns>
+      <!-- column-name col1 -->
+      <column type="gchararray"/>
+      <!-- column-name col2 -->
+      <column type="gchararray"/>
+      <!-- column-name col3 -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkWindow" id="window">
+    <property name="can_focus">False</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
+    <child>
+      <object class="GtkFixed" id="fixed1">
+        <property name="width_request">750</property>
+        <property name="height_request">400</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkButton" id="clearStore">
+            <property name="label" translatable="yes">Clear Tree/Table</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="tooltip_text" translatable="yes">Click Me!</property>
+            <signal name="clicked" handler="on_clearStore_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">50</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="entry1">
+            <property name="width_request">340</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="placeholder_text" translatable="yes">case sensitive array indices separated by a space</property>
+            <signal name="changed" handler="on_entry1_changed" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">8</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledWindow2">
+            <property name="width_request">730</property>
+            <property name="height_request">290</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTreeView" id="tree1">
+                <property name="width_request">728</property>
+                <property name="height_request">172</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="model">treeStore</property>
+                <property name="search_column">0</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="select1">
+                    <signal name="changed" handler="on_select1_changed" swapped="no"/>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="col0">
+                    <property name="fixed_width">428</property>
+                    <property name="title" translatable="yes">Global Array</property>
+                    <property name="clickable">True</property>
+                    <property name="sort_column_id">0</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="col0r"/>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="col1">
+                    <property name="fixed_width">300</property>
+                    <property name="title" translatable="yes">Subject heading</property>
+                    <property name="sort_column_id">1</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="col1r"/>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">92</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="findButton">
+            <property name="label" translatable="yes">Find</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_findButton_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">356</property>
+            <property name="y">9</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="loadTree">
+            <property name="label" translatable="yes">Load Tree</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_loadTree_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">260</property>
+            <property name="y">50</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="loadTable">
+            <property name="label" translatable="yes">Load Table</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_loadTable_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">152</property>
+            <property name="y">50</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
