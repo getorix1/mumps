@@ -1,0 +1,142 @@
+July 5, 2022
+
+Make knuth.mps executable and be sure to install Mumps first!
+
+The program is knuth.mps which you may execute directly or
+compile.
+
+File 'input' is a sample set of input data.
+
+Example Mumps code for Knuth's Optimum Binary Tree algorithm:
+
+    knuth.mps
+
+or, if you want to use the provided data input:
+
+	knuth.mps < input
+
+or, if you compile it (install Mumps first):
+
+	mumpsc knuth.mps
+	knuth < input
+
+Example:
+
+n 5
+p1 1
+p2 2
+p3 3
+p4 4
+p5 5
+q0 1
+q1 1
+q2 1
+q3 1
+q4 1
+q5 1
+
+matrix
+
+1 2 2 3 4 
+0 2 3 3 4 
+0 0 3 4 4 
+0 0 0 4 5 
+0 0 0 0 5 
+
+12 b(0 342 b(0,1 342 b(0,2 342 b(0,1,1 342 b(0,1,2 34
+b(0)->4
+b(0,1)->2
+b(0,2)->5
+b(0,1,1)->1
+b(0,1,2)->3
+b(0,2,1)->0
+b(0,2,2)->0
+b(0,1,1,1)->0
+b(0,1,1,2)->0
+b(0,1,2,1)->0
+
+Where the first number is the number of nodes containing data.
+
+The algorithm is given in the scans in the subdirectory
+Algorithm along with the reference to the original publication.
+
+The algorithm assumes that searches can succeed and as well as fail. 
+
+The five numbers after the number of nodes are the probabilities 
+(or weights) that a data containing node is the search argument in 
+sorted order (low to high). That is, successful search.
+
+The next six numbers are the probabilities (or weights) that the 
+search argument is not found but lies between, prior to, are after 
+a data containing node. That is, failed search.
+
+All probabilities can be weights giving the relative number of
+times the node was searched for and found or not found.
+
+In the example, for simplification, the failure nodes all have a 
+probability of 1. The weights for data containing nodes (1,2,3,4,5)
+show a tree structure were the middle nodes (sorted) are the more
+important. The tree should thus have shorter paths to these nodes.
+
+The last part of the output gives the tree structure.
+
+The root node b(0) is the node with weight 5
+
+Its two descendants are b(0,1) on the right is node 5. The descendant
+on the left b(0,2) is an empty leaf node.
+
+The tree is:
+
+
+                      (4)
+                     /   \
+                  (2)     (5)
+                 /   \    / \
+              (1)     (3)     
+              / \     / \
+
+Where:
+
+n 5
+p1 1
+p2 2
+p3 3
+p4 2
+p5 1
+q0 1
+q1 1
+q2 1
+q3 1
+q4 1
+q5 1
+
+matrix
+
+1 2 2 3 3 
+0 2 3 3 3 
+0 0 3 3 4 
+0 0 0 4 4 
+0 0 0 0 5 
+
+12 b(0 342 b(0,1 342 b(0,2 342 b(0,1,1 342 b(0,2,2 34
+b(0)->3
+b(0,1)->2
+b(0,2)->4
+b(0,1,1)->1
+b(0,1,2)->0
+b(0,2,1)->0
+b(0,2,2)->5
+b(0,1,1,1)->0
+b(0,1,1,2)->0
+b(0,2,2,1)->0
+
+Gives the tree:
+
+                      (3)
+                     /   \
+                  (2)     (4)
+                 /   \    / \
+              (1)           (5)
+              / \            / \
+
+
