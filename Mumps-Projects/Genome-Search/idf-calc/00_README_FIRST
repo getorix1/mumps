@@ -1,0 +1,19 @@
+June 23, 2024
+
+The files in this directory are used to create the table of Inverse 
+Document Frequency values for each genomic word (usually 11 base pairs).
+
+The result is the file idf-weights-sorted.dat which is store in the
+indexing directory above.
+
+Calculating this table requires a large quantity of nucleotide training
+sequences and take a very long time to run.
+
+You probably don't want to be here unless you are rebuilding the IDF table
+with a new sample of sequences.
+
+If you want to run it anyway, read the comments in indexing-nt-idf.script
+on detail of how to link to a training set of sequences.
+
+Do no attempt to run indexing-controls.script. This file contains parameters
+that adjust how the training sequences will be processed.
