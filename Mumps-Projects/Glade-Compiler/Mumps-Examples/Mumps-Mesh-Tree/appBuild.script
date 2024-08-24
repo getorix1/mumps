@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo "-------------------------"
+echo 
+
+date
+
+# remove signal handlers that contain
+# no working code so they may be re-created
+
+
+extractWidgets.mps < mumps.glade
+
+mumpsc gtk.mps

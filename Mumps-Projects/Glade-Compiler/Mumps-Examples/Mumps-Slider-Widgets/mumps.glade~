@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.2 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkAdjustment" id="adjustment1">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="adjustment2">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="adjustment3">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkWindow" id="window">
+    <property name="can_focus">False</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
+    <child>
+      <object class="GtkFixed" id="fixed1">
+        <property name="width_request">480</property>
+        <property name="height_request">360</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkSpinButton" id="SampleGtkSpinButton">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="adjustment">adjustment1</property>
+            <signal name="value-changed" handler="on_SampleGtkSpinButton_value_changed" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">10</property>
+            <property name="y">23</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrollbar" id="SampleGtkScrollBar">
+            <property name="width_request">300</property>
+            <property name="height_request">-1</property>
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="adjustment">adjustment2</property>
+            <signal name="value-changed" handler="on_SampleGtkScrollBar_value_changed" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">80</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label2">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">GtkSpinButton</property>
+          </object>
+          <packing>
+            <property name="x">342</property>
+            <property name="y">30</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">GtkScrollBar</property>
+          </object>
+          <packing>
+            <property name="x">342</property>
+            <property name="y">80</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScale" id="SampleGtkScale">
+            <property name="width_request">300</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="adjustment">adjustment3</property>
+            <property name="round_digits">1</property>
+            <signal name="value-changed" handler="on_SampleGtkScale_value_changed" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">126</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">GtkScale</property>
+          </object>
+          <packing>
+            <property name="x">342</property>
+            <property name="y">140</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkCalendar" id="ExampleCalendar">
+            <property name="width_request">100</property>
+            <property name="height_request">80</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="year">2022</property>
+            <property name="month">6</property>
+            <property name="day">15</property>
+            <signal name="day-selected" handler="on_ExampleCalendar_day_selected" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">171</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

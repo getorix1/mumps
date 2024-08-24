@@ -1,0 +1,102 @@
+Jan 28, 2022
+
+Spurious Error Messages
+
+GTK often emits spurious error message which mean nothing. This application 
+may cause a message looking like:
+
+	(gtk:34004): dbind-WARNING **:  Couldn't register with accessibility bus ...
+
+You may supress the message with the line:
+
+	export NO_AT_BRIDGE=1
+
+
+Functions Implemented
+
+$z~mdh~toggle~button~get~active(ToggleButtonReference)
+
+	Returns 0 if the button is inactive, 1 if active
+
+$z~mdh~toggle~button~set~active(ToggleButtonReference,intVal)
+
+	Sets the button to active if intVal is 1, inactive
+	if the value is 0. This will trigger a toggle signal.
+
+$z~mdh~entry~get~text(EntryReference)
+
+	Returns the current string contents of the referenced
+	Entry box.
+
+$z~mdh~entry~set~text(EntryReference,value)
+
+	Sets the contents of the named entry box to value.
+
+$z~mdh~text~buffer~set~text(TextBufferReference,string)
+
+	Sets the contents of the referenced text buffer to
+	the value of string.
+
+$z~mdh~label~set~text(LabelReference,string)
+
+	Sets the text contents of the label referenced to string.
+
+$z~mdh~tree~selection~get~selected(TreeModelReference,column)
+
+	Returns value in designated column of referenced TreeModel.
+
+$z~mdh~tree~store~clear(TreeStoreReference)
+
+	Clears (deletes) the contents of the referenced TreeStore.	
+
+$z~mdh~tree~level~add(TreeStoreReference,treeDepth,index,data[,...])
+
+	Add index at tree level treeeDepth to column 1 of TreeStore. 
+	Add data items in successive columns.
+
+$z~mdh~spin~button~get~value(SpinButtonReference)
+
+	Returns the current value of the referenced SpinButton.
+
+$z~mdh~spin~button~set~value(SpinButtonReference,number)
+
+	Sets the current value of the referenced SpinButton to number.
+	Triggers a value changed signal.
+
+$z~mdh~widget~hide(widget)
+
+	Hides the referenced widget;
+
+$z~mdh~widget~show(widget)
+
+	Shows the referenced widget;
+
+
+Adding A TreeView in Glade (it's confusing)
+
+From the Display tab, add a GtkTreeView widget to your app.
+
+Give the GtkTreeView and the attached GtkTreeSelection ID unique names.
+
+Right click on the GtkTreeView entry on the left column and click the plus
+sign in the box that pops up. (this adds a column)
+
+Give the column an ID of the form col1, col2, col3, etc.
+
+Under Title, give the column title that will appear in the app.
+
+Right clock on the column in the popup box and add child text.
+
+Give the child text GtkCellRenderer that results a name of the corm col1r, col2r, etc.
+where the colX part matches the parent column ID.
+
+Note: there may be warnings for deprecated elements. These will disapper after
+a save/load cycle.
+To add a CellRendererText to a column, edit the column, righ click on the column,
+and add Child text.
+In Glade, watch for the difference beteen CellRendererAccelerator and CellRendererText. 
+They are not the same.
+
+Please spell the functions correctly. They really won't work unless you do....
+
+Note: if you don't create any signals, you will not get any on... files.

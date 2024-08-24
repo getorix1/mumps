@@ -1,0 +1,8 @@
+August 1, 2022
+
+Remove old on.* files if you want the GtkCompiler to re-create them.
+
+If you do not, existing on.* files will not be over-written.
+
+The Makefile as configured deletes existing on.* files. Fix this
+if you do not want the on.* files deleted each time.

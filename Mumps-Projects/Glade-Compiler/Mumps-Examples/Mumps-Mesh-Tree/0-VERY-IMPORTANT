@@ -1,0 +1,23 @@
+July 20, 2022
+
+The GtkCompiler, for each signal, builds a file whose name begins
+with "on.". The file's name includes the signal name. For example:
+
+	on.load.clicked.h
+
+where the file will handle clicked signals for the load widget.
+
+If a file already exists with a signal name, no file is created.
+The existing file remains unchanged.
+
+If a file with the signal name does not exist, a template signal
+handler with the signal and widget name is created.
+
+If you remove old signal files, new ones will be created with minimal
+content.
+
+This directory contains files with tree code already written in them.
+
+You probably do NOT want to remove them.
+
+The treeStore is used both as a table and as a tree.

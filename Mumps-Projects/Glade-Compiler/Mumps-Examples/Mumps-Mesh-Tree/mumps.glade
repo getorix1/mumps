@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.2 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkAdjustment" id="adjustment1">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkTextBuffer" id="textbuffer1"/>
+  <object class="GtkTreeStore" id="treeStore">
+    <columns>
+      <!-- column-name col1 -->
+      <column type="gchararray"/>
+      <!-- column-name col2 -->
+      <column type="gchararray"/>
+      <!-- column-name col3 -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkWindow" id="window">
+    <property name="can_focus">False</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
+    <child>
+      <object class="GtkFixed" id="fixed1">
+        <property name="width_request">900</property>
+        <property name="height_request">506</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkButton" id="clearStore">
+            <property name="label" translatable="yes">Clear TreeStore</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="tooltip_text" translatable="yes">Click Me!</property>
+            <signal name="clicked" handler="on_clearStore_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">132</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkToggleButton" id="toggle1">
+            <property name="label" translatable="yes">toggle example</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="toggled" handler="on_toggle1_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">81</property>
+            <property name="y">13</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="entry1">
+            <property name="width_request">340</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="placeholder_text" translatable="yes">case sensitive array indices separated by a space</property>
+            <signal name="changed" handler="on_entry1_changed" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">90</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledrWindow1">
+            <property name="width_request">335</property>
+            <property name="height_request">185</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkViewport" id="viewport1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkTextView" id="textview1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="wrap_mode">word</property>
+                    <property name="buffer">textbuffer1</property>
+                    <property name="input_purpose">terminal</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="x">393</property>
+            <property name="y">11</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label1">
+            <property name="width_request">76</property>
+            <property name="height_request">20</property>
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Test label</property>
+            <property name="xalign">0</property>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">196</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkCheckButton" id="check1">
+            <property name="label" translatable="yes">checkbutton</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="draw_indicator">True</property>
+            <signal name="toggled" handler="on_check1_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">81</property>
+            <property name="y">51</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledWindow2">
+            <property name="width_request">880</property>
+            <property name="height_request">276</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTreeView" id="tree1">
+                <property name="width_request">876</property>
+                <property name="height_request">172</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="model">treeStore</property>
+                <property name="search_column">0</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="select1">
+                    <signal name="changed" handler="on_select1_changed" swapped="no"/>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="col0">
+                    <property name="fixed_width">401</property>
+                    <property name="title" translatable="yes">Global Array</property>
+                    <property name="clickable">True</property>
+                    <property name="sort_column_id">0</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="col0r"/>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="col1">
+                    <property name="fixed_width">330</property>
+                    <property name="title" translatable="yes">Subject heading</property>
+                    <property name="sort_column_id">1</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="col1r"/>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="col2">
+                    <property name="title" translatable="yes">Terminal Code</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="col2r"/>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">219</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="findButton">
+            <property name="label" translatable="yes">Find</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_findButton_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">143</property>
+            <property name="y">132</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkRadioButton" id="radio1">
+            <property name="label" translatable="yes">radio1</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="active">True</property>
+            <property name="draw_indicator">True</property>
+            <signal name="toggled" handler="on_radio1_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">12</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkRadioButton" id="radio2">
+            <property name="label" translatable="yes">radio2</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="active">True</property>
+            <property name="draw_indicator">True</property>
+            <property name="group">radio1</property>
+            <signal name="toggled" handler="on_radio2_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">36</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkRadioButton" id="radio3">
+            <property name="label" translatable="yes">radio3</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="active">True</property>
+            <property name="draw_indicator">True</property>
+            <property name="group">radio1</property>
+            <signal name="toggled" handler="on_radio3_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">61</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSpinButton" id="spin1">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="adjustment">adjustment1</property>
+            <signal name="value-changed" handler="on_spin1_value_changed" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">231</property>
+            <property name="y">12</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="loadTree">
+            <property name="label" translatable="yes">Load TreeStore</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_loadTree_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">164</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="loadTable">
+            <property name="label" translatable="yes">Load Table</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_loadTable_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">142</property>
+            <property name="y">164</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkToggleButton" id="show">
+            <property name="label" translatable="yes">Show/Hide Tree</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="toggled" handler="on_show_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">250</property>
+            <property name="y">132</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
