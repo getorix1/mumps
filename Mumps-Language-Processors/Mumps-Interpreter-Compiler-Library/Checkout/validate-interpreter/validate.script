@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# May 17, 2024
+# Kevin C. O'Kane
+
+cat /dev/null > nohup.out
+
+echo "Mumps and MDH validation routines"
+
+chmod u+x *.mps
+
+rm -f key.dat data.dat
+
+echo " misc tests"
+
+./checkout.mps < checkout.input
+
+if (($? > 0)); then echo "execution error checkout.mps"; exit; fi
+
+echo "new tests"
+
+./new01.mps
+
+if (($? > 0)); then echo "execution error new01.mps"; exit; fi
+
+./new02.mps
+
+if (($? > 0)); then echo "execution error new02.mps"; exit; fi
+
+./new03.mps
+
+if (($? > 0)); then echo "execution error new03.mps"; exit; fi
+
+echo " local $order tests"
+
+if (($? > 0)); then echo "execution error checkout.mps"; exit; fi
+
+./lclOrder.mps
+
+if (($? > 0)); then echo "execution lclOrder.mps error"; exit; fi
+
+echo " perl backref test"
+
+./backref.mps < backref.input
+
+if (($? > 0)); then echo "execution backref.mps error"; exit; fi
+
+echo " functions test"
+
+./fcns.mps < fcns.input
+
+if (($? > 0)); then echo "*** fcns.mps execution error"; exit; fi
+
+echo " for loop tests"
+
+./for1.mps
+
+if (($? > 0)); then echo "execution error for1.mps"; exit; fi
+
+./for2.mps
+
+if (($? > 0)); then echo "execution error for2.mps"; exit; fi
+
+./for3.mps
+
+if (($? > 0)); then echo "execution error for3.mps"; exit; fi
+
+echo " operator tests"
+
+./ops.mps
+
+if (($? > 0)); then echo "execution error ops.mps"; exit; fi
+
+echo " goto and do tests"
+
+./go1.mps
+
+if (($? > 0)); then echo "execution error go1.mps"; exit; fi
+
+echo " subroutine tests"
+
+./s6.mps
+
+if (($? > 0)); then echo "execution error s5.mps"; exit; fi
+
+echo " global stress test"
+
+./globals1.mps
+
+if (($? > 0)); then echo "execution error globals1.mps"; exit; fi
+
+echo " zfunctions test"
+
+./zfunctions.mps
+
+if (($? > 0)); then echo "execution error zfunctions.mps"; exit; fi
+
+echo "query qlength qsubscript"
+
+./qtst.mps
+
+if (($? > 0)); then echo "execution error qtst.mps"; exit; fi
+
+echo "kill test"
+
+./kill.mps
+
+if (($? > 0)); then echo "execution error kill.mps"; exit; fi
+
+# optional if readonly module exists
+#	echo "readonly test - expect sum of 100 with garbled lines"
+#	rm key.dat data.dat
+#	./readonlysetup.mps
+#	./readonly.mps &
+#	./readonly.mps &
+#	./readonly.mps &
+#	./readonly.mps &
+#	wait
+
+if (($? > 0)); then echo "execution error"; exit; fi
+
+# cleanup
+
+rm -f tmpI.tmp tmp.tmp
+rm -r key.dat data.dat
