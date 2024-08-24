@@ -1,0 +1,83 @@
+#!/bin/bash
+
+#*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Internet Radio Automation & Encoding Toolkit
+#+
+#+     Copyright (C) 2018, 2019, 2020, 2021, 2022, 2023, 2024 
+#+     by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://www.cs.uni.edu/~okane
+#+     https://threadsafebooks.com/
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#+
+#+ June 23, 2024
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+# rm -f nohup.out
+
+date
+
+#-----------------
+#       settings
+#-----------------
+
+echo
+
+if [ -z $1 ]
+        then
+                echo "Max Number of Docs not supplied - default of 10000 used..."
+                max_docs=10000
+        else
+                max_docs=$1
+		echo "Begin processing up to $max_doc sequences"
+        fi
+
+rm -f genome
+rm -f reformat
+rm -f extractNT
+rm -f extractDNA
+rm -f data.dat
+rm -f key.dat
+
+make -C idf-code clean
+
+make -C idf-code -B -j 8
+
+# Make the following point to YOUR large NT dataset
+# in FASTA format.
+
+SOURCE="/media/okane/Seagate8/datasets/nt"
+
+echo
+echo "Extract sequences from $SOURCE"
+echo
+
+idf-code/extractNT $max_docs < $SOURCE > db.converted
+
+source ./indexing-controls.script $max_docs
+
+pwd
+
+idf-code/genome
+
+rm -f *.tmp
+rm -f titles.list
+rm -f data.dat
+rm -f key.dat
+rm -f db.converted
