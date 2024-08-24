@@ -1,0 +1,95 @@
+August 7, 2022
+
+Run:
+
+    make -B 
+
+and then:
+
+    gtk
+
+This example requires Mumps to be installed.
+
+Do not clobber the on.* files. They contain code.
+
+This version includes the file TreeStorePopulate.h into the gtk.c
+routine. This file contains the code to populate a GtkTreeStore.
+
+The files tree-load.h and table-load.h, which are called by
+signal handlers, invoke the code in TreeStorePopulate.h to
+actually load data into a GtKTreeStore.
+
+The code in TreeStorePopulate.h treats the first column of
+the GtkTreeStore as a tree. The remaining columns, if any, are
+flat data columns with data elements that correspond to the
+entry in the first column.
+
+The code to load the GtkTreeStore can be used to treat the
+GtkTreeStore as either a table or a tree. When used as a
+table, elements added to the first column of the GtkTreeStore
+are added at the root level of the tree and they have no descendants.
+
+When building a tree, first column entries may be added at levels
+below the root level.
+
+When adding new tree elements at levels below the root, no intermediate
+level may be skipped. That is, if you are adding an element at level
+5 of the tree, there must exist levels 1, 2, 3, and 4 immediately above
+it. This is because the levels are connected.
+
+The function in TreeStorePopulate.h that adds elements to a tree or
+table is:
+
+    int	GtkTreeLevelAdd(GtkTreeStore *t, int cols, int depth, ...)
+
+The first parameter is the pointer to the GtkTreeStore being manipulated.
+
+The second parameters is the number of columns you have created for the
+GtkTreeStore in glade. This number, naturally, must be at least 1.
+
+The third parameter is the depth at which you are adding an element. 
+
+The fourth and following parameters are the values to be stored. The fourth
+parameter becomes column 1, the fifth (if present) becomes the second column and
+so forth. The number of parameters is variable but should conform to the number
+of columns established in the Glade layout.
+
+Example database:
+
+birds
+    ducks
+    chickens
+    penguins
+dogs
+    hounds
+    spaniels
+    poodles
+fish
+    salmon
+    guppies
+    sharks
+
+The function calls to create the above (indentation added for emphasis only):
+
+    GtkTreeLevelAdd(t, 1, 1, "birds");
+        GtkTreeLevelAdd(t, 1, 2, "ducks");
+        GtkTreeLevelAdd(t, 1, 2, "chickens");
+        GtkTreeLevelAdd(t, 1, 2, "penguins");
+    GtkTreeLevelAdd(t, 1, 1, "dogs");
+        GtkTreeLevelAdd(t, 1, 2, "hounds");
+        GtkTreeLevelAdd(t, 1, 2, "spaniels");
+        GtkTreeLevelAdd(t, 1, 2, "poodles");
+    GtkTreeLevelAdd(t, 1, 1, "fish");
+        GtkTreeLevelAdd(t, 1, 2, "salmon");
+        GtkTreeLevelAdd(t, 1, 2, "guppies");
+        GtkTreeLevelAdd(t, 1, 2, "sharks");
+
+The resulting single column table will initially have three row entries: birds, dogs, and fish.
+Each of these will have an arrow next to them which if clicked, will display the three row
+levels beneath.
+
+If in the above the table were declared to have two columns, an extra argument on each function call
+would populate the second column for each row. The example provided uses a 3 column table. 
+
+To build a flat table from the above, change all the depth numbers to 1.
+

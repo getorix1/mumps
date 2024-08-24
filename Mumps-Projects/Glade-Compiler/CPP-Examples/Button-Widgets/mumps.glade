@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.2 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkEntryBuffer" id="entrybuffer1">
+    <property name="max_length">32</property>
+  </object>
+  <object class="GtkListStore" id="liststore1">
+    <columns>
+      <!-- column-name Vegetables -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Carrots</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Peas</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Corn</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkWindow" id="window">
+    <property name="can_focus">False</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
+    <child>
+      <object class="GtkFixed" id="fixed1">
+        <property name="width_request">480</property>
+        <property name="height_request">440</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkToggleButton" id="SampleGtkToggleButton">
+            <property name="label" translatable="yes">SampleGtkToggleButton</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="toggled" handler="on_SampleGtkToggleButton_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">60</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkCheckButton" id="SampleGtkCheckButton">
+            <property name="label" translatable="yes">GtkCheckButton</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="draw_indicator">True</property>
+            <signal name="toggled" handler="on_SampleGtkCheckButton_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">110</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkRadioButton" id="SampleGtkRadio1">
+            <property name="label" translatable="yes">GtkRadioButton 1</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="active">True</property>
+            <property name="draw_indicator">True</property>
+            <signal name="toggled" handler="on_SampleGtkRadio1_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">160</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkRadioButton" id="SampleGtkRadio2">
+            <property name="label" translatable="yes">GtkRadioButton 2</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="active">True</property>
+            <property name="draw_indicator">True</property>
+            <property name="group">SampleGtkRadio1</property>
+            <signal name="toggled" handler="on_SampleGtkRadio2_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">210</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkRadioButton" id="SampleGtkRadio3">
+            <property name="label" translatable="yes">GtkRadioButton 3</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="active">True</property>
+            <property name="draw_indicator">True</property>
+            <property name="group">SampleGtkRadio1</property>
+            <signal name="toggled" handler="on_SampleGtkRadio3_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">260</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="SampleGtkButton">
+            <property name="label" translatable="yes">SampleGtkButton</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_SampleGtkButton_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">10</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkColorButton" id="SampleColorButton">
+            <property name="width_request">100</property>
+            <property name="height_request">80</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="color-set" handler="on_SampleColorButton_color_set" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">226</property>
+            <property name="y">10</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSwitch" id="ExampleSwitch">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <signal name="state-set" handler="on_ExampleSwitch_state_set" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">226</property>
+            <property name="y">128</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">GtkColorButton</property>
+          </object>
+          <packing>
+            <property name="x">226</property>
+            <property name="y">98</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label2">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">GtkSwitch</property>
+          </object>
+          <packing>
+            <property name="x">226</property>
+            <property name="y">162</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFontButton" id="ExampleFontButton">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="font">Sans 12</property>
+            <property name="language">en-us</property>
+            <property name="preview_text"/>
+            <signal name="font-set" handler="on_ExampleFontButton_font_set" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">226</property>
+            <property name="y">192</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Font Chooser</property>
+          </object>
+          <packing>
+            <property name="x">226</property>
+            <property name="y">225</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Combo Box</property>
+          </object>
+          <packing>
+            <property name="x">226</property>
+            <property name="y">294</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkComboBox" id="ComboBoxExample">
+            <property name="width_request">133</property>
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="model">liststore1</property>
+            <property name="has_entry">True</property>
+            <property name="entry_text_column">0</property>
+            <property name="id_column">0</property>
+            <signal name="changed" handler="on_ComboBoxExample_changed" swapped="no"/>
+            <child internal-child="entry">
+              <object class="GtkEntry" id="cbentry">
+                <property name="can_focus">False</property>
+                <property name="buffer">entrybuffer1</property>
+                <property name="placeholder_text" translatable="yes">veggies</property>
+                <signal name="changed" handler="on_cbentry_changed" swapped="no"/>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="x">226</property>
+            <property name="y">255</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkStackSwitcher" id="stackSwitcher">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="stack">stack1</property>
+            <signal name="button-release-event" handler="on_stack_switcher_button_release_event" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">8</property>
+            <property name="y">330</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkStack" id="stack1">
+            <property name="width_request">201</property>
+            <property name="height_request">60</property>
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkFixed" id="page_0">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkLabel" id="label3">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Page 0 Label</property>
+                  </object>
+                  <packing>
+                    <property name="x">10</property>
+                    <property name="y">20</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="name">page1</property>
+                <property name="title" translatable="yes">page 1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkFixed" id="page_1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkLabel" id="lbl4">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Page 1 Label</property>
+                  </object>
+                  <packing>
+                    <property name="x">10</property>
+                    <property name="y">20</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="name">page2</property>
+                <property name="title" translatable="yes">page 2</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="x">226</property>
+            <property name="y">328</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
