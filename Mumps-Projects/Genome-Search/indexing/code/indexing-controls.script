@@ -1,0 +1,231 @@
+#*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Internet Radio Automation & Encoding Toolkit
+#+
+#+     Copyright (C) 2018, 2019, 2020, 2021, 2022 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://www.cs.uni.edu/~okane
+#+     https://threadsafebooks.com/
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#+
+#+ May 6, 2023
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#	DO NOT RUN THIS SCRIPT - IT IS INVOKED BY OTHER SCRPTS
+#	DO NOT RUN THIS SCRIPT - IT IS INVOKED BY OTHER SCRPTS
+#	DO NOT RUN THIS SCRIPT - IT IS INVOKED BY OTHER SCRPTS
+#	DO NOT RUN THIS SCRIPT - IT IS INVOKED BY OTHER SCRPTS
+
+echo "common index.script `date`"
+echo
+
+#-----------------
+#	settings
+#-----------------
+
+max_docs=$1
+export max_docs
+
+SQL="no"
+SQLite="no"
+compile="yes"
+reformat="yes"
+zipf="no"
+kwic="no"
+discrim="no"
+proximity="no"
+tt_correlations="no"
+cluster_terms="no"
+prox_load="no"
+write_stems="no"
+soundex="no"
+hyper_cluster="no"
+
+#----------------------------------------------
+# For local clustering, enable the following.
+# It is not required for full clustering.
+#----------------------------------------------
+
+document_cluster="no" 
+
+#------------------------------------
+#	enable the following to
+#	permit full clustering
+#------------------------------------
+
+doc_doc_matrix="no"
+dumpDT="yes"
+
+export reformat
+export zipf
+export kwic
+export discrim
+export proximity
+export doc_doc_matrix
+export document_cluster
+export tt_correlations
+export cluster_terms
+export prox_load
+export write_stems
+export soundex
+export dumpDT
+export hyper_cluster
+
+DB="db"
+export DB
+
+#------------------------------------------------------------------------
+#	DocumentTermMarix settings"
+#
+#	Max Number of Docs: max_docs
+#	Words must be longer than: min_word_length
+#	Kill docs with fewer than min_doc_vector_word_count words
+#	A word must appear in at least min_doc_word_count separate docs
+#	A word may appear in no more than: max_collection_word_count docs
+#------------------------------------------------------------------------
+
+	min_word_length=11
+	min_doc_vector_word_count=20
+	min_word_count=1 		# min num of occurrences
+	max_word_count=$((max_docs/5))
+	min_doc_word_count=5		# min num of docs
+
+	export min_word_length
+	export min_doc_vector_word_count
+	export min_word_count
+	export max_word_count
+	export min_doc_word_count
+
+#-------------------------------------------------------------------------
+#	Inverse Document Frequency settings"
+#
+#	Delete docs after IDF with fewer than: min_idf_vector_count words
+#-------------------------------------------------------------------------
+
+	min_idf_vector_count=$min_doc_word_count
+	export min_idf_vector_count
+
+#-------------------------------------------------------------
+#	Document weights
+#
+#	delete words with weight less than: min_doc_weight
+#	delete documents with fewer than: min_doc_word_count
+#-------------------------------------------------------------
+
+	min_doc_weight=5
+	export min_doc_weight
+
+#-----------------------------------------------------------------------
+#	Term-Term matrix settings
+#
+#	Related terms must have this correlation: min_tt_correlation
+#	Min co-occurances for term-term matrix: min_tt_cooccur
+#-----------------------------------------------------------------------
+
+	min_tt_correlation=0.250
+	min_tt_cooccur=3
+
+	export min_tt_correlation
+	export min_tt_cooccur
+
+#----------------------------------------------------------------
+#	Proximity matrix settings
+#
+#	Proximity matrix min count: proximity_min_count
+#	Proximity distance factor: prox_dist_factor
+#----------------------------------------------------------------
+
+	proximity_min_count=20
+	prox_dist_factor=20
+
+	export proximity_min_count
+	export prox_dist_factor
+
+#-----------------------------------------------------------------
+#	Document-document matrix settings
+#
+#	Doc Words in common for inclusion: min_doc_doc_cooccur
+#	Min doc-doc matrix cohesion: min_dd_cohesion
+#-----------------------------------------------------------------
+
+	min_doc_doc_cooccur=5                    	
+	min_dd_cohesion=.20
+
+	export min_doc_doc_cooccur                  	
+	export min_dd_cohesion
+
+#-------------------------------------
+#	Jaccard term-term settings
+#`
+#	Jaccard minimum: jaccard_min
+#-------------------------------------
+
+	jaccard_min=0.001
+	export jaccard_min
+
+#----------------------------------------------------
+#	Clusterdd settings
+#
+#	Minimum doc-doc connection: min_cluster_connection
+#----------------------------------------------------
+
+	min_cluster_connection=0.50
+	export min_cluster_connection
+
+#-------------------------------------------
+#	Hypercluster settings
+#
+#-------------------------------------------
+
+	hyper_min=.3
+	hyper_wgt=.3
+
+	export hyper_min
+	export hyper_wgt
+
+#----------------------------------------------------------
+#	Term-term cluster settings
+#
+#	Min term-term cluster correlation: min_tt_cluster
+#----------------------------------------------------------
+
+	min_tt_cluster=.1
+	export min_tt_cluster
+
+# set -v
+# set -x
+
+# echo
+# 
+# # rm -f $DB.stemmed
+# # rm -f *.txt
+# # rm -f *.tmp
+# # rm -f key.dat data.dat
+# 
+# echo
+# echo "Start genome"
+# echo
+# 
+# # link name used for tracking purposes
+# 
+# ln -s genome genome$2
+# 
+# genome$2
+# 
+# # rm -f *.tmp
+
