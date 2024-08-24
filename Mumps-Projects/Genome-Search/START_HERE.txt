@@ -1,0 +1,10 @@
+June 24, 2024
+
+The idf-calc directory contains the code to calculte the table of IDF values used
+by the indexing process. An IDF table is already supplied and is located in the
+indexing directory (idf-weights-sorted.dat). 
+
+You probably do not want to recalculate this table and therefore will not enter idf-calc.
+
+The indexing directory contains the indexining and retrieval code. This is probably where
+you want to go.
