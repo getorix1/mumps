@@ -1,0 +1,16 @@
+pid 45897's current affinity list: 0-7
+pid 45897's new affinity list: 0
+pid 46076's current affinity list: 0-7
+pid 46076's new affinity list: 1
+pid 46255's current affinity list: 0-7
+pid 46255's new affinity list: 2
+pid 46434's current affinity list: 0-7
+pid 46434's new affinity list: 3
+pid 46613's current affinity list: 0-7
+pid 46613's new affinity list: 4
+pid 46792's current affinity list: 0-7
+pid 46792's new affinity list: 5
+pid 46971's current affinity list: 0-7
+pid 46971's new affinity list: 6
+pid 47150's current affinity list: 0-7
+pid 47150's new affinity list: 7

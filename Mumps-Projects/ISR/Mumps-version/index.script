@@ -1,0 +1,661 @@
+#!/bin/bash
+
+# index.script
+# Copyright 2014, 2022, 2023, 2024 Kevin C. O'Kane
+
+# $1 is database name
+# $2 is task number or empty
+
+# April 26, 2024
+
+echo "Compile? $compile"
+
+# tabs 10
+
+segtabs () {
+
+for (( i=0 ; i<$task ; i++ ));
+        do
+	printf "\t" "" 1>&2
+	done
+}
+
+tabprint () {
+	printf "%-9s\r" "$1" 1>&2
+	}
+
+echo
+
+cat /dev/null > nohup.out	# erase any prior nohup.out
+
+echo
+echo "index.script `date`"
+echo
+
+rm -f DocCount key.dat data.dat
+rm -f *.txt *.sorted *.tmp tmp tmp1	# delete old results
+
+#----------------------------
+#	bash verbose mode
+#----------------------------
+
+# set -v
+# set -x
+
+# $1 is DB
+
+if [ -z $2 ]
+	then
+		task=""
+	else
+		task=$2
+	fi
+
+echo "task $task "
+echo
+
+echo "Task settings:"
+
+max_docs=10000000
+export max_docs
+echo "	Max Number of Docs: $max_docs "
+
+cluster_tt="no"
+export cluster_tt
+echo "	cluster_tt: $cluster_tt"
+
+ttt="no"
+export ttt
+echo "	ttt: $ttt"
+
+jaccard_tt="no"
+export jaccard_tt
+echo "	jaccard_tt: $jaccard_tt"
+
+tt_corelations="no"
+export tt_corelations
+echo "	tt_corelations: $tt_corelations"
+
+cohesion_tt="no" # requires tt_corelations
+export cohesion_tt
+echo "	cohesion_tt: $chhesion_tt"
+
+discrim="no"
+export discrim
+echo "	discrim: $discrim"
+
+proximity="yes"
+export proximity
+echo "	proximity: $proximity"
+
+doc_doc_matrix="no"
+export doc_doc_matrix
+echo "	doc doc matrix: $doc_doc_matrix"
+
+document_cluster="no" # requires doc_doc_matrix
+echo "	document cluster: $document_cluster"
+export document_cluster
+
+if [ -z $1 ]
+	then
+	echo "	Database name not given - default ohsu database used"
+		DB="ohsu"
+	else
+		DB=$1
+	fi
+
+export DB
+echo $DB > DBPREFIX
+
+./starttime.mps			# record starting time
+
+wc -l titles.list > MAXDOCS
+echo "	Documents found based on title count: `cat MAXDOCS`"
+
+./endtime.mps
+
+echo
+echo "-------------------------------------------------------------------------"
+echo "preprocess"
+echo "-------------------------------------------------------------------------"
+echo
+
+min_word_length=4
+echo "	preprocess minimum word length $min_word_length"
+
+segtabs
+tabprint "preproc"
+
+if [ "$compile" = "yes" ]; then
+	ln -s preprocess preproc$task
+	./preproc$task $min_word_length < $DB.converted > $DB.stemmed
+else
+	./preprocess.mps $min_word_length < $DB.converted > $DB.stemmed
+fi
+
+# echo "	`./showcount.mps $DB.stemmed`"
+
+./endtime.mps
+
+echo
+echo "-------------------------------------------------------------------------"
+echo "loadTitles"
+echo "-------------------------------------------------------------------------"
+echo
+
+segtabs
+tabprint "titles" 
+
+if [ "$compile" = "yes" ]; then
+	ln -s loadTitles Titles$task
+	./Titles$task < titles.list
+else
+	./loadTitles.mps < titles.list
+fi
+
+echo "	`./showcount.mps titles.list` line count"
+
+./endtime.mps
+
+echo
+echo "-------------------------------------------------------------------------"
+echo "DocumentTermMatrix "
+echo "-------------------------------------------------------------------------"
+echo
+
+min_words_per_doc=5
+echo "	Min words per doc $min_words_per_doc"
+
+min_df=3
+echo "	Min ^df $min_df"
+
+segtabs
+tabprint "doc-term"
+
+if [ "$compile" = "yes" ]; then
+	ln -s DocumentTermMatrix DocTerm$task
+	./DocTerm$task $min_words_per_doc $min_df < $DB.stemmed 
+else
+	./DocumentTermMatrix.mps $min_words_per_doc $min_df < $DB.stemmed
+	fi
+
+echo "	Line counts:"
+echo "	`./showcount.mps document-term-matrix.txt`"
+echo "	`./showcount.mps dict.tmp`"
+echo "	`./showcount.mps doc.tmp`"
+echo "	`./showcount.mps dict.sorted.tmp`"
+echo "	`./showcount.mps doc.sorted.tmp`"
+echo "	`./showcount.mps df.tmp`"
+echo "	`./showcount.mps df.sorted.tmp`"
+echo "	`./showcount.mps DocCount`"
+echo "	`./showcount.mps term-frequencies.unsorted.tmp`"
+echo "	`./showcount.mps term-frequencies.txt`"
+
+echo "	Doc count after deletion of docs with fewer than $min_words_per_doc words: `./dcount.mps`"
+
+./endtime.mps
+
+echo
+
+echo "-------------------------------------------------------------------------"
+echo "idf "
+echo "-------------------------------------------------------------------------"
+
+segtabs
+tabprint "idf"
+
+if [ "$compile" = "yes" ]; then
+	ln -s idf idf$task
+	./idf$task
+else
+	./idf.mps
+	fi
+
+./endtime.mps
+
+
+echo
+echo "-------------------------------------------------------------------------"
+echo "idf-cutoff "
+echo "-------------------------------------------------------------------------"
+echo
+
+min_idf_vector_count=5
+
+echo "	Delete documents with fewer than $min_idf_vector_count words"
+
+segtabs
+tabprint "idf"
+
+if [ "$compile" = "yes" ]; then
+	ln -s idf-cutoff idfcut$task
+	./idfcut$task $min_idf_vector_count 
+else
+	./idf-cutoff.mps $min_idf_vector_count 
+	fi
+
+
+segtabs
+tabprint "sort wgts"
+
+sort -k 1 -nr -k 2 -nr idfWeights.tmp > idf-weights.sorted.txt
+
+echo
+echo "	`./showcount.mps idf-deleted-documents.txt`"
+echo "	`./showcount.mps idf-deleted-words.txt`"
+echo "	Document count after removal of low IDF words: `./dcount.mps`"
+echo "	`./showcount.mps idf-weights.sorted.txt`"
+echo "	High IDF: `head -1 idf-weights.sorted.txt`"
+echo "	Low  IDF: `tail -1 idf-weights.sorted.txt`"
+
+./endtime.mps
+
+
+if [ "$discrim" = "yes" ]; then
+
+	echo
+	echo "-------------------------------------------------------------------------"
+	echo "discrim"
+	echo "-------------------------------------------------------------------------"
+	echo
+
+segtabs
+tabprint "discrim"
+
+	if [ "$compile" = "yes" ]; then
+		ln -s discrim disc$task
+		./disc$task | sort -n > discrimination-coefficients.txt 
+	else
+		./discrim.mps | sort -n > discrimination-coefficients.txt 
+		fi
+
+	echo "	`./showcount.mps discrimination-coefficients.txt`"
+	
+	./endtime.mps
+	
+	fi
+
+echo
+echo "-------------------------------------------------------------------------"
+echo "weight.mps"
+echo "-------------------------------------------------------------------------"
+echo
+
+	min_doc_weight=10
+	export min_doc_weight
+
+	min_doc_word_count=5
+	export min_doc_word_count
+
+	echo "	delete words with weight less than $min_doc_weight"
+	echo "	delete documents with fewer than $min_doc_word_count"
+
+segtabs
+tabprint "weights"
+
+	if [ "$compile" = "yes" ]; then
+		ln -s weight wgt$task
+		./wgt$task $min_doc_weight $min_doc_word_count
+	else
+		./weight.mps $min_doc_weight $min_doc_word_count
+		fi
+
+echo "	`./showcount.mps document-term-matrix-weighted.txt`"
+echo "	`./showcount.mps term-document-matrix-weighted.txt`"
+
+./endtime.mps
+
+
+if [ "$proximity" = "yes" ]; then
+
+echo "-------------------------------------------------------------------------"
+echo "proximity.mps"
+echo "-------------------------------------------------------------------------"
+echo
+
+segtabs
+tabprint "prox"
+
+	proximity_min_count=5
+	prox_dist_factor=5
+	log_adj_factor=30
+
+	export proximity_min_count
+	export prox_dist_factor
+	export log_adj_factor
+
+	echo "	Proximity matrix min count (score): $proximity_min_count"
+	echo "	Proximity distance factor: $prox_dist_factor"
+	echo "	Log adjustment factor: $log_adj_factor"
+
+	if [ "$compile" = "yes" ]; then
+		ln -s proximity prox$task
+		./prox$task $proximity_min_count $prox_dist_factor $log_adj_factor
+		sort -nr < term-term-proximity-similarities.tmp \
+			> term-term-proximity-similarities.txt 
+	else
+		./proximity.mps $proximity_min_count $prox_dist_factor $log_adj_factor
+		sort -nr < term-term-proximity-similarities.tmp \
+			> term-term-proximity-similarities.txt 
+		fi
+	
+	echo "	`./showcount.mps term-term-proximity-similarities.tmp`"
+	echo "	`./showcount.mps term-term-proximity-similarities.txt`"
+	
+	./endtime.mps
+
+
+	echo
+	echo "-------------------------------------------------------------------------"
+	echo "proxLoad"
+	echo "-------------------------------------------------------------------------"
+	echo
+
+segtabs
+tabprint "proxload"
+
+	if [ "$compile" = "yes" ]; then
+		ln -s proxLoad prxld$task
+		./prxld$task < term-term-proximity-similarities.txt
+	else
+		./proxLoad.mps < term-term-proximity-similarities.txt
+		fi
+
+	echo "	`./showcount.mps term-term-proximity-similarities.txt`"
+
+	./endtime.mps
+
+	fi
+
+if [ "$tt_corelations" = "yes" ]; then
+
+	echo
+	echo "-------------------------------------------------------------------------"
+	echo "term-term matrix"
+	echo "-------------------------------------------------------------------------"
+	echo
+
+segtabs
+tabprint "tt correl"
+
+	min_tt_corelation=0.250
+	min_tt_cooccur=3
+
+	export min_tt_corelation
+	export min_tt_cooccur
+
+	echo "	Related terms must have this corelation: $min_tt_corelation" 
+	echo "	Min co-occurances for term-term matrix: $min_tt_cooccur"
+
+	min_tt_cluster=.1
+	export min_tt_cluster
+
+	echo "	Min term-term cluster corelation: $min_tt_cluster"
+
+	if [ "$compile" = "yes" ]; then
+		ln -s tt1 tt$task
+		./tt1 $min_tt_corelation $min_tt_cooccur
+	else
+		./tt1.mps $min_tt_corelation $min_tt_cooccur
+		fi
+
+	echo "	`./showcount.mps term-term-matrix-sorted.txt`"
+
+	./endtime.mps
+	fi
+
+if [ "$ttt" = "yes" ]; then
+
+	echo
+	echo "-------------------------------------------------------------------------"
+	echo "ttt.mps"
+	echo "-------------------------------------------------------------------------"
+	echo
+
+segtabs
+tabprint "ttt correl"
+
+	if [ "$compile" = "yes" ]; then
+		ln -s ttt ttt$task
+		./ttt$task
+	else
+		./ttt.mps
+		fi
+
+	echo "	`./showcount.mps term-term-term.txt`"
+		
+	./endtime.mps
+	fi
+
+if [ "$cluster_tt" = "yes" ]; then
+
+	echo
+	echo "-------------------------------------------------------------------------"
+	echo "clustertt "
+	echo "-------------------------------------------------------------------------"
+	echo
+
+segtabs
+tabprint "tt cluster"
+
+	if [ "$compile" = "yes" ]; then
+		ln -s clustertt clstrtt$task
+		./clstrtt$task $min_tt_cluster > term-clusters.txt
+	else
+		./clustertt.mps $min_tt_cluster > term-clusters.txt
+		fi
+
+	echo "	`./showcount.mps term-clusters.txt`"
+	
+	./endtime.mps
+	fi
+
+if [ "$jaccard_tt" = "yes" ]; then
+
+	echo "-------------------------------------------------------------------------"
+	echo "Jaccard matrix"
+	echo "-------------------------------------------------------------------------"
+
+segtabs
+tabprint "jaccard tt"
+
+	jaccard_min=0.001
+
+	export jaccard_min
+
+	echo "	Jaccard minimum: $jaccard_min"
+
+	if [ "$compile" = "yes" ]; then
+		ln -s jaccardtt jacc$task
+		./jacc$task $jaccard_min < term-term-matrix-sorted.txt
+		sort -n < term-term-jaccard-similarities.tmp > \
+			term-term-jaccard-similarities.sorted.txt
+	else
+		./jaccardtt.mps $jaccard_min < term-term-matrix-sorted.txt
+		sort -n < term-term-jaccard-similarities.tmp > \
+			term-term-jaccard-similarities.sorted.txt
+		fi
+
+	echo "	`./showcount.mps term-term-jaccard-similarities.sorted.txt`"
+		
+	./endtime.mps
+	fi
+
+if [ "$cohesion_tt" = "yes" ]; then
+
+	echo
+	echo "-------------------------------------------------------------------------"
+	echo "cohesion"
+	echo "-------------------------------------------------------------------------"
+	echo
+
+segtabs
+tabprint "cohes tt"
+
+	if [ "$compile" = "yes" ]; then
+		ln -s cohesion cohes$task
+		ln -s cohes$task cohesion$task
+		./cohesion$task < term-term-matrix-sorted.txt | \
+			sort -n > term-term-cohesion-similarities.txt
+	else
+		./cohesion.mps < term-term-matrix-sorted.txt | \
+			sort -n > term-term-cohesion-similarities.txt
+		fi
+
+	echo "	`./showcount.mps term-term-cohesion-similarities.txt`"
+	
+	./endtime.mps
+	fi
+		
+#--------------------
+#	SQLdocVects
+#--------------------
+
+if [ "$SQL" = "yes" ]; then
+	echo "Build SQL commands"
+
+segtabs
+tabprint "SQL"
+
+	echo
+	echo "---> SQL Commands"
+
+	if [ "$compile" = "yes" ]; then
+		./SQLdocVects > SQL.commands
+	else
+		./SQLdocVects.mps > SQL.commands
+		fi
+	./endtime.mps
+	fi
+
+echo
+echo "-------------------------------------------------------------------------"
+echo "soundex"
+echo "-------------------------------------------------------------------------"
+echo
+
+segtabs
+tabprint "soundex"
+
+if [ "$compile" = "yes" ]; then
+	ln -s soundex sndx$task
+	./sndx$task > soundex.txt
+else
+	./soundex.mps > soundex.txt
+	fi
+
+echo "	`./showcount.mps soundex.txt`"
+
+./endtime.mps
+
+if [ "$doc_doc_matrix" = "yes" ]; then
+
+echo "-------------------------------------------------------------------------"
+echo "doc-doc matrix"
+echo "-------------------------------------------------------------------------"
+
+segtabs
+tabprint "doc-doc"
+
+	min_doc_doc_cooccur=5                    	
+	min_dd_cosine=0.25
+	min_dd_cohesion=.10
+
+	export min_doc_doc_cooccur                  	
+	export min_dd_cosine
+	export min_dd_cohesion
+
+	echo
+	echo "doc-doc1.mps"
+	echo
+	echo "	Doc Words in common for inclusion: $min_doc_doc_cooccur"
+	echo "	Min doc-doc matrix cosine: $min_dd_cosine"
+	echo "	Min doc-doc matrix cosine: $min_dd_cohesion"
+
+	if [ "$compile" = "yes" ]; then
+		ln -s docdoc1 dd$task
+		./dd$task $min_doc_doc_cooccur $min_dd_cosine
+	else
+		./docdoc1.mps $min_doc_doc_cooccur $min_dd_cosine
+		fi
+
+	sort -k 3 -n < docdoc1.tmp > document-document-matrix.txt
+
+	echo "	`./showcount.mps document-document-matrix.txt`"
+
+	./endtime.mps
+
+echo "-------------------------------------------------------------------------"
+echo "clusterdd"
+echo "-------------------------------------------------------------------------"
+
+	if [ "$document_cluster" = "yes" ]; then
+
+		echo
+		echo "	------------------"
+		echo "	Clusterdd settings"
+		echo "	------------------"
+
+segtabs
+tabprint "doc clstr"
+
+		min_cluster_cosine=$min_dd_cosine
+
+		export min_cluster_cosine
+
+		echo "	Minimum doc-doc cosine: $min_cluster_cosine"
+
+		if [ "$compile" = "yes" ]; then
+			ln -s clusterdd clstrdd$task
+			./clstrdd$task $min_cluster_cosine > document-clusters.txt
+		else
+			./clusterdd.mps $min_cluster_cosine > document-clusters.txt
+			fi
+
+		echo "	`./showcount.mps document-clusters.txt`"
+		echo "	`./showcount.mps document-clusters-by-title.txt`"
+
+		./endtime.mps
+
+		echo
+		echo "-------------------------------------------------------------------------"
+		echo "hypercluster hyper_min=$hyper_min hyper_wgt=$hyper_wgt"
+		echo "-------------------------------------------------------------------------"
+		echo
+
+		hyper_min=.3
+		hyper_wgt=.3
+
+		export hyper_min
+		export hyper_wgt
+
+		echo "	Hyper cluser min cosine: $hyper_min"
+
+segtabs
+tabprint "hyper doc"
+
+		if [ "$compile" = "yes" ]; then
+			ln -s hypercluster hype$task
+			./hype$task $hyper_min $hyper_wgt < document-clusters-table.txt \
+				> hyperclusters.txt
+		else
+			./hypercluster.mps $hyper_min $hyper_wgt < document-clusters-table.txt \
+				> hyperclusters.txt
+			fi
+
+		echo "	`./showcount.mps hyperclusters.txt`"
+	
+		./endtime.mps
+		
+		fi
+	fi
+
+
+segtabs
+tabprint "<done>"
+
+echo
+echo "__________________________________________"
+./endtime.mps 
+
+# rm -f *.tmp tmp tmp1

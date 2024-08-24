@@ -1,0 +1,29 @@
+# convert.script
+# Copyright 2014, 2022, 2023 Kevin C. O'Kane
+
+# May 9, 2022
+
+max_docs=1000000
+
+export max_docs
+compile="no"
+
+echo "	Database name not given - default ohsu database used"
+DB="ohsu"
+
+export DB
+
+echo $DB > DBPREFIX
+
+	if [ "$compile" = "yes" ]; then
+		./reformat < $DB.medline > $DB.converted
+	else
+		./reformat.mps < $DB.medline > $DB.converted
+	fi
+
+echo "	`./showcount.mps $DB.converted`"
+echo "	`./showcount.mps titles.list`"
+
+wc -l titles.list > MAXDOCS
+
+./endtime.mps

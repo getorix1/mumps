@@ -1,0 +1,41 @@
+#!/bin/bash
+# Copyright 2014 Kevin C. O'Kane
+
+cat /dev/null > RunTimes
+
+if [ -f "DBPREFIX" ]
+        then
+        db=`cat DBPREFIX`
+        echo "Using $db.converted"
+else
+        echo "File DBPREFIX not found"
+        exit
+        fi
+
+
+CPUS=`grep processor /proc/cpuinfo | wc -l`
+echo "Number or processing elements: $CPUS"
+
+for x in 10000
+	do
+		echo "processing $x"
+		if [ -d $x ]
+			then
+			cd $x
+			rm *
+		else
+			mkdir $x
+			cd $x
+			fi
+
+		for m in ../*.mps
+			do
+			ln -s $m $(basename $m)
+			done
+		ln -s ../$db.medline $db.medline
+		ln -s ../$db.converted $db.converted
+		ln -s ../index.script index.script
+		ln -s ../basic.stop.words basic.stop.words
+		index.script $x > ../output.$x & 
+		cd ..
+	done

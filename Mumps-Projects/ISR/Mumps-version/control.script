@@ -1,0 +1,198 @@
+#!/bin/bash
+
+#----------------------------------
+#	(c) 2024 Kevin C. O'Kane
+#	June 5, 2024
+#----------------------------------
+
+tabs 10
+
+segtabs () {
+
+for (( i=0 ; i<$task ; i++ ));
+        do
+	printf "\t" "" 1>&2
+	done
+}
+
+tabprint () {
+	printf "%s\r" "$1" 1>&2
+	}
+
+echo
+echo "-----------------------------------------------"
+
+#rm -f tasks
+
+compile="no"
+compile="yes"
+
+export compile
+
+DB="ohsu"
+
+if [ -z $1 ]
+	then
+		in_docs=1000
+		echo "Not doc count given."
+		echo "1000 used."
+	else
+		in_docs=$1
+	fi
+
+cpu_count=`grep processor /proc/cpuinfo | wc -l`
+cpu_count=1
+
+if [ "$compile" = "yes" ]; then
+	make -j 8 -B
+	fi
+
+FILE="../$DB.converted"
+TITLES="../titles.list"
+
+if [ ! -f "$FILE" ] || [ ! -f "$TITLES" ]; then
+
+	echo
+	echo "***********************"
+	echo "Processing input file"
+	echo "***********************"
+
+	rm -f titles.list ../titles.list
+
+        if [ "$compile" = "yes" ]; then
+                reformat < ../$DB.medline > ../$DB.converted
+        else
+                ./reformat.mps < ../$DB.medline > ../$DB.converted
+        fi
+else
+        echo "  Database not reformatted - using existing database."
+	./endtime.mps
+	fi
+
+echo
+echo "***************************************"
+echo "Docs converted: `wc -l ../$DB.converted`"
+echo "***************************************"
+
+rm -r -f segment*
+
+echo
+echo "Processing $1 documents."
+
+echo "Number of processing elements: $cpu_count"
+
+max_docs=$((in_docs / cpu_count))
+
+total_docs=$((cpu_count*max_docs))
+echo "Processing $total_docs total docs"
+echo
+
+head -$total_docs ../titles.list > titles.list
+echo "  title.list line count: `./showcount.mps titles.list`"
+echo
+
+# to separate the file into cpu_count sections and
+# prrocess the first max_docs in each, use the following
+# which provides a sampling across the entire database.
+# If you use this, change the above so all titles from
+# titles.data are copies to titles.list.
+
+# to process the first max_docs*cpu_count docs from the database,
+# use the following.
+
+	total_docs=$((max_docs*cpu_count))
+	head -$total_docs ../$DB.converted > db.tmp
+	in_file="db.tmp"
+
+# the number of lines per chunk will vary but the total will
+# be correct. this is because the chunk files sizes are approx
+# equal but the constutent lines vary in length thus a variation
+# in total line count.
+
+split -n l/$cpu_count --numeric-suffixes=10 $in_file
+
+echo
+echo "Segment data bases"
+wc x*
+echo
+
+# For each cpu, create a sub-directory to process a section of the
+# converted file. Link the code into the segment directory.
+# Start a parallel task to process the segment.
+
+echo
+
+for (( task=0 ; task<$cpu_count ; task++ )); 
+	do
+	segtabs
+	tabprint "Task $task"
+	done
+
+echo
+
+for (( task=0 ; task<$cpu_count ; task++ )); 
+	do
+	segtabs
+	tabprint "---------"
+	done
+
+echo
+
+starttime.mps
+
+for (( i=0 ; i<$cpu_count ; i++ )); 
+	do
+
+#	Starting segment $i
+
+	rm -r -f segment$i
+	mkdir -p segment$i
+	cd segment$i
+
+	dbx=$(($i + 10))
+	mv ../x$dbx ohsu.converted
+
+#	Database $dbx 
+
+	cp ../index.script .
+	ln -s ../basic.stop.words basic.stop.words
+	ln -s ../titles.list titles.list
+
+	for pgm in ../*.mps
+		do
+		# link to .mps file
+		filename=$(basename -- "$pgm")
+		ln -s ../$filename $filename
+		# link to compiled file
+		filename="${pgm%.*}"
+		filename=$(basename -- "$filename")
+		ln -s ../$filename $filename
+		done
+
+	rm -f output
+	index.script ohsu $i > output &
+
+#	assign each task to a cpu
+#	taskset -cp $cpu,$(($cpu+1)) $! >> ../tasks
+#	taskset -cp $i $! >> ../tasks
+
+	cd ..
+
+	done
+
+wait
+
+echo
+
+for (( task=0 ; task<$cpu_count ; task++ )); 
+	do
+	segtabs
+	tabprint "----------"
+	done
+echo
+endtime.mps
+# reset tabs
+tabs -8
+echo
+echo
+
