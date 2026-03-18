@@ -1,3 +1,0 @@
-      zmain
-      write i,!
-      halt
