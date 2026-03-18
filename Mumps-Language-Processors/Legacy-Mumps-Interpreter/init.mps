@@ -1,1 +1,0 @@
-	w "Today is: ",$zd,!
