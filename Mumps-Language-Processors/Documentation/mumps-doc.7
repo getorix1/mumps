@@ -1,0 +1,2394 @@
+.TH MUMPS-DOC 7 "February 3, 2026" "Documentation" 
+
+.SH NAME
+mumps-doc \- Mumps Programming Language Interpreter and Compiler Documentation
+
+.SH AUTHOR
+\&
+.br
+
+.nf
+Kevin C. O'Kane
+Professor Emeritus
+Department of Computer Science
+University of Northern Iowa
+Cedar Falls, IA 50614
+
+kc.okane@gmail.com
+.fi
+
+A full text on this topic in both print and ebook formats are available 
+from Amazon.com
+
+Videos are available on youtube.com:
+
+https://www.youtube.com/@kevin_okane/playlists
+
+Copies of the software used in this tutorial are are available at:
+
+http://www.cs.uni.edu/~okane/
+http://threadsafebooks.com/
+
+.SH COPYRIGHT
+\&
+.br
+
+Copyright (C)  2026  Kevin C. O'Kane
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+
+A copy of the license is available at
+
+https://www.gnu.org/licenses/fdl-1.3.en.html
+
+.SH Mumps History
+\&
+.br
+
+Beginning in 1966, 
+.ft I
+Mumps 
+.ft P
+(also sometimes referred to as M), was developed by Neil Pappalardo and 
+others in Dr. Octo Barnett's lab at the Massachusetts General Hospital on a PDP-7. 
+It was later ported to a number of machines including the then widely used PDP-11 and 
+VAX, among others.
+
+Mumps is a general purpose programming language that supports a native, 
+multi-dimensional and hierarchical database facility.
+
+The acronym stands for the Massachusetts General Hospital Utility Multi-programming 
+System. It is widely used in financial and clinical applications and remains to 
+this day.
+
+.SH "Mumps Implementations"
+\&
+.br
+The implementations currently available are:
+
+.TP
+Intersystems (Caché)
+http://www.intersystems.com/ (called Caché®)
+
+.TP
+FIS (GT.M) 
+https://github.com/ChristyV/fis-gtm
+
+.TP
+Open Mumps Interpreter and Compiler
+http://www.cs.uni.edu/~okane/
+https://threadsafebooks.com/
+
+.TP
+MUMPS Database and Language by Ray Newman
+http://sourceforge.net/projects/mumps/
+
+.PP
+The dialects and extensions accepted by these implementations vary so you should 
+consult the documentation of the version you are using for further details. 
+The examples used here are drawn from Open Mumps.
+
+.SH
+\&
+.br
+Open Mumps Interpreter and Compiler
+
+The examples in this tutorial are designed to run in the Open Mumps Interpreter. 
+Written in C/C++, it is an open source distribution licensed under the GPL V2 License. 
+The distribution is available at:
+
+.nf
+	http://www.cs.uni.edu/~okane/
+	https://threadsafebooks.com/
+.fi
+
+Once installed, the interpreter may be executed in interactive command line mode by 
+typing:
+
+ 	mumps
+
+To exit, type halt. 
+
+Mumps commands may be entered and executed immediately. To execute a program contained 
+in a file, to the mumps prompt type:
+
+ 	goto ^filename.mps
+
+You may also execute a file from a Linux terminal prompt with a command like:
+
+ 	mumps filename.mps
+
+Alternatively, a file of Mumps code may be executed directly if you set the file's 
+protections to executable and have on its first line:
+
+ 	#!/usr/bin/mumps
+
+The program may now be executed by typing the file name to the command prompt.
+
+.SH Mumps Syntax Overview
+\&
+.br
+
+Mumps syntax will be discussed in detail below but it is important at this time to 
+point out that standard Mumps code may not contain embedded blanks except within 
+quoted strings. 
+
+In Mumps, a blank is a delimiter.
+
+ set var=3*x+y         ; correct
+ set var = 3 * x + y   ; wrong - blanks not allowed in expressions
+
+.SH Variables
+\&
+.br
+
+Mumps has two types of variables: local and global.
+
+Global variables are stored on disk and continue to exist when the program that 
+created them terminates. 
+
+Local variables are stored in memory and disappear when the program that created 
+them terminates.
+
+A Mumps variable name must begin with a letter or percent sign (%) and may be 
+followed by letters, percent signs, or numbers. 
+
+Variable names are case sensitive. The underscore (_) and dollar sign ($) 
+characters are not legal in variable names.
+
+Global variable names are always preceded by a circumflex (^), local variables 
+are not.
+
+The contents of all Mumps variables are stored as varying length character strings. 
+The maximum string length permitted is determined by the implementation but this 
+number is usually at least 512 and often far larger (normally 4096 in Open Mumps).
+
+In Mumps there are no data declaration statements. Variables are created as needed 
+when a value is assigned to a variable name for the first time.
+
+Values may be assigned to variables by either a \fIset\fP, \fImerge\fP 
+or \fIread\fP command. 
+
+Variables may also be created if they appear as arguments to the \fInew\fP command. 
+
+Once created, local variables normally persist until the program ends or they are 
+destroyed by a \fIkill\fP command. Global variables persist until 
+destroyed by a \fIkill\fP command.
+
+In its original implementation, Mumps did not have a means to pass parameters to 
+invoked routines. Consequently, to this day, variables are, ordinarily, known to 
+all routines.
+
+Mumps variables are not typed. The basic data type is string although integer, 
+floating point and logical (true/false) operations can be performed on variables 
+if their contents are appropriate.
+
+The values in a string are, at a minimum, any ASCII character code between 32 to 
+127 (decimal) inclusive. Some implementations permit additional character codings 
+for other languages.
+
+In Open Mumps, some characters outside this range can be generated in \fIwrite\fP commands 
+with the \fI$char()\fP function.
+
+Array references are formed by adding a parenthesized list of indices to the variable 
+name such as: 
+
+name("abc",2,3)
+
+Indices may evaluate to numbers or strings or both. String constants must be quoted, 
+numeric constants need not be quoted.
+
+Example Variables
+
+.nf
+ set %=123             ; a scalar local variable
+ set ^x1("ducks")=123  ; ^ducks is a global array
+ set fido="123"        ; Local variable
+ set Fido="dog"        ; Names are case sensitive
+ set x("PI")=3.1414    ; x is a local array reference
+ read ^x(100)          ; read value into global array element
+ read %%123            ; read value into scalar
+ set input_dat=123     ; wrong - underscore not permitted
+ set 1x=123            ; wrong - must begin with letter or %
+ set $x=123            ; wrong - $ sign not permitted
+ read _A               ; wrong - underscore error
+.fi
+
+.SH String Constants
+\&
+.br
+
+String constants are enclosed in double quote marks ("). 
+
+A double quote mark itself can be inserted into a string by placing two immediately 
+adjacent double quote marks ("") in the string. 
+
+The single quote mark (') is the not operator with no special meaning within 
+quoted strings. 
+
+The C/C++/Java convention of preceding some special characters by a backslash 
+does not apply in Mumps.
+
+.SS
+\&
+.br
+.nf
+"The seas divide and many a tide"
+"123.45" (means the same as 123.45)
+"Bridget O'Shaunessey? You're not making that up?" 
+"""The time has come,"" the walrus said."
+\\"the time has come\\" (wrong - no backslash quotes)
+\&'now is the time'    (wrong - single quote means NOT)
+.fi
+
+.SH Numeric Constants
+\&
+.br
+
+Numbers can be integers or floating point. Quotes are optional.
+
+.nf
+100
+1.23
+-123
+-1.23
+"3.1415"
+.fi
+
+Some implementations permit scientific notation. Each implementation has limits 
+on accuracy and size.  Consult implementation documentation for details.
+
+In Open Mumps, constants in scientific notation are a special case of strings 
+and must be enclosed in quotes as strings and a numeric operator (such as unary +) 
+is needed to impose a numeric interpretation on the contents:
+
+.nf
+> set i="123E4" set j="100E4"
+> write i+j," ",+i," ",+j,!
+2.23e+06 1.23e+06 1e+06
+.fi
+
+.SH Mixed Strings & Numeric Constants
+\&
+.br
+
+Mumps  has some peculiar ways of handling strings when they participate in numeric 
+calculations.
+
+If a string begins with a number but ends with trailing non-numeric characters 
+and it is used as an operand in an arithmetic operation, only the leading numeric 
+portion will participate in the operation. The trailing non-numeric portion will 
+be ignored.
+
+A string not beginning with a numeric character is interpreted numerically as having 
+the value of zero.
+
+.SH Numeric Interpretation of Strings
+\&
+.br
+
+.nf
+1+2         is evaluated as 3 
+"ABC"+2     is evaluated as 2 
+"1AB"+2     is evaluated as 3 
+"AA1"+2     is evaluated as 2 
+"1"+"2"     is evaluated as 3 
+""          is evaluated as 0
++"-12AB"    is evaluated as -12
++"123.45e4" is evaluated as 1.2345e+06
+.fi
+
+.SH Logical Values
+\&
+.br
+
+Logical values in Mumps are special cases of strings. 
+
+A numeric value of zero, any string beginning with a non-numeric character, or a 
+string of length zero is interpreted as false. 
+
+Any numeric string value other than zero is interpreted as true. 
+
+Logical expressions yield either the digit zero (for false) or one (for true). 
+
+The result of any expression can be used as a logical operand.
+
+.SH Logical Expressions
+\&
+.br
+
+Logical expressions yield either zero (for false) or one (for true). 
+The result of any numeric expression can be used as a logical operand. 
+
+The not operator is the single quote:  '
+
+.nf
+1       true    '1      false
+0       false   '0      true
+""      false   '""     true
+"A"     false   '"A"    true
+"99"    true    '"99"   false
+"1A"    true    '"1A"   false
+"000"   false   '"000"  true
+"-000"  false   '"-000" true
+"+000"  false   '"+000" true
+"0001"  true    '"0001" false
+.fi
+
+.SH Arrays
+\&
+.br
+
+Arrays in Mumps come in two varieties: local and global. 
+
+Global array names are always prefixed by a circumflex (^) and are stored 
+on disk. They retain their values when a program terminates and, once set, 
+can be accessed by other programs operating at the same time. They can only 
+be deleted by the \fIkill\fP command.
+
+Local arrays are destroyed when the program creating them terminates or when 
+they are the subject of a \fIkill\fP command. Local arrays are not accessible to 
+other programs unless the other programs were invoked by the program which 
+created the array.
+
+Arrays (both global and local) are not declared or pre-dimensioned. 
+
+Array (both global and local) elements are created by \fIset\fP, \fImerge\fP or \fIread\fP statements. 
+
+The indices of an array (both global and local) are specified by a comma separated list of numbers or strings or both surrounded by parentheses.
+
+wrong - Arrays (both local and global) are sparse. That is, if you create an element of an array, let us say element 10, it does not mean that Mumps has created any other elements. In other words, it does not imply that there exist elements 1 through 9. You must explicitly create these it you want them. 
+
+Array indices may be positive or negative numbers, character strings, or a combination of both.
+
+Arrays in Mumps may have multiple dimensions limited by the maximum line length (at least 512 characters).
+
+Arrays may be viewed as either matrices or trees. 
+
+When viewed as trees, each successive index is part of a path description from the 
+root to an internal or leaf node.
+
+Data may be stored (or not stored) at any node along the path of a tree.
+
+Global array names are prefixed with the circumflex character (^) and local arrays are not.
+
+Local arrays are destroyed when the program ends while global arrays, being disk 
+resident, persist.
+
+ set a(1,2,3)="text value"      ; local array
+ set ^b(1,2,3)="text value"     ; global array
+
+ set a("text string")=100       ; local array
+ set ^b("text string")=100      ; global array
+
+ set i="testing" set a(i)=1001  ; local array
+ set i="testing" set ^b(i)=1001 ; global array
+
+ set a("Iowa","Black Hawk County","Cedar Falls")="UNI"
+ set ^b("Iowa","Black Hawk County","Cedar Falls")="UNI"
+
+ set a("Iowa","Black Hawk County",Waterloo")="John Deere"
+ set ^b("Iowa","Black Hawk County",Waterloo")="John Deere"
+
+ set a[1][2][3]=123     ; wrong - brackets not allowed
+ set a(1, 2, 3)=123     ; wrong - embedded blanks
+ set a[1,2,3]=123       ; wrong - brackets again
+
+.SH Array Examples
+\&
+.br
+
+ set a=”1ST FLEET”
+ set b=”BOSTON”
+ set c=”FLAG”
+ set ^ship(a,b,c)="CONSTITUTION"
+ set ^captain(^ship(a,b,c))="JONES"
+ set ^home(^captain(^ship(a,b,c)))="PORTSMOUTH"
+ write ^ship(a,b,c) → CONSTITUTION
+ write ^captain("CONSTITUTION") → JONES
+ write ^home("JONES") → PORTSMOUTH
+ write ^home(^captain("CONSTITUTION")) → PORTSMOUTH
+ write ^home(^captain(^ship(a,b,c))) → PORTSMOUTH
+
+.SH Hierarchical Data
+\&
+.br
+
+Mumps was originally written to manage medical records which are often viewed as 
+hierarchically organized. For that reason, the designers needed a convenient 
+means to store data in a tree structure and developed the notion of global 
+arrays as a result. 
+
+.SH Arrays As Trees
+\&
+.br
+
+In Mumps, both global and local arrays can be viewed as trees. When viewed as a 
+tree, each successive index in an array reference is interpreted as part of a 
+path description from the root of the array to a node. Nodes along the path may 
+(or may not) contain data. In the diagram below, the array is named root. 
+Numeric indices have been used for simplicity but string indices are also legal.
+
+Data may be inserted into the tree by assignment statements. Not all nodes need have data. 
+
+.nf
+ set ^root(1,37)=1
+ set ^root(1,92,77)=2
+ set ^root(1,92,177)=3
+ set ^root(5)=4
+ set ^root(8,1)=5
+ set ^root(8,100)=6
+ set ^root(15)=7
+ set ^root(32,5)=8
+ set ^root(32,5,3)=9
+ set ^root(32,5,8)=10
+ set ^root(32,123)=11
+.fi
+
+.SH String Indices
+\&
+.br
+
+Strings are permitted as indices in Mumps:
+
+.nf
+ set ^lab(1234,”hct”,”05/10/2008”,38)=””
+ set ^lab(1234,”hct”,”05/12/2008”,42)=””
+ set ^lab(1234,”hct”,”05/15/2008”,35)=””
+ set ^lab(1234,”hct”,”05/19/2008”,41)=””
+.fi
+
+Mumps permits both numeric and string indices.
+
+Sometimes the indices themselves are the data and nothing ("" is the empty string) 
+is actually stored at the node. That is the case in the above where the last index 
+value is the actual test result. Using the functions $data() and $order() it is 
+easy to navigate through nodes at any level of a tree.
+
+In the code above, the Hematocrit (hct) results for patient 1234 are stored for 
+several dates. The actual hct results for each observation are the last index value.
+
+.SH Access to Mumps Arrays
+\&
+.br
+
+Mumps array nodes can be accessed directly if you know all the indices.
+
+Alternatively, you can navigate through an array tree by means of the $data() 
+and $order() builtin functions. 
+
+The first of these, $data(), tells you if a node exists, if it has data, and if 
+it has descendants. 
+
+The second, $order(), is used to navigate, at a given level of a tree, from one 
+sibling node to the next node having an alphabetically higher (or lower) index value.
+
+For example, given:
+
+.nf
+ set ^a(1)=100,^a(2)=200,^a(3)=300,^a(2,1)=210,^a(4,1)=410
+
+$data(^a(1))   is 1  (node exists, has no descendant) 
+$data(^a(1,1)) is 0  (node does not exist)
+$data(^a(2))   is 11 (node exists, has data, has descendant)
+$data(^a(4))   is 10 (node exists, has no data, has descendant)
+
+$order(^a(“”))   is 1  (first index at level 1)
+$order(^a(1))    is 2  (next higher index)
+$order(^a(2,””)) is 1  (first index at level 2 beneath index 2)
+$order(^a(4))    is “” (no more indices)
+.fi
+
+.SH Global Array Examples
+\&
+.br
+
+ for i=1:1:100 do	; store values only at leaf nodes
+ . for j=1:1:100 do
+ .. for k=1:1:100 do
+ ... set ^mat1(i,j,k)=0
+
+This would be similar to a traditional three dimensional matrix in C or
+Fortran.  There are 1,000,000 cells (nodes) each  with a value of zero. The
+global array may be thought of as 100 planes of matrices each 100 by
+100.
+
+Access to each element of the matrix requires three indices: ^a(i,j,k).
+
+    mat(1,1,1)
+    mat(1,1,2)
+    mat(1,2,3)
+    ...
+    mat(1,2,1)
+    mat(1,2,2)
+    ...
+
+Alternatively: 
+
+ for i=1:1:100 do    ; store values at all node levels
+ . set ^mat(i)=i
+ . for j=1:1:100 do
+ .. set ^mat(i,j)=j
+ .. for k=1:1:100 do
+ ... set ^mat1(i,j,k)=k
+
+This example is best thought of as a tree of depth three. At the  first
+level  under the root, there are 100 cells (nodes) at each of which is stored a
+value from 1 to 100, inclusive. For each node at level 1, there are 100
+descendant cells (nodes) at level two each containing a value from 1 to 100.
+Finally for each node at level two, there are 100 descendant cells (nodes) at
+level 3 likewise containing values between 1 and 100.
+
+In total, there are 100 level one nodes, 10,000 level  two  nodes,  and
+1,000,000  level  three  nodes.  The  tree contains 1,010,100 values in
+total (100 + 10,000 + 1,000,000). 
+
+    mat(1)
+    mat(1,1)
+    mat(1,1,1)
+    mat(1,1,2)
+        ...
+    mat(1,2)
+    mat(1,2,1)
+    mat(1,2,3)
+        ...
+    mat(2)
+    mat(2,1)
+    mat(2,1,1) 
+
+Access to a node requires one, two or three indices depending on the location of the 
+level of the tree at which the node sought is stored.
+
+.nf
+  for i=10:10:100 do	; sparse matrix - elements missing
+  . for j=10:10:100 do
+  .. for k=10:10:100 do
+  ... set ^mat1(i,j,k)=0
+.fi
+
+Note: for i=10:10:100 means iterate with i beginning at 10 and incrementing by 10 
+up to and including 100. Thus, I will have the values 10, 20 ... 100. 
+
+The do without an argument causes the block following the command to be executed. Inner blocks have leading decimal points to indicate their level of depth.
+
+In this example, the array is also a tree but, unlike the first example, 
+many elements do not exist. At level one, there are only ten nodes 
+(10, 20, 30, ... 90, 100). Each level one node has ten descendants and each 
+level two node has ten descendants. 
+
+In total, the tree has 10,110 (10 + 100 + 10,000) nodes.
+
+For example, the node ^a(15,15,15) does not exist. You may, however, create it with 
+something of the form:
+
+ set ^a(15,15,15)=15
+
+Now the tree has 10,111 nodes.
+
+.SH Mumps Commands
+\&
+.br
+
+A Mumps program consists of a sequence of commands. Most commands have arguments 
+to be executed. Some commands, however, do not have arguments.
+
+In most cases, more than one command may appear on a line.
+
+Some of the common commands that have arguments are 
+.ft I
+set 
+.ft P
+(assignment), for 
+(loop control), 
+.ft I
+if 
+.ft P
+(conditional execution), 
+.ft I
+read 
+.ft P
+(input), 
+.ft I
+write 
+.ft P
+(output), and so forth. 
+
+The 
+.ft I
+halt 
+.ft P
+command, on the other hand, does not have an argument (if it does, 
+it becomes the hang command).
+
+Each Mumps command begins with a keyword that may, in most cases, be abbreviated. 
+Most abbreviations are a single letter. Excessively abbreviated Mumps code is 
+compact but difficult to read.
+
+The complete list is given below.
+
+.SH Postconditionals 
+\&
+.br
+
+Mumps commands may optionally be followed by what is known as a postconditional.
+
+Postconditionals are expressions that immediately follow a command. There are no 
+spaces between a command and a postconditional. A postconditional is delimited 
+from the command word (or abbreviation) by a colon.
+
+If the postconditional expression is true, the command and its arguments are 
+executed. If the expression is false, the command and all of its arguments are 
+skipped and execution advances to the next command. 
+
+The following is an example of a post-conditional applied to the 
+.ft I
+\fIset\fP 
+.ft P
+command:
+
+ set:a=b i=2
+
+The 
+.ft I
+set 
+.ft P
+command argument (assign 2 to variable i) will be executed only if a equals b. 
+
+Some commands permit individual arguments to be postconditionalized.
+
+One use of postconditionals of Mumps is for loop control. Unless blocks and the do 
+command are used, the scope of a for command is the current line only. 
+
+This creates a problem if a loop needs to terminate for a condition not established 
+in the loop control expression if you attempt to use an if command because the 
+scope of an if command is also the remainder of the line on which it appears.
+
+For example, assume you have a global array named ^a which has an unknown number 
+of nodes. Assume that each node is indexed sequentially beginning with 1 (1, 2 , 3 , ...).
+If you attempt to print out the values in the nodes with the following:
+
+ for i=1:1 write ^a(i),!
+
+You encounter an error when you attempt to access a node of the array that 
+does not exist.
+
+If you add an if command:
+
+ for i=1:1 if ‘$data(^a(i)) quit  write ^a(i),!
+
+you still have a problem (single quote is the NOT operator in Mumps). 
+
+The expression ‘$data(^a(i)) is TRUE if the node ^a(i) does NOT exist and false 
+otherwise.
+The intent is to quit the loop when there are no more nodes in ^a (note the 
+two blanks after the quit command - since it has no arguments, two blanks 
+are required).
+However, the if command has scope of the remainder of the line on which it occurs.
+Thus the \fIwrite\fP will not execute if a node does exist because the expression 
+in the if will be false ($data(^a(i)) is true which is then made false by the 
+not operator). Consequently, the remainder of the line is skipped.
+Likewise, if the node does not exist ($data(^a(i)) is false but becomes true 
+because of the not operator), the loop will terminate.
+Thus, nothing at all will be printed.
+
+An else command will not help since it will still be on the same line following the 
+if and will be ignored if the if expression is false: 
+
+ for i=1:1 if ‘$data(^a(i)) quit  else  write ^a(i),!
+
+(Note the two blanks after the else).
+If ^a(i) exists, the remainder of the line is skipped. If ^a(i) does not 
+exist, the loop is terminated.
+Hence the postconditional was invented.
+
+ for i=1:1 quit:‘$data(^a(i))  write ^a(i),!
+
+The quit will execute only when the postconditional expression is true 
+which occurs when there are no more nodes of the array.
+
+Problem solved!
+
+.SH Operator Precedence
+\&
+.br
+
+Expressions in Mumps are evaluated strictly left-to-right without precedence. If you want a different order of evaluation, you must use parentheses. 
+
+This is true for all Mumps expressions in all Mumps commands. It is a common source of error, especially in if commands with compound predicates.
+
+For example, a<10&b>20 really means (((a<10)&b)>20) when you probably 
+wanted (a<10)&(b>20) or, equivalently, a<10&(b>20).
+
+.SH Operators
+\&
+.br
+
+.SS Basic Operators
+\&
+.br
+
+.nf
+Assignment:               =
+
+Unary Arithmetic:         + -
+
+Binary Arithmetic:        +  addition
+                          -  subtraction
+                          *  multiplication
+                          /  full division
+                          \\  integer division
+                          #  modulo
+                          ** exponentiation
+.fi
+
+.SS Arithmetic Relational
+\&
+.br
+
+.nf
+    >          greater than
+    <          less than
+    \&'>         not greater / less than or equal
+    \&'<         not less / greater than or equal
+.fi
+
+.SS String Binary
+\&
+.br
+
+.nf
+    _          concatenate
+.fi
+  
+.SS String relational operators 
+\&
+.br
+
+.nf
+    =          equal
+    [          contains - left operand contains right
+    ]          follows  - left alphabetically follows right operand
+    ?          pattern
+    ]]         Sorts after
+
+    \&'=         not equal
+    \&'[         not contains
+    \&']         not follows
+    \&'?         not pattern
+    \&']]        not sorts after
+.fi
+
+.SS Pattern Match Operator
+\&
+.br
+
+.nf
+    A for the entire upper and lower case alphabet.
+    C for the 33 control characters.
+    E for any of the 128 ASCII characters.
+    L for the 26 lower case letters.
+    N for the numerics
+    P for the 33 punctuation characters.
+    U for the 26 upper case characters.
+    A literal string.
+.fi
+
+The letters are preceded by a repetition count. A dot means any number. 
+Consult documentation for more detail.
+
+.nf
+ set A="123-45-6789"
+ if A?3N1"-"2N1"-"4N write "OK"  ; writes OK
+ if A'?3N1"-"2N1"-"4N write "OK" ; writes nothing
+
+ set A="JONES, J. L."
+ if A?.A1",".A write "OK"  ; writes OK
+ if A'?.A1",".A write "OK" ; writes nothing
+.fi
+
+.SS Logical Operators
+\&
+.br
+
+.nf
+    &          and
+    !          or
+    \&'          not
+.fi
+
+    1&1        yields 1
+    2&1        yields 1
+    1&0        yields 0
+    1&(0<1)    yields 1
+    1!1        yields 1
+    1!0        yields 1
+    0!0        yields 0
+    2!0        yields 1
+    \&'0         yields 1
+    \&'1         yields 0
+    \&'99        yields 0    ; any non-zero value is true
+    \&'""        yields 1    ; empty strings are false
+.fi
+
+.SS Indirection Operator
+\&
+.br
+
+The indirection operator (@) causes the value of the expression to its right to be executed and the result replaces the indirect expression.
+
+
+.nf
+    set a="2+2"
+    write @a,!        ; writes 4
+
+    kill ^x
+    set ^x(1)=99
+    set ^x(5)=999
+    set v="^x(y)"
+    set y=1
+    set x=$order(@v   ; equivalent to ^x(1)
+    write x,!         ; writes next index of ^x(1): 5
+    set v1="^x"
+    set x=$order(@(v1_"("_y_")")) ;
+    write x,!         ; writes 5
+.fi
+
+
+.SH Syntax Rules
+\&
+.br
+
+A line may begin with a label. If so, the label must begin in column one.
+
+If column one has a semicolon, the line is a comment. If a semicolon appears in a 
+position where a command word could appear, the remainder of the line is a comment.
+
+After a label there must be at least one blank or a <tab> character before the first command.
+
+If there is no label, column one must be a blank or a <tab> character followed by some 
+number of blanks, possibly zero, before the first command.
+
+After most command words or abbreviations there may be an optional post-conditional. 
+No blanks or <tab> characters are permitted between the command word and the post-conditional.
+
+If a command has an argument, there must be at least one blank after the command word and 
+its post-conditional, if present, and the argument.
+
+Expressions (both in arguments and post-conditionals) may not contain embedded blanks 
+except within double-quoted strings.
+
+If a command has no argument and it is the final command on a line, it is followed by 
+the new line character.
+
+If a command has an argument and it is the final command on a line, its last argument is 
+followed by a new line character.
+
+If a command has an argument and it is not the last command on a line, it is 
+followed by at least one blank before the next command word.
+
+If a command has no argument, there must be two blanks after the command word if there is 
+another command on the line. If it is the last command on a line, it is followed by the new line character.
+
+.SH Open Mumps Syntax Extensions
+\&
+.br
+
+In Open Mumps:
+
+If a line begins with a pound-sign (#) or two forward slashes (//), the remainder of the 
+line is taken to be a comment (non-standard extension).
+
+If a line begins with a plus-sign (+), the remainder of the line is interpreted to be an 
+in-line C/C++ statement (non-standard compiler extension).
+
+After the last argument on a line and at least one blank (two if the command has no 
+arguments), a double-slash (//) causes the remainder of the line to be interpreted as a 
+comment  (non-standard extension).
+
+.SH Line Syntax Examples
+\&
+.br
+
+
+.nf
+label  set a=123
+       set a=123
+       set a=123 set b=345
+       set:i=j a=123
+
+; standard comment
+       set a=123 ; standard comment
+# non-standard comment
+       set a=123 // non-standard comment
++ printf("hello world\n");  // non-standard C/C++ embed
+
+set a=123             ; wrong  no commands in in col 1
+ label set a=123      ; wrong - label must be in col 1
+ set a = 123          ; wrong - no blanks allowed in arguments
+ halt:a=b set a=123   ; wrong - Halt needs 2 blanks after postconditional
+.fi
+
+.SH Blocks
+\&
+.br
+
+Originally, all Mumps commands only had line scope. That is, no command extended beyond the 
+line on which it appeared. In later years, however, a block structure facility was added 
+to the language. 
+
+This lead to the introduction of the argumentless do command. Originally, all do commands 
+had arguments consisting of either a label, offset, file name or combination of these 
+that addressed a block of code to be invoked as a subroutine.
+
+An argumentless do command also invokes a block of code. The code invoked consists of the 
+lines immediately following the line containing the do command if they are at a line level 
+one greater than the line level of the do. The block ends when the declines to the line 
+level of the do or below.  
+
+Mumps lines are normally at line level one. A higher line level is achieved by preceding 
+the code on a line with one or more periods. A line with one period is at line level two, 
+one with two periods is at level three and so on. 
+
+Execution of a Mumps program normally proceeds from one level one line to the next 
+except as if, else, and goto commands may dictate otherwise. If execution encounters 
+a line at a level greater than the current level, the line is skipped unless entered 
+by means of a do command on the preceding line with a level one lower. 
+
+.nf
+For example:  
+
+  set a=1
+  if a=1 do
+  . write "a is 1",!		; block dependent on do
+  write "hello",!
+.fi
+
+The do on line 2, at line level one, if executed, invokes the one line block on line 3 
+which is at line level two. If the do is not executed, the block consisting of line 3 
+is skipped and line 4 is executed after line 2.
+
+Code at line levels greater than one may be entered by means of an argumentless do 
+command. The goto command should not be used to enter or exit  blocks of code with 
+line levels greater than one.
+
+.nf
+  set a=1
+  if a=1 do
+  . write "a is 1",!
+  . set a=a*3
+  else  do
+  . write "a is not 1",!
+  . set a=a*4
+  write "a is ",a,!
+.fi
+
+Because a has a value of 1, lines 3 & 4 will be executed and lines 6 & 7 will not be executed. 
+
+.nf
+  if a’=0 do
+  . write "a is 1",!
+  . set a=a*3
+  . if a>10 do
+  .. write "a is greater than 10",!
+  .. set a=a/2
+  . set a=a+a
+  write "a is ",a,!
+.fi
+
+The block beginning on line 2 is entered if variable a is not zero. Otherwise, execution skips to line 8
+
+The block beginning at line 5 is entered if variable a is greater than 10. Otherwise 
+line 5 & 6 are skipped and execution resumes at line 7.
+
+.SH Blocks and $Test
+\&
+.br
+
+$test is a builtin system variable that indicates if certain operations succeeded (true) or 
+failed (false). 
+
+For example, if a \fIread\fP command fails to read data (end of file, for example), $test will 
+be false after the \fIread\fP command, otherwise, true. 
+
+The open command sets $test to be true if a file is successfully opened, false otherwise. The 
+if is another command sets $test based on the result of its predicate.
+
+Both the if and else commands have an argumentless form where execution of the command 
+is determined by the current value in $test. 
+
+An oddity in Mumps is that the else command is not necessarily connected with a preceding 
+if command. The else command can be standalone. If the value in $test is false, the 
+remainder of the line on which the else appears is executed. If the value is true, execution 
+skips to the next line.
+
+For example:
+
+.nf
+ read x
+ else  write "end of file",! halt
+.fi
+
+The else executes based on the value of $test that was set as the result of the \fIread\fP 
+command. If the \fIread\fP failed, the code on the line following the else will execute and 
+the program will halt. If the \fIread\fP succeeded, the program will not halt.
+
+However, in practice, an else command is often used with a preceding if command 
+where $test is set by the if’s predicate. 
+
+In the case of an argumentless if command, the value of $test determines if 
+the remainder of the line is executed.
+
+Both the argumentless if and else require at least two blanks following the command 
+word or abbreviation.
+
+The value of $test is restored upon exit from a block:
+
+.nf
+  set a=1,b=2
+  if a=1 do                 ; $test becomes true
+  . set a=0
+  . if b=3 do               ; $test becomes false
+  .. set b=0                ; not executed
+  . else  do                ; executed 
+  .. set b=10               ; executed
+  . write $test," ",b,!     ; $test is false
+  write $test," ",b,!       ; $test restored to true
+.fi
+
+In the above, line 2 sets $test to be 1 (the predicate is true). Lines 3 & 4 are 
+executed. Line 4 sets $test to be 0 (the predicate is false). Line 5 is not executed.
+
+Line 6 is executed and, since $test is false, the do is executed and line 7 is 
+executed. Line 8 is executed with $test as 0 and b as 10.
+
+Line 9 is executed. $test is restored to the value it had in line 2 (true). The value of b is 10.
+
+.SH \fIQuit\fP
+\&
+.br
+
+A quit command in standard Mumps causes:
+
+.PP
+ A single-line scope for command to terminate, or
+.PP
+ A subroutine to return, or
+.PP
+ A code block to be exited with execution resuming on the line containing the invoking do command.
+.PP
+
+A quit command without arguments requires at least two blanks after it if there are 
+more commands on the line (the case where a quit has a postconditional).
+
+Using quit to terminate a for command:
+
+.nf
+ for i=1:1 quit:i>100  write i," ",i*i,!
+.fi
+
+When i becomes 101, the loop will terminate.
+
+.nf
+; read and write until no more input ($test is 0).
+  set f=0
+  for  do  quit:f=1  ; this quit, when executed, terminates the loop
+  . read a
+  . if '$test set f=1 quit  ; this quit returns to the do
+  . write a,!
+.fi
+
+The for without arguments (note the two blanks following it) loops forever. The do 
+invokes the block where data is read. When there is no more data, f is set to 1 
+and return is made to the line containing the for command. The for terminates when f 
+becomes 1. If the \fIread\fP succeeds, the value \fIread\fP is written and the loop iterates.
+
+Using quit to return form a legacy subroutine. Mumps originally used the do 
+command to invoke a local or remote block of code which, when completed, 
+would return the the line containing the invoking do command. This was similar 
+to the early BASIC gosub statement. The original Mumps do command did 
+not allow arguments to be passed.
+
+The argument for a do command was either a label, a label with offset, a 
+file name, or a combination of all three (some systems used different syntax):
+
+.nf
+ do lab1              ; execute beginning at label lab1
+ do lab1+3            ; execute beginning at the 3rd line following lab1
+ do ^file.mps         ; execute the contents of file.mps
+ do lab1^file.mps     ; execute contents of file.mps beginning at lab1
+ do lab1+3^file.mps   ; execute file.mps beginning at 3rd line from lab1
+.fi
+
+In each case, when the code block thus invoked ended or encountered a quit command, 
+return was made to the invoking do command. Note: if the invoking do command had 
+additional arguments, they would now be executed in sequence.
+
+.nf
+; using quit as a return from a subroutine
+  do top
+...
+top   set page=page+1
+      write #,?70,"Page ",page,!
+      quit  ; return to invoking do command
+     
+; non-standard use of break instead of quit in Open Mumps
+  for  do
+  . read a
+  . if '$test break ; exits the loop and the block
+  . write a,!
+  
+
+; loop while elements of array a exist
+ for i=1:1 quit:'$data(a(i))  write a(i),!
+
+; display all nodes at level one
+ set i=”” for  set i=$order(^a(i)) quit:i=””  write ^a(i),!
+
+; inner loop quits if an element of array b has the value 99 but
+; outer loop continues to next value of i.
+  set x=0
+  for i=1:1:10 for j=1:1:10 if b(i,j)=99 set x=x+1 quit
+
+; outer loop terminates when f becomes 1 in the block
+  set f=0
+  for i=1:1:10 do  quit:f=1
+  . if a(i)=99 set f=1
+
+; The last line of the block is not executed when i>50
+  set f=1
+  for i=1:1:100 do
+  . set a(i)=i
+  . set b(i)=i*2
+  . if i>50 quit
+  . set c(i)=i*i
+.fi
+
+Later versions of Mumps permitted functions and subroutines that could pass parameters and 
+return, in the case of functions, values. Thus, the quit command can also have an argument:
+
+.nf
+; returning a value from a function
+
+   set i=$$aaa(2)
+   write i,!          ; writes 4
+   halt
+
+ aaa(x)	set x=x*x
+          quit x
+.fi
+
+.SH Commands
+\&
+.br
+
+.SS \fIBreak\fP
+\&
+.br
+
+Originally, break was used as an aid in debugging. See documentation for your system to see 
+if it is implemented.
+
+In the Open Mumps dialect, a break command is used to terminate a block 
+(non-standard). Execution continues at the first statement following the block.
+
+.nf
+; non-standard use of break (Open Mumps)
+
+  for  do
+  . read a
+  . if '$test break ; exits the loop and the block
+  . write a,!
+.fi
+
+.SS \fIClose\fP Command
+\&
+.br
+
+Closes and disconnects one or more I/O units. May be implementation defined. All buffers are 
+written to output files and released. No further I/O may take place to closed unit 
+numbers until a successful open command has been issued on the unit. The syntax of 
+the arguments to this command varies depending on implementation.
+
+.nf
+ 	close 1,2 ; closes units 1 and 2
+.fi
+
+.SS \fIDo\fP Command
+\&
+.br
+
+Executes a dependent block, or a labeled block of code either in the current program or a program on disk.
+
+.nf
+ 	if a=b do    ; executes the dependent block that follows
+ 	. set x=1
+ 	. write x
+-----------------------------------------------------
+
+ 	    do abc   ; executes the code block beginning at abc
+ 	... intervening code ...
+abc		set x=1
+ 		write x
+ 		quit ; returns to invoking do
+-----------------------------------------------------
+ 	
+   do ^abc.mps       ; invokes the code block in file abc.mps
+-----------------------------------------------------
+   
+   do abc(123)       ; invokes code at label abc passing an argument
+.fi
+
+.SS \fIElse\fP Command
+
+The remainder of the line is executed if $test is false (0). 
+
+$test is builtin system variable which is set by several commands to indicate 
+success. No preceding if command is required. Two blanks must follow the command.
+
+.nf
+ 	else  write "error",! halt		; executed if $test is false
+
+ 	else  do
+ 	. write "error",!
+ 	. halt
+.fi
+
+.SS \fIFor\fP Command 
+\&
+.br
+
+The for command can be iterative with the basic format:
+
+.nf
+ for variable=start:increment:limit
+
+ for i=1:1:10 write i,!    ; writes 1,2,...9,10
+ for i=10:-1:0 write i,!   ; writes 10,9,...2,1,0
+ for i=1:2:10 write i,!    ; writes 1,3,5,...9 
+ for i=1:1 write i,!       ; no upper limit - endless
+.fi
+
+The for commands can be nested:
+
+.nf
+ for i=1:1:10 write !,i,": " for j=1:1:5 write j," "
+
+output:
+
+1: 1 2 3 4 5
+2: 1 2 3 4 5
+3: 1 2 3 4 5
+.
+.
+.
+10: 1 2 3 4 5
+.fi
+
+A comma list of values may also be used:
+
+.nf
+
+	for i=1,3,22,99 write i,!    ; 1,3,22,99
+.fi
+
+Both modes may be mixed:
+
+.nf
+	for i=3,22,99:1:110 write i,!  ; 3,22,99,100,...110
+	for i=3,22,99:1 write i,!      ; 3,22,99,100,...
+.fi
+
+With no arguments, the command becomes loop forever (two blanks required after for):
+
+.nf
+	set i=1
+	for  write i,! set i=1+1 quit:i>5   // 1,2,3,4,5
+.fi
+
+.SS \fIFor\fP with Quit 
+\&
+.br
+
+Note: two blanks after for and do
+
+.nf
+  set i=1
+  for  do  quit:i>5
+  . write i,!
+  . set i=i+1
+
+writes 1 through 5
+
+ for i=1:1:10 do
+ . write i
+ . if i>5 write ! quit
+ . write " ",i*i,!
+
+output:
+
+1 1
+2 4
+3 9
+4 16
+5 25
+6
+7
+8
+9
+10
+.fi
+
+.SS Nested \fIFor\fP with \fIQuit\fP
+\&
+.br
+
+.nf
+  for i=1:1:10 do
+  . write i,": "
+  . for j=1:1 do  quit:j>5
+  .. write j," "
+  . write !
+
+output:
+
+1: 1 2 3 4 5 6
+2: 1 2 3 4 5 6
+3: 1 2 3 4 5 6
+.
+.
+.
+8: 1 2 3 4 5 6
+9: 1 2 3 4 5 6
+10: 1 2 3 4 5 6
+.fi
+
+.SS \fIGoto\fP Command
+
+Transfer of control to a local or remote label. Return is not made.
+
+.nf
+ 	goto abc                ; go to label abc in current routine
+ 	goto abc^xyz.mps        ; go to label abc in file xyz.mps
+
+	goto abc:i=10,xyz:i=11  ; multiple postconditionals
+.fi
+
+Note: the arguments of both the do and goto commands may be individually 
+postconditionalized as seen above. The commands themselves may be postconditionalized as well.
+
+.SS \fIHalt\fP Command
+\&
+.br
+
+Terminate a program.
+
+.nf
+ 	halt
+.fi
+
+The program terminates. Halt takes no arguments but may be postconditionalized. 
+
+Two blanks are required after the command if there is another command on the line (meaningful only 
+if the halt is postconditionalized).
+
+.SS \fIHang\fP Command
+\&
+.br
+
+Pause the program for a fixed number of seconds. Both halt and hang have the same 
+abbreviation (h) but the hang has an argument and the halt does not. Both may be postconditionalized.
+
+ 	hang 10	; pause for 10 seconds
+
+.SS If Command
+\&
+.br
+
+.nf
+ set i=1,j=2,k=3
+ if i=1 write "yes",!          ; yes
+ if i<j write "yes",!          ; yes
+ if i<j,k>j write "yes",!      ; yes
+ if i<j&k>j write "yes",!      ; does not write
+ if i<j&(k>j) write "yes",!    ; yes
+ if i write "yes",!            ; yes
+ if 'i write "yes",!           ; does not write
+ if '(i=0) write "yes",!       ; yes
+ if i=0!(j=2) write "yes",!    ; yes
+ if a>b open 1:"file,old" else  write "error",! halt
+                               ; the else clause never
+                               ; executes
+ if  write "hello world",!     ; executes if $test is 1
+ else  write "goodbye world",! ; executes if $test is 0
+.fi
+  
+.SS If and Else Commands
+\&
+.br
+
+If the keyword if is followed by an expression and if expression is true (evaluates to a non-zero number), the remainder of line is executed. If false, next line executed.
+
+.nf
+ 	if a>b open 1:"file,old"
+.fi
+
+If sets $test. If the predicate is true, $test is 1, 0 otherwise.
+
+An if with no arguments executes the remainder of the line if $test is true. An if 
+with no arguments must be followed by two blanks.
+
+The else command is not directly related to the if command. An else command executes the 
+remainder of the line if $test is false (0). An else requires no preceding if command. An else 
+command following an if command on the same line will not normally execute unless an 
+intervening command between the if and else changes $test to false.
+
+.SS \fIJob\fP Command
+\&
+.br
+
+Creates a concurrently executing independent process. Implementation defined.
+
+.SS \fIKill\fP Command
+
+The \fIkill\fP command deletes local and global variables.
+
+.nf
+ kill i,j,k     ; removes i, j and k from the local 
+					; symbol table
+ kill (i,j,k)   ; removes all variables except i, j and k
+ kill a(1,2)    ; deletes node a(1,2) and any descendants
+					; of a(1,2)
+ kill ^a			; deletes the entire global array ^a
+ kill ^a(1,2)   ; deletes ^a(1,2) and any descendants 
+.fi
+					; of ^a(1,2)
+.SS \fILock\fP Command
+\&
+.br
+
+Locks for exclusive access a global array node and its descendants.
+
+.nf
+ 	lock ^a(1,2)	
+.fi
+
+Requests ^a(1,2) and descendants for exclusive access.
+
+Lock may have a timeout which, if the lock is not granted, will terminate the command and 
+report failure/success in $test.
+
+Implementations vary. Lock is a voluntary signaling mechanism and does not necessarily 
+prevent access. Consult documentation. See also: transaction processing. In the native single
+user database, \fIlock\fP has no meaning. In the Sqlite3 version, you should use
+the transaction processing commands.
+
+.SS \fIMerge\fP Command
+\&
+.br
+
+Copies one array and its descendants to another.
+
+.nf
+        merge ^a(1,2)=^b     ; global array ^b and its 
+                             ; descendants are copied
+                             ; as descendants of ^a(1,2)
+.fi
+
+.SS \fINew\fP Command
+\&
+.br
+
+Creates a new copy of one or more variables pushing previous copies onto the stack. 
+The previous copies will be restored when the block containing the new command ends.
+
+.nf
+ 	if a=b do
+ 	. new a,b			; variables local to this block
+	. set a=10.2,b=20
+	. write a,b,!
+.fi
+
+The previous values and a and b are restored at exit.
+
+.SS \fIOpen\fP, \fIUse\fP and Unit Numbers
+\&
+.br
+
+The format of the open command is implementation dependent. In Open Mumps, unit numbers 
+are used. Unit 5 is always open and considered to be the console and is always open 
+for both input and output. In Linux terms, unit 5 is stdin and stdout. Other unit 
+numbers are available for assignment by the open command. 
+
+In Open Mumps, the format of the argument to an open command is the unit number followed by a 
+colon followed by a string. The string must contain the file name followed by a comma 
+followed by one of the keywords old, new, or append.
+
+old means that the file exists and is being opened for input.
+
+new means that the file is to be created and is being opened for output.
+
+append means that the file is being opened for output and new data will be appended to existing data.
+
+Open arguments vary widely depending on implementation.
+
+Open Mumps \fIOpen\fP & \fIUse\fP Examples
+
+.fi
+ open 1:"aaa.dat,old" ; existing file
+ if '$test write "aaa.dat not found",! halt
+
+ open 2:"bbb.dat,new" ; new means create (or re-create)
+ if '$test write "error writing bbb.dat",! halt
+
+ write "copying ...",!
+
+ for  do
+ . use 1 			; switch to unit 1
+ . read rec 		; read from unit 1
+ . if '$test break
+ . use 2 			; switch to unit 2
+ . write rec,! 	; write to unit 2
+ close 1,2 			; close the open files
+ use 5 				; revert to console i/o
+ write "done",!
+.fi
+
+.SS Open Mumps \fIOpen\fP with Variables
+\&
+.br
+
+.nf
+   set in="aaa.dat,old"
+   set out="bbb.dat,new"
+   open 1:in
+   if '$test write "error on ",in,! halt
+   open 2:out
+   if '$test write "error on ",out,! halt
+   write "copying ...",!
+   for  do
+   . use 1
+   . read rec
+   . if '$test break
+   . use 2
+   . write rec,!
+   close 1,2
+   use 5
+   write "done",!
+.fi
+
+.SS I/O Format Codes
+\&
+.br
+
+The \fIread\fP and \fIwrite\fP commands have basic format controls for output intended to be 
+displayed or printed. These codes are embedded among command arguments. While 
+they are mainly used with the \fIwrite\fP command, the \fIread\fP command permits a a written prompt.
+
+!  - new line (!! means two new lines, etc.)
+
+#  - new page
+
+?x - advance to column "x" (newline generated if needed). 
+
+.SS \fIRead\fP Command
+\&
+.br
+
+The \fIread\fP command reads an entire line into the variable. It may include a prompt. Reading takes place from the current I/O unit (see $io). Variables are created if they do not exist. 
+
+.nf
+ read a             ; read a line into a
+ read a,^b(1),c     ; read 3 lines
+ read !,"Name:",x   ; write prompt then read into x
+						; prompts: constant strings, !, ?
+ read *a            ; read ASCII code of char typed
+ read a#10			; read maximum of 10 characters
+ read a:5           ; read with a 5 second timeout
+                    ; $test will indicate if anything was read
+.fi
+
+.SS \fISet\fP Command
+\&
+.br
+
+The set command is the basic assignment statement. each argument consists of a variable 
+or function reference to the left of the = operator and an expression to the right. The expression is evaluated and assigned to the variable or passed to the function.
+
+ set a=10,b=20,c=30
+
+Expressions of the form:
+
+ set a=b=c=10
+
+are not permitted in Mumps.
+
+.SS Database Transaction Commands
+\&
+.br
+
+Some versions of Mumps permit database transaction commands. The implementation 
+of these varies so the following commands may or may not be implemented. Check your 
+implementation's documentation for details.
+
+.nf
+    \fITCommit
+    TREstart
+    TROllback
+    TSTART\fP
+.fi
+
+In Open Mumps these are not implemented. However, when used with a SQL 
+backend store (MySQL or PostgreSQL), the full range of SQL 
+transaction controls are available.
+
+.SS \fIUse\fP Command
+\&
+.br
+
+The use command selects the I/O unit to be used by the next \fIread\fP or \fIwrite\fP command. 
+This unit remains in effect for subsequent I/O activity until change by another use command.
+
+Implementation of this command will be vendor specific.
+
+At any given time, one I/O unit is in effect. All \fIread\fP and \fIwrite\fP operations default to 
+the current unit until explicitly changed.
+
+    use 2    ; unit 2 must be open
+
+.SS \fIView\fP Command
+\&
+.br
+
+The view command is vendor defined. It is often used for debugging or similar activities. 
+It is not implemented in Open Mumps.
+
+.SS \fIWrite\fP Command
+\&
+.br
+
+
+The \fIwrite\fP command \fIwrite\fP text lines to the current I/O unit. 
+
+The format codes !, # and ?exp may be used to skip lines (!), 
+skip to the top of a page (#), or indent to a specific column (?exp), respectively.
+
+.nf
+ write "hello world",!
+ set i="hello",j="world" write i," ",j,!
+ set i="hello",j="world" write i,!,j,!
+ write 1,?10,2,?20,3,?30,4,!!
+.fi
+
+.SS \fIXecute\fP Command
+\&
+.br
+
+The xecute command is used to dynamically execute strings as though they were code. 
+
+.nf
+ set a="set b=10+456 write b"
+ xecute a                      ; 466 is written
+
+ set a="set c=""1+1"" write @c"  
+
+ xecute a                      ; 2 is written
+
+ set b="a"
+ xecute @b                     ; 2 is written
+
+ for  read x xecute x          ; read and xecute input
+.fi
+
+.SS Z... Commands
+\&
+.br
+
+Commands that begin with the letter Z are implementation defined and have no standard meaning.
+
+.SH Navigating Arrays
+\&
+.br
+
+Global (and local) arrays are navigated by means of the $data() and $order() functions. 
+
+The $data() function can determine if a node exists, whether it has data assigned to it, and 
+if it has descendants. 
+
+The $order() permits you to move from one sibling to another at a given level 
+of a global array tree.
+
+The function $data() returns a 0 if the array reference passed as a parameter to it 
+does not exist. It returns 1 if the node exists but has no descendants, 10 if it 
+exists, has no data but has descendants, and 11 if it exists, has data and has descendants.
+
+The $order() function returns the next higher (or lower) value of the last index in 
+the array reference passed to the function.
+
+Function $order(), by default, returns indices in ascending collating 
+sequence order unless a second argument of -1 is given. In this case, the indices 
+are presented in descending  collating sequence order.
+
+$order(“”) returns the first value (or last value when a second argument of -1 is 
+given) if the value of the last index of the array reference passed to it is the 
+empty string. It returns an empty string when there are no more nodes at this 
+level of the tree. 
+
+.nf
+  kill ^a                    ; all prior values deleted
+  for i=1:1:9 set ^a(i)=1    ; initialize
+
+  write $data(^a(1))         ; writes 1
+  write $order(^a(""))       ; writes 1
+  write $order(^a(1))        ; writes 2
+  write $order(^a(9))        ; writes the empty string (nothing)
+
+  set i=5
+  for j=1:1:5 set ^a(i,j)=j  ;initialize at level 2
+
+  write $data(^a(5))         ; writes 11
+  write $data(^a(5,1))       ; writes 1
+  write $data(^a(5,15))      ; writes 0
+  write $order(^a(5,""))     ; writes 1
+  write $order(^a(5,2))      ; writes 3
+
+  set ^a(10)=10
+  write $order(^a(1))        ; writes 10
+  write $order(^a(10))       ; writes 2
+  set ^a(11,1)=11
+  write $data(^a(11))        ; writes 10
+  write $data(^a(11,1))      ; writes 1
+.fi
+
+The following writes 1 through 5 (see data initializations on previous slide)
+
+.nf
+  set j=""
+  for  set j=$order(^a(5,j)) quit:j="" write j,!
+.fi
+
+The following writes one row per line:
+
+.nf
+  set i=""
+  for  do
+  . set i=$order(^a(i))
+  . if i="" break
+  . write "row ",i," "
+  . if $data(^a(i))>1 set j="" do
+  .. set j=$order(^a(i,j))
+  .. if j="" break
+  .. write j," " ; elements of the row on the same line
+  . write !      ; end of row: write new line
+  
+.fi
+
+.SH Indirection
+\&
+.br
+
+Indirection is indicated by means of the unary indirection operator (@) which causes the string 
+expression to its right to be executed as a code expression. 
+
+Indirection permits strings created by your program, read from a file, or loaded from a 
+database can be interpretively evaluated and executed at runtime as expressions.
+
+Note: The xecute command permits commands to be executed. 
+
+The indirection operator (@) is for expressions.
+
+
+.nf
+ set i=2,x=”2+i”
+ write @x,!              ; 4 is written
+ set a=123
+ set b="a"
+ write @b,!              ; 123 is written
+ set c="b"
+ write @@c,!             ; 123 is written
+ set d="@@c+@@c"
+ write @d,!              ; 246 is written
+ write @"a+a",!          ; 246 is written
+ set @("^a("_a_")")=789  ; equiv to ^a(a)=789
+ write ^a(123),!         ; 789 is written
+ read x write @x         ; xecute the input expr as code
+ set a="^m1.mps" do @a   ; routine m1.mps is executed
+ set a="b=123" set @a    ; 123 is assigned to variable b
+.fi
+
+.SH Subroutines
+\&
+.br
+
+Originally, subroutines were ordinary local blocks of code in the current routine or in 
+files of code on disk. These were (and still can be) invoked by a do command whose 
+argument is a label indicating the first line of the code block or the name of a file 
+or some combination of these.
+
+With this form of subroutine invocation, there are no parameters or return values. 
+
+However, the full symbol table is accessible to such a subroutine and any changes 
+to a variable made in a subroutine block are visible upon return. This form of 
+subroutine call is similar to the early BASIC GOSUB statement.
+
+Later versions of Mumps permitted parameters and return values (for functions) 
+including call by value and call by name. 
+
+These later changes to Mumps also permit the programmer to create variables local to the 
+subroutine (using the \fInew\fP command) which are deleted upon exit.
+
+In most cases, the full symbol table of variables, remains accessible to a subroutine.
+
+In all cases, all global variables are available to all routines.
+
+.nf
+;       original style of Mumps block invocation
+
+        set i=100
+        write i,!  ; writes 100
+        do block1  ; invoke local code block
+        write i,!  ; writes 200
+        halt
+
+block1  set i=i+i
+        quit       ; returns to invocation point
+
+Invoking a subroutine original style:
+
+ do lab1               ; call local code block
+ do ^file1.mps         ; call file containing program
+ do lab2^file1.mps     ; call file, entry point lab2
+
+Invoking a subroutine with parameters (call by value):
+
+ do lab2(a,b,c)           ; call local label with params
+ do ^file2.mps(a,b,c)     ; call file program with params
+ do lab2^file2.mps(a,b,c) ; call file with params, at entry point
+                          ; lab2
+.fi
+
+If you pass parameters, they are call by value unless you precede their 
+names with a dot:
+
+.nf
+ do lab3(.a,.b,.c)       ; call local call by name
+ do ^file3.mps(.a,.b,.c) ; call file call by name
+.fi
+
+The following subroutine creates a variable that is not destroyed on exit. The variable is 
+accessible after return is made.
+
+.nf
+ do two
+ write "expect 99 1 ->  ",x," ",$data(x),!
+ halt
+
+two
+    set x=99
+    quit
+.fi
+
+Similar to the original style but this subroutine uses the \fInew\fP command to create 
+new copy of x which is deleted upon exit from the routine. The variable x 
+is not available after return is made.
+
+.nf
+ set y=99
+ do one
+ write "expect 99 0  -> ",y," ",$data(x),!
+ halt
+
+one new x
+    set x=100
+    write "expect 99 100 -> ",y," ",x,!
+    quit
+.fi
+
+Call be value example. Parameter variable d only exists in the subroutine. 
+The variable and any changes to it are lost on exit. The variable d does 
+not exist after return is made.
+
+.nf
+ do three(101)
+ write "expect 0 ->  ",$d(d),!  ; d only exists in the subroutine
+
+three(d)
+    write "expect 101 -> ",d,!
+    quit
+.fi
+
+Call by name example. Modification of z in the subroutine changes x in the 
+caller. Note the .x in the call. This signifies call by name.
+
+.nf
+ kill
+ set x=33
+ do four(.x)
+ write "expect 44 ->  ",x,!
+
+four(z)
+    write "expect 33 -> ",z,!
+    set z=44
+    quit
+.fi
+
+Using the \fInew\fP command. Subroutine one creates x and subroutine two uses it. 
+Changes to x in two are seen upon return to one. Variable x is destroyed upon return from 
+subroutine one. 
+
+.nf
+ set y=99
+ do one
+ write "expect 99 0  -> ",y," ",$data(x),!
+
+one new x
+    set x=100
+    write "expect 99 100 -> ",y," ",x,!
+    do two
+    write "expect 99 99 -> ",y," ",x,!
+    quit
+
+two set x=99
+    quit
+.fi
+
+.SH Functions
+\&
+.br
+
+A function with returns a value. The calling code variable i is not changed 
+by the subroutine (call by value). The variable i in the function is a temporary copy.
+
+.nf
+ set i=100
+ set x=$$sub(i)
+ write x," ",i,!  ; writes 500 100
+ halt
+
+sub(i) 
+ set i=i*5
+ quit i
+.fi
+
+.SH Builtin Functions & Variables
+\&
+.br
+
+Mumps has many builtin functions, called intrinsic functions, and system variables, 
+called intrinsic variables. These handle string manipulation, tree navigation and so on.
+
+Each function and system variable begins with a dollar sign. Some system variables are 
+read-only while others can be set. 
+
+While most functions appear in expressions only and yield a result, some functions may appear 
+on the left hand side of an assignment operator or in \fIread\fP statements.
+
+.SH Intrinsic Functions
+\&
+.br
+
+.SS $Ascii(arg[,pos]) 
+\&
+.br
+
+$Ascii() returns the numeric equivalent of the character argument. If a second argument is given, it it the position of the character in the first argument.
+
+.nf
+$A("A")           yields 65 - the ASCII code for A
+$A("Boston")      yields 66 - the ASCII code for B
+$A("Boston",2)    yields 98 - the ASCII code for o
+.fi
+
+.SS $Char(nbr[, ...]) 
+\&
+.br
+
+$Char() returns a string of characters corresponding to the ASCII codes given as arguments.
+
+.nf
+$C(65)            yields A - the ASCII equivalent of 65
+$C(65,66,67)      yields ABC
+$C(65,-1,66)      yields AB - invalid codes are ignored
+.fi
+
+.SS $Data(var)
+\&
+.br
+
+$Data() returns an integer which indicates whether the argument exists, has data, 
+and descendants. The value returned is 0 if var is undefined, 1 if var is defined 
+and has no associated array descendants; 10 if var is defined but has no associated 
+value (but does have descendants); and 11 is var is defined and has descendants. 
+The argument var may be either a local or scalar or global variable.
+
+.nf
+  set A(1,11)="foo"    
+  set A(1,11,21)="bar"    
+  $data(A(1))         ; yields 10
+  $data(A(1,11))      ; yields 11
+  $data(A(1,11,21))   ; yields  1
+  $data(A(1,11,22)    ; yields  0
+.fi
+
+.SS $Extract(e1,i2[,i3])
+\&
+.br
+
+$Extract() returns a substring of the first argument. The substring begins at the 
+position noted by the second operand. Position counting begins at one.
+
+If the third operand is omitted, the substring consists only of the i2'th character of 
+e1. If the third argument is present, the substring begins at position i2 and ends at position i3. 
+
+If only e1 is given, the function returns the first character of the string e1. 
+
+If i3 specifies a position beyond the end of e1, the substring ends at the end of e1.
+
+.nf
+$extract("ABC",2) YIELDS "B"
+$extract("ABCDEF",3,5) YIELDS "CDE"
+.fi
+
+.SS $Find(e1,e2[,i3])
+\&
+.br
+
+$Find() searches the first argument for an occurrence of the second argument. 
+If one is found, the integer returned is one greater than the end position 
+of the second argument in the first argument. 
+
+If i3 is specified, the search begins at position i3 in argument e1. 
+Position counting begins with one.
+
+If the second argument is not found, the value returned is 0. 
+
+.nf
+ $find("ABC","B") YIELDS 3
+ $find("ABCABC","A",3) YIELDS 5
+.fi
+
+.SS $FNumber(a,b[,c])
+\&
+.br
+
+$Fnumber() is a function used to format numbers based on codes based on local 
+currency flags. See your documentation for details.
+
+.nf
+ $FN(100,"P")		yields 100
+ $FN(-100,"P")		yields (100)
+ $FN(-100,"T")		yields 100-
+ $FN(10000,",2")	yields 10,000.00
+ $FN(100,"+")		yields +100
+.fi
+
+.SS $Get(var[,default])
+\&
+.br
+
+$get() returns the current value of a variable or a default value if the variable 
+is undefined. If a default value is not specified, the empty string is used.
+
+.nf
+ kill x
+ $get(x,"?")	yields ?
+ set x=123
+ $get(x,"?")	yields 123
+ kill x
+ $get(x) yields “”
+.fi
+
+.SS $Justify(str,fld[,dec]))
+\&
+.br
+
+$Justify() returns a string in which the first argument is right justified in a 
+field whose length is given by the second argument. 
+
+In the three argument form, the first argument is right justified in a field 
+whose length is given by the second argument rounded to dec decimal places. 
+
+The three argument form imposes a numeric interpretation upon the first argument. If the 
+field length is too small, it will be extended.
+
+.nf
+$justify(39,7)       yields "     39"
+$justify("test",7)   yields "   test"
+$justify(39,7,1)     yields "   39.0"
+$justify(“test”,7,2) yields “   0.00”
+$justify(123.45,3)   yields “123.45”
+.fi
+
+.SS $Length(exp[,str])
+\&
+.br
+
+$Length() returns the length of the string (in the 1 argument form) or the number of 
+pieces in the string delimited by the second argument.
+
+.nf
+ set x="1234 x 5678 x 9999"
+ $length(x)			yields 18
+ $length(x,"x")	yields 3 (number parts)
+.fi
+
+.SS $NAme(arrayVar[,int])
+\&
+.br
+
+$Name() Returns a string containing an evaluated representation of all or 
+part of the array variable reference. It does not check to see if the 
+array variable exists. If a second argument is given, it specifies the 
+portion of the representation to return: if zero, the name of the array, 
+otherwise the indices 1 through the value of the integer. If no second 
+argument is provided or if it exceeds the number of indices, the 
+entire representation is returned.
+
+.nf
+ set x=10,y=20,z=30,a=”abc(x,y,z)”
+ $na(abc(x,y,z))        yields abc("10","20","30")
+ $na(abc(x,y,z),1)      yields abc("10")
+ $na(abc(x,y,z),2)      yields abc("10","20")
+ $na(abc(10,20,25+5))   yields abc(“10”,”20”,”30”)
+ $na(@a)                yields abc(“10”,”20”,”30”)
+.fi
+
+abc() need not exist
+
+.SS $Order(vn[,-1])
+\&
+.br
+
+The $Order() function returns the next ascending or descending index at a 
+given level of an array reference. The function traverses an array from 
+one sibling node to the next in key ascending or descending order. The result 
+returned is the next value of the last index of the global or local array 
+given as the first argument to $Order(). 
+
+The default traversal is in key ascending order except if the optional 
+second argument is present and evaluates to "-1" in which case the 
+traversal is in descending key order. 
+
+If the second argument is present and has a value of "1", the traversal will 
+be in ascending key order which is the default. In Open Mumps, numeric 
+indices are retrieved in ASCII collating sequence order. Other systems may 
+retrieve subscripts in numeric order. Check your documentation.
+
+.nf
+  for i=1:1:9 s ^a(i)=i
+  set ^b(1)=1
+  set ^b(2)=-1
+  write "expect (next higher) 1 ",$order(^a("")),!
+  write "expect (next lower) 9 ",$order(^a(""),-1),!
+  write "expect 1 ",$order(^a(""),^b(1)),!
+  write "expect 9 ",$order(^a(""),^b(2)),!
+  set i=0,j=1
+  write "expect 1 ",$order(^a(""),j),!
+  write "expect 9 ",$order(^a(""),-j),!
+  write "expect 1 ",$order(^a(""),i+j),!
+  write "expect 9 ",$order(^a(""),i-j),!
+ 
+  set i=""
+  write "expect 1 2 3 ... 9",!
+  for  set i=$order(^a(i)) quit:i=””  write i,!
+ 
+  set i=""
+  write "expect 9 8 7 ... 1",!
+  for  set i=$order(^a(i),-1) quit:i=""  write i,!
+.fi
+
+.SS $Piece(str,pat[,i3[,i4]])
+\&
+.br
+
+The $Piece() function returns a substring of the first argument delimited by 
+the instances of the second argument. 
+
+The substring returned in the three argument case is that substring 
+of the first argument that lies between the i3 minus one and the i3 
+occurrence of the second argument. 
+
+In the four argument form, the string returned is that substring of 
+the first argument delimited by the i3 minus one instance of the second 
+argument and the i4 instance of the second argument.  If only two 
+arguments are given, i3 is assumed to be 1.
+
+The function may appear on the left hand side of an assignment operator in 
+which case the substring addressed by i3 and i4 (if present) is 
+replaced by the result of the right hand side of the assignment operator.
+
+.nf
+$piece("A.BX.Y",".",2)		yields "BX"
+$piece("A.BX.Y",".",1)		yields "A"
+$piece("A.BX.Y",".")		yields "A"
+$piece("A.BX.Y",".",2,3)	yields "BX.Y"
+
+set x="abc.def.ghi" 
+set $piece(x,".",2)="xxx" causes x to be "abc.xxx.ghi"
+.nf
+
+.SS $QLength(string)
+\&
+.br
+
+$QLength() returns the number of subscripts contained in the in the array reference in the string argument
+   
+.nf
+ set x=”a(1,2,3)”
+ write $qlength(x)
+ write $qlength(“^a(i,j)”),!
+ write $qlength(“a”),!
+
+ writes 3, 2 and 0
+.fi
+
+.SS $QSubscript(string, int)
+\&
+.br
+
+The $QSubscript(string,int) function returns a portion of the array 
+reference given by the first string. If the second integer argument is 
+-1, the environment is returned (if defined in your implementation), if 
+0, the name of the global array is returned. In Open Mumps, subscripts 
+of arrays are evaluated before being returned.
+
+For values greater than 0, the value returned is that of the associated subscript. 
+
+If a value exceeds the number of indices, an empty string is returned.
+
+.nf
+  set i=10,j=20,k=30
+  set x=”^a(i,j,k)”
+  write $qsubscript(x,0),!
+  write $qsubscript(x,1),!
+  write $qsubscript(x,2),!
+  write $qsubscript(“^a(i,j,k)”,3),!
+.fi
+
+writes ^a, 10, 20, and 30 respectively. 
+
+Note that in Open Mumps, unlike other versions, the indices of the array are evaluated.
+
+.SS $QUery()
+\&
+.br
+
+The $QUery(string) function returns the next array element in the array space 
+denoted by the string argument. 
+
+The argument to $query(string) is a global or local array reference (not 
+a string like the other $q... functions). The value returned is a string containing 
+the next ascending entry in the array space or, if there are no more, the empty string. 
+
+.nf
+ set a(1,2,3)=99
+ set a(1,2,4)=98
+ set a(1,2,5)=97
+ set x="a"
+ set x=$query(@x)
+ write "expect a(1,2,3) ",x,!
+
+ set x=$query(@x)
+ write "expect a(1,2,4) ",x,!
+
+ set x=$query(@x)
+ write "expect a(1,2,5) ",x,!
+ write “expect a(1,2,3) “,$query(a(1)),!
+.fi
+
+.SS $Random(int)
+\&
+.br
+
+$Random() returns a random number between zero and one less than the integer argument.
+
+.nf
+ $random(10)      yields a random number between 0
+                  and 9
+.fi
+
+.SS $REverse(str)
+\&
+.br
+
+$Reverse() returns the string passed as the argument in reverse order.
+
+$reverse("abc")	yields cba
+
+.SS $Select(texp1:exp1[,...])
+
+$Select() evaluates each truth valued expression (texp1, ...) in sequence 
+and for the first one found to be true, returns the result of the 
+corresponding expression following the colon (:). If none are true, the
+empty string is returned.
+
+.nf
+set x=10
+$select(x=9:"A",x=10:"B",x=11:"C",1:””) yields B
+set x=22
+$select(x=9:"A",x=10:"B",x=11:"C",1:””) yields “”
+.fi
+
+.SS $STack(intexp1[,...])
+\&
+.br
+
+$Stack() returns information concerning the Mumps stack environment based on the numeric 
+codes supplied. Consult your documentation for details as the relate to your implementation. 
+Not implemented in Open Mumps.
+
+.SS $Test(entryRef)
+\&
+.br
+
+$Test() returns a string a line of code from the the routine at the location given 
+by the entry reference (label, offset, and/or routine).
+
+.nf
+Assume the program code:
+
+L1		set a=10
+ 		set b=20
+ 		set c=30
+; line of comment
+
+$text(L1)       yields "L1 set a=10"
+$text(L1+1)     yields "   set b=20"
+$text(4)        yields "; line of comment"
+.fi
+
+.SS $TRanslate() $TRanslate(exp1[,exp2[,exp3)
+\&
+.br
+
+Returns exp1 after dropping or substituting characters. If the second and third 
+operands are omitted, the original string is returned. Characters from the first 
+operand are selected if they occur in the second and (1) replaced by the character 
+from the third operand which positionaly correspond to the second operand or, 
+(2) dropped if there is no corresponding third operand character (third 
+operands is shorter than second).
+
+.nf
+ set x="arma virumque cano"
+
+ $tr(x,"a")		yields "rm virumque cno"
+ $tr(x,"a","A") yields "ArmA virumque cAno"
+.fi
+
+.SS $View()
+\&
+.br
+
+$View() is implementation defined.
+
+
+.SS $Z...()
+\&
+.br
+
+$Z...() functions are added by the implementer and are, thus, implementation defined. 
+See your documentation.
+
+

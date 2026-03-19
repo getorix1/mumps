@@ -1,0 +1,130 @@
+MUMPS(1)                         User Commands                        MUMPS(1)
+
+NAME
+       mumps - Mumps Programming Language Interpreter and Compiler
+
+SYNOPSIS
+       mumps
+       mumps PROGRAM
+
+DESCRIPTION
+       You may start the Mumps programming language interpreter in interactive
+       mode or run a Mumps program contained in the ASCII text file PROGRAM.
+
+       To  start in interactive mode, type mumps to a terminal command prompt.
+       This will  start  the  interpreter.  You  will  see  some  introductory
+       information  followed  by  an interactive prompt (>). You may now enter
+       Mumps commands for immediate execution. Note:  if  you  are  using  the
+       Sqlite3  database,  the database file (usually mumps.sqlite) must exist
+       before you start Mumps. See: mumps-sql-db-create.
+
+       Mumps programs can be stored as ordinary ASCII text files. These may be
+       interpreted by the Mumps interpreter or compiled to executable  by  the
+       Mumps compiler (see: mumpsc).
+
+       You can run a program source file with the interpreter by (1) providing
+       the filename of the program as an argument to the mumps command, (2) by
+       invoking  a  program  from  the  Mumps interpreter, or (3) by  adding a
+       shebang (#!) at the start of the source  code  file,  making  the  file
+       executable,   and  invoking  the  file directly from a terminal prompt.
+       (The shebang is #!/usr/bin/mumps)
+
+       Examples
+
+       mumps progname.mps
+
+              Execute the Mumps interpreter on the Mumps source  code  program
+              contained in the ASCII file progname.mps
+
+       progname.mps
+
+              If progname.mps begins with:
+
+              #!/usr/bin/mumps
+
+              And  progname.mps  has  been  made  executable (see: chmod), the
+              contents  of  progname.mps  will  be  executed  by   the   Mumps
+              interpreter as a Mumps program.
+
+       mumpsc progname.mps followed by progname
+
+              The  Mumps  program  in  progname.mps  will  be  compiled  to an
+              executable binary named progname.  The  source  code  file  must
+              begin  with  a  zmain command (see documentation).  A file named
+              progname.cpp will also be created containing the translation  of
+              progname.mps  to  C++.  This  file  may be edited and recompiled
+              using the mumpsc command.
+
+DATABASES
+       The global array database will be stored in the directory that was  the
+       current working directory when the interpreter or program was started.
+
+       The  database for the native version is stored in files named  data.dat
+       and  key.dat  in the directory curent when the interpreter was started.
+       These are automatically  created.   Only  one  instance  of  Mumps  may
+       operate on these at a time.
+
+       The database for the Sqlite3 version is stored (by default) in the file
+       mumps.sqlite   in  the  directory  current  when  the  interpreter  was
+       started. The file mumps.sqlite must be created by  the  command  mumps-
+       sql-db-create  before  a Mumps program is invoked and it must be in the
+       directory from which the Mumps program is executed  or,  alternatively,
+       there  may  be a link from the directory from which a Mumps program was
+       invoked to an  instance  of  mumps.sqlite  in  another  directory.  The
+       command   mumps-sql-de-create   is  installed  when  the interpreter is
+       installed. Multiple instances of Mumps may access an instance  of  this
+       database file database concurrently.
+
+RELATED COMMANDS
+       mumps-sql-db-create.script
+
+              This  is  installed  with the Sqlite3 interpreter and is used to
+              create the Sqlite3 database. This command  has  no  options.  It
+              must be run before any instance of the Sqlite version of Mumps.
+
+       mumpsc
+
+              This  command  compiles  Mumps  source  code  programs to binary
+              executables. It is also used to compile C++ programs written  by
+              the  Mumps  compiler  and  with  the  MDH (Multi-Dimensional and
+              Hierarchical) Toolkit.
+
+SEE ALSO
+       mumps-doc - mumps documentation man page (7)
+
+       mumps-sql-db-create man - page (1)
+
+FILES
+       Files  installed  associated  with  Mumps  are:  /share/man/man7/mumps-
+       doc.7.gz
+       /share/man/man1/mumps.1.gz
+       /include/mumpsc/*.h
+       /lib/libmpscpp.a
+       /lib/libmumps.a
+       /lib/libmpsglobal_native.a
+       /bin/mumps2c
+       /bin/mumps-sql-db-create.script
+       /bin/mumpslib
+       /bin/mumpsc
+       /bin/mumps
+
+AUTHOR
+       Written by Kevin C. O'Kane.
+
+REPORTING BUGS
+       Online help: <https://www.cs.uni.edu/~okane/
+
+COPYRIGHT
+       Copyright (C)  2026  Kevin C. O'Kane
+
+       Permission  is  granted to copy, distribute and/or modify this document
+       under the terms of the GNU Free Documentation License, Version  1.3  or
+       any  later  version  published by the Free Software Foundation; with no
+       Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+
+       A     copy      of      the      license      is      available      at
+       https://www.gnu.org/licenses/fdl-1.3.en.html
+
+       Full documentation <https://https://www.cs.uni.edu/~okane/>
+
+SGR coreutils 1.0              3 February, 2026                       MUMPS(1)

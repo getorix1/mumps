@@ -1,0 +1,1084 @@
+Mumps Programming Language Quick Start
+
+Kevin C. O'Kane
+Professor Emeritus
+Department of Computer Science
+University of Northern Iowa
+Cedar Falls, IA 50614
+
+kc.okane@gmail.com
+
+Turoeial videos are available on youtube.com:
+
+https://www.youtube.com/@kevin_okane/playlists
+
+Copies of the software used in this tutorial are are available at:
+
+http://www.cs.uni.edu/~okane/
+http://threadsafebooks.com/
+
+April 5, 2025
+
+
+More on Mumps syntax below but it is important at this point to note that standard Mumps code may
+not contain embedded blanks n exp[ressions except within quoted strings. In Mumps, a blank is a 
+delimiter.
+
+ set var=3*x+y          ; right
+ set var = 3 * x + y	; wrong
+
+
+Mumps has one data type (string) and two types of variables: local and global.
+
+Global variables are stored on disk and continue to exist when the program that created them 
+terminates. 
+
+Local variables are stored in memory and disappear when the program that created them terminates.
+
+A Mumps variable name must begin with a letter or percent sign (%) and may be followed by letters,
+percent signs, or numbers. 
+
+Variable names are case sensitive. The underscore (_) and dollar sign ($) characters are not legal 
+in variable names.
+
+Global variable names are always preceded by a circumflex (^), local variables are not.
+
+The contents of all Mumps variables are stored as varying length character strings. The maximum
+string length permitted is determined by the implementation but this number is usually at least
+512 and often far larger.
+
+
+In Mumps there are no data declaration statements. Variables are created when a value is assigned
+to a variable for the first time.
+
+Values may be assigned to variables by either the set, merge or read commands. 
+
+Variables may also be created if they appear as arguments to the new command. 
+
+Once created, local variables normally persist until the program ends or they are destroyed by
+a kill command. Global variables persist until destroyed by a kill command.
+
+In its original form, Mumps did not have a means to pass parameters to invoked routines. Consequently,
+to this day, variables are, ordinarily, known throuout an entire program.
+
+Mumps variables are not typed. The basic data type is string although integer, floating point 
+and logical (true/false) operations can be performed on variables if their contents are 
+appropriate.
+
+The values in a string are, at a minimum, any ASCII character code between 32 to 127 (decimal) 
+inclusive. Some implementations permit additional character codings for other languages.
+
+In Mumps, some characters outside this range can be generated with the $char() function.
+
+Variables receive values by means of the set, merge or read commands.
+
+Array references are formed by adding a parenthesized list of indices to the variable name such as: 
+
+name("abc",2,3)
+
+Indices may evaluate to numbers or strings or both. Strings constants must be quoted, numeric
+constants need not be quoted.
+
+ set %=123               ; a scalar local variable
+ set fido="123"          ; local variable
+ set ^x1("ducks")=123    ; ^ducks is a global array
+ set Fido="dog"          ; Names are case sensitive
+ set x("PI")=3.1414      ; x is a local array reference
+ set input_dat=123       ; underscore not permitted
+ read ^x(100)            ; read value into global array element
+ read %%123              ; read value into scalar
+
+ read _A                 ; wrong - underscore error
+ set $a=123              ; wrong - $ sign not permitted
+ set 1x=123              ; wrong - must begin with a letter or %
+
+String constants are enclosed in double quote marks ("). 
+
+A double quote mark itself can be inserted into a string by placing two immediately adjacent double 
+quote marks ("") in the string. 
+
+ set a="quoted phrase"
+ write a                 ; writes quoted phrase
+ set a="""quoted phrase"""
+ write a                 ; writes "quoted phrase"
+
+The single quote mark (') is the not operator with no special meaning within quoted strings. 
+
+The C/C++/Java convention of preceding some special characters by a backslash does not apply in Mumps.
+
+Mumps has some strange ways of handling strings when they participate in numeric calculations.
+
+If a string begins with a number but ends with trailing non-numeric characters and it is used as an operand in an arithmetic operation, only the leading numeric portion will participate in the operation. The trailing non-numeric portion will be ignored.
+
+A string not beginning with a numeric character is interpreted numerically as having the value of zero.
+
+1+2         is evaluated as 3 
+"ABC"+2     is evaluated as 2 
+"1AB"+2     is evaluated as 3 
+"AA1"+2     is evaluated as 2 
+"1"+"2"     is evaluated as 3 
+""          is evaluated as 0
++"-12AB"    is evaluated as -12
++"123.45e4" is evaluated as 1.2345e+06
+
+Logical values in Mumps are special cases of strings. 
+
+A numeric value of zero, any string beginning with a non-numeric character, or a string of length 
+zero is interpreted as false. 
+
+Any numeric string value other than zero is interpreted as true. 
+
+Logical expressions yield either the digit zero (for false) or one (for true). 
+
+The result of any expression can be used as a logical operand.
+
+Logical expressions yield either zero (for false) or one (for true). The result of any numeric 
+expression can be used as a logical operand. 
+
+The not operator is the single quote:  '
+
+1       true
+'1      false
+0       false
+'0      true
+""      false
+'""     true
+"A"     false
+'"A"    true
+"99"    true
+'"99"   false
+"1A"    true
+'"1A"   false
+"000"   false
+'"000"  true
+"-000"  false
+'"-000" true
+
+Arrays (both global and local) are not declared or pre-dimensioned. 
+
+Array (both global and local) elements are created by set, merge or read statements. 
+
+The indices of an array (both global and local) are specified by a comma separated list of 
+numbers or strings or both surrounded by parentheses.
+
+Arrays (both local and global) are sparse. That is, if you create an element of an array, 
+let us say element 10, it does not mean that Mumps has created any other elements. In 
+other words, it does not imply that there exist elements 1 through 9. You must explicitly 
+create these it you want them. 
+
+Array indices may be positive or negative numbers, character strings, or a combination of both.
+
+Arrays in Mumps may have multiple dimensions limited by the maximum line length (at least 512 
+characters).
+
+Arrays may be viewed as either matrices or trees. 
+
+When viewed as trees, each successive index is part of a path description from the root to 
+an internal or leaf node.
+
+Data may be stored (or not stored) at any node along the path of a tree.
+
+Global array names are prefixed with the circumflex character (^) and local arrays are not.
+
+Local arrays are destroyed when the program ends while global arrays, being disk resident, persist.
+
+
+ set a(1,2,3)="text value"              ; local array
+ set ^b(1,2,3)="text value"             ; global array
+
+ set a("text string")=100               ; local array
+ set ^b("text string")=100              ; global array
+
+ set i="testing" set a(i)=1001          ; local array
+ set i="testing" set ^b(i)=1001         ; global array
+
+ set a("Iowa","Black Hawk County","Cedar Falls")="UNI"
+ set ^b("Iowa","Black Hawk County","Cedar Falls")="UNI"
+
+ set a("Iowa","Black Hawk County",Waterloo")="John Deere"
+ set ^b("Iowa","Black Hawk County",Waterloo")="John Deere"
+
+ set a=”1ST FLEET”
+ set b=”BOSTON”
+ set c=”FLAG”
+ set ^ship(a,b,c)="CONSTITUTION"
+ set ^captain(^ship(a,b,c))="JONES"
+ set ^home(^captain(^ship(a,b,c)))="PORTSMOUTH"
+ write ^ship(a,b,c) → CONSTITUTION
+ write ^captain("CONSTITUTION") → JONES
+ write ^home("JONES") → PORTSMOUTH
+ write ^home(^captain("CONSTITUTION")) → PORTSMOUTH
+ write ^home(^captain(^ship(a,b,c))) → PORTSMOUTH
+
+
+Mumps was originally written to manage medical records which are often viewed as hierarchically organized. For that reason, the designers needed a convenient means to store data in a tree structure and developed the notion of global arrays as a result. 
+
+
+In Mumps, both global and local arrays can be viewed as trees. When viewed as a tree, each successive index in an array reference is interpreted as part of a path description from the root of the array to a node. Nodes along the path may (or may not) contain data. In the diagram below, the array is named root. Numeric indices have been used for simplicity but string indices are also legal.
+
+
+
+
+Data may be inserted into the tree by assignment statements. Not all nodes need have data. 
+
+ set ^root(1,37)=1
+ set ^root(1,92,77)=2
+ set ^root(1,92,177)=3
+ set ^root(5)=4
+ set ^root(8,1)=5
+ set ^root(8,100)=6
+ set ^root(15)=7
+ set ^root(32,5)=8
+ set ^root(32,5,3)=9
+ set ^root(32,5,8)=10
+ set ^root(32,123)=11
+
+
+
+ set ^lab(1234,”hct”,”05/10/2008”,38)=””
+ set ^lab(1234,”hct”,”05/12/2008”,42)=””
+ set ^lab(1234,”hct”,”05/15/2008”,35)=””
+ set ^lab(1234,”hct”,”05/19/2008”,41)=””
+
+Mumps permits both numeric and string indices.
+
+Sometimes the indices themselves are the data and nothing ("" is the empty string) is actually stored at the node. That is the case in the above where the last index value is the actual test result. Using the functions $data() and $order() it is easy to navigate through nodes at any level of a tree.
+
+In the code above, the Hematocrit (hct) results for patient 1234 are stored for several dates. The actual hct results for each observation are the last index value
+
+
+Mumps array nodes can be accessed directly if you know all the indices.
+
+Alternatively, you can navigate through an array tree by means of the $data() and $order() builtin functions. 
+
+The first of these, $data(), tells you if a node exists, if it has data, and if it has descendants. 
+
+The second, $order(), is used to navigate, at a given level of a tree, from one sibling node to the next node having an alphabetically higher (or lower) index value.
+
+
+
+For example, given:
+
+ set ^a(1)=100,^a(2)=200,^a(3)=300,^a(2,1)=210,^a(4,1)=410
+
+$data(^a(1))   is 1  (node exists, has no descendant) 
+$data(^a(1,1)) is 0  (node does not exist)
+$data(^a(2))   is 11 (node exists, has data, has descendant)
+$data(^a(4))   is 10 (node exists, has no data, has descendant)
+
+$order(^a(“”))   is 1  (first index at level 1)
+$order(^a(1))    is 2  (next higher index)
+$order(^a(2,””)) is 1  (first index at level 2 beneath index 2)
+$order(^a(4))    is “” (no more indices)
+
+
+
+  for i=1:1:100 do	; store values only at leaf nodes
+  . for j=1:1:100 do
+  .. for k=1:1:100 do
+  ... set ^mat1(i,j,k)=0
+
+This would be similar to a traditional three dimensional matrix in C or Fortran. There are 1,000,000 cells each with the value zero. The global array may be though of as 100 planes of matrices each 100 by 100. 
+
+Access to each element of the matrix requires three indices ( ^a(i,j,k) ).
+
+
+
+  for i=1:1:100 do 	; store values at all node levels
+  . set ^mat(i)=i
+  . for j=1:1:100 do
+  .. set ^mat(i,j)=j
+  .. for k=1:1:100 do
+  ... set ^mat1(i,j,k)=k
+
+This example is best thought of as a tree of depth three. At the first level under the root, there are 100 nodes at each of which is stored a value from 1 to 100, inclusive. For each node at level 1, there are 100 descendant nodes at level two each containing a value from 1 to 100. Finally for each node at level two, there are 100 descendant nodes at level 3 likewise containing values between 1 and 100.
+
+In total, there are 100 level one nodes, 10,000 level two nodes, and 1,000,000 level three nodes. The tree contains 1,010,100 values in total (100 + 10,000 + 1,000,000).
+
+Access to a node requires one, two or three indices depending on the location of the level of the tree at which the node sought is stored.
+
+
+  for i=10:10:100 do	; sparse matrix - elements missing
+  . for j=10:10:100 do
+  .. for k=10:10:100 do
+  ... set ^mat1(i,j,k)=0
+
+Note: for i=10:10:100 means iterate with i beginning at 10 and incrementing by 10 up to and including 100. Thus, I will have the values 10, 20 ... 100. 
+
+The do without an argument causes the block following the command to be executed. Inner blocks have leading decimal points to indicate their level of depth.
+
+In this example, the array is also a tree but, unlike the first example, many elements do not exist. At level one, there are only ten nodes (10, 20, 30, ... 90, 100). Each level one node has ten descendants and each level two node has ten descendants. 
+
+In total, the tree has 10,110 (10 + 100 + 10,000) nodes.
+
+For example, the node ^a(15,15,15) does not exist. You may, however, create it with something of the form:
+
+ set ^a(15,15,15)=15
+
+Now the tree has 10,111 nodes.
+
+
+A Mumps program consists of a sequence of commands. Most commands have arguments to be executed. Some commands, however, do not have arguments.
+
+In most cases, more than one command may appear on a line.
+
+Some of the common commands that have arguments are set (assignment), for (loop control), if (conditional execution), read (input), write (output), and so forth. 
+
+The halt command, on the other hand, does not have an argument (if it does, it becomes the hang command).
+
+Each Mumps command begins with a keyword that may, in most cases, be abbreviated. Most abbreviations are a single letter. Excessively abbreviated Mumps code is compact but difficult to read.
+
+The complete list is given below.
+
+
+
+
+
+
+
+
+Mumps commands may optionally be followed by what is known as a postconditional.
+
+Postconditionals are expressions that immediately follow a command. There are no spaces between a command and a postconditional. A postconditional is delimited from the command word (or abbreviation) by a colon.
+
+If the postconditional expression is true, the command and its arguments are executed. If the expression is false, the command and all of its arguments are skipped and execution advances to the next command. 
+
+The following is an example of a post-conditional applied to the set command:
+
+ set:a=b i=2
+
+The set command argument (assign 2 to variable i) will be executed only if a equals b. 
+
+Some commands permit individual arguments to be postconditionalized.
+
+
+
+
+
+
+One use of postconditionals of Mumps is for loop control. Unless blocks and the do command are used, the scope of a for command is the current line only. 
+This creates a problem if a loop needs to terminate for a condition not established in the loop control expression if you attempt to use an if command because the scope of an if command is also the remainder of the line on which it appears.
+For example, assume you have a global array named ^a which has an unknown number of nodes. Assume that each node is indexed sequentially beginning with 1 (1, 2 , 3 , ...).
+If you attempt to print out the values in the nodes with the following:
+ for i=1:1 write ^a(i),!
+You encounter an error when you attempt to access a node of the array that does not exist.
+
+
+
+
+
+
+
+
+
+If you add an if command:
+ for i=1:1 if ‘$data(^a(i)) quit  write ^a(i),!
+you still have a problem (single quote is the NOT operator in Mumps). 
+The expression ‘$data(^a(i)) is TRUE if the node ^a(i) does NOT exist and false otherwise.
+The intent is to quit the loop when there are no more nodes in ^a (note the two blanks after the quit command - since it has no arguments, two blanks are required).
+However, the if command has scope of the remainder of the line on which it occurs.
+Thus the write will not execute if a node does exist because the expression in the if will be false ($data(^a(i)) is true which is then made false by the not operator). Consequently, the remainder of the line is skipped.
+Likewise, if the node does not exist ($data(^a(i)) is false but becomes true because of the not operator), the loop will terminate.
+Thus, nothing at all will be printed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+An else command will not help since it will still be on the same line following the if and will be ignored if the if expression is false: 
+ for i=1:1 if ‘$data(^a(i)) quit  else  write ^a(i),!
+(Note the two blanks after the else).
+If ^a(i) exists, the remainder of the line is skipped. If ^a(i) does not exist, the loop is terminated.
+Hence the postconditional was invented.
+ for i=1:1 quit:‘$data(^a(i))  write ^a(i),!
+The quit will execute only when the postconditional expression is true which occurs when there are no more nodes of the array.
+Problem solved!
+
+
+
+
+
+
+
+
+
+
+
+
+Expressions in Mumps are evaluated strictly left-to right without precedence. If you want a different order of evaluation, you must use parentheses. 
+
+This is true for all Mumps expressions in all Mumps commands. It is a common source of error, especially in if commands with compound predicates.
+
+ For example, a<10&b>20 really means (((a<10)&b)>20) when you probably wanted (a<10)&(b>20) or, equivalently, a<10&(b>20).
+
+
+
+
+
+
+
+
+
+Assignment: 			=
+Unary Arithmetic: 	+ -
+Binary Arithmetic		+ addition
+							- subtraction
+							* multiplication
+							/ full division
+							\ integer division
+							# modulo
+							** exponentiation
+Arithmetic Relational
+							> greater than
+							< less than
+							'> not greater / less than or equal
+							'< not less / greater than or equal
+String Binary			_ concatenate
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+String relational operators 
+
+		=   equal
+		[   contains - left operand contains right
+		]   follows  - left operand alphabetically follows
+                     right operand
+		?   pattern
+		]]  Sorts after
+
+		'=  not equal
+		'[  not contains
+		']  not follows
+		'?  not pattern
+		']] not sorts after
+
+
+
+
+
+A for the entire upper and lower case alphabet.
+C for the 33 control characters.
+E for any of the 128 ASCII characters.
+L for the 26 lower case letters.
+N for the numerics
+P for the 33 punctuation characters.
+U for the 26 upper case characters.
+A literal string.
+
+The letters are preceded by a repetition count. A dot means any number. Consult documentation for more detail.
+
+ set A="123-45-6789"
+ if A?3N1"-"2N1"-"4N write "OK"  ; writes OK
+ if A'?3N1"-"2N1"-"4N write "OK" ; writes nothing
+
+ set A="JONES, J. L."
+ if A?.A1",".A write "OK"  ; writes OK
+ if A'?.A1",".A write "OK" ; writes nothing
+
+
+
+
+
+
+
+
+
+Logical operators: 	& and
+							! or
+							' not
+
+	1&1 		yields 1
+	2&1 		yields 1
+	1&0 		yields 0
+	1&(0<1) 	yields 1
+	1!1 		yields 1
+	1!0 		yields 1
+	0!0 		yields 0
+	2!0 		yields 1
+	'0  		yields 1
+	'1  		yields 0
+   '99 		yields 0		; any non-zero value is true
+	'"" 		yields 1		; strings are false except if they 
+								; have a leading non-zero numeric
+
+
+
+
+
+
+
+
+The indirection operator (@) causes the value of the expression to its right to be executed and the result replaces the indirect expression.
+
+ set a="2+2"
+ write @a,!					; writes 4
+
+ kill ^x
+ set ^x(1)=99
+ set ^x(5)=999
+ set v="^x(y)"
+ set y=1
+ set x=$order(@v)			; equivalent to ^x(1)
+ write x,!					; writes next index of ^x(1): 5
+ set v1="^x"
+ set x=$order(@(v1_"("_y_")")) ;
+ write x,!              ; writes 5
+
+
+
+
+
+
+breakSuspends execution or exits a block (non-
+standard extension)
+closerelease an I/O device
+databaseset global array database (non-standard
+extension)
+doexecute a program, section of code or block
+elseconditional execution based on $test
+foriterative execution of a line or block
+gototransfer of control to a label or program
+haltterminate execution
+hangdelay execution for a specified period of time
+htmlwrite line to web server (non-standard
+extension)
+
+
+ifconditional execution of remainder of line
+jobCreate an independent process
+lockExclusive access/release named resource
+killdelete a local or global variable
+mergecopy arrays
+newcreate new copies of local variables
+openobtain ownership of a device
+quitend a for loop or exit a block
+readread from a device
+setassign a value to a global or local variable
+
+
+
+
+shellexecute a command shell (non-standard
+extension)
+sqlexecute an SQL statement (non-standard
+extension)
+tcommitcommit a transaction
+trestartroll back / restart a transaction
+trollbackRoll back a transaction
+tstartBegin a transaction
+useselect which device to read/write
+viewImplementation defined
+writewrite to device
+xecutedynamically execute strings
+z...implementation defined - all begin with the
+letter z
+
+
+
+
+
+
+
+
+
+A line may begin with a label. If so, the label must begin in column one.
+If column one has a semi-colon (;), the line is a comment. If a semi-colon appears in a
+position where a command word could appear, the remainder of the line is a comment.
+After a label there must be at least one blank or a <tab> character before the first
+command.
+If there is no label, column one must be a blank or a <tab> character followed by some
+number of blanks, possibly zero, before the first command.
+After most command words or abbreviations there may be an optional post-conditional.
+No blanks or <tab> characters are permitted between the command word and the
+post-conditional.
+If a command has an argument, there must be at least one blank after the command
+word and its post-conditional, if present, and the argument.
+
+
+
+
+Expressions (both in arguments and post-conditionals) may not contain embedded
+blanks except within double-quoted strings.
+If a command has no argument and it is the final command on a line, it is followed by
+the new line character.
+If a command has an argument and it is the final command on a line, its last argument
+is followed by a new line character.
+If a command has an argument and it is not the last command on a line, it is followed
+by at least one blank before the next command word.
+If a command has no argument, there must be two blanks after the command word if
+there is another command on the line. If it is the last command on a line, it is followed
+by the new line character
+
+
+
+
+
+
+
+In Open Mumps:
+If a line begins with a pound-sign (#) or two forward slashes (//), the remainder of the
+line is taken to be a comment (non-standard extension).
+If a line begins with a plus-sign (+), the remainder of the line is interpreted to be an in-
+line C/C++ statement (non-standard compiler extension).
+After the last argument on a line and at least one blank (two if the command has no
+arguments), a double-slash (//) causes the remainder of the line to be interpreted as a
+comment (non-standard extension)
+
+
+
+
+
+
+
+
+
+
+
+
+
+label	set a=123
+ set a=123
+ set a=123 set b=345
+ set:i=j a=123
+
+; standard comment
+ set a=123 ; standard comment
+# non-standard comment
+ set a=123 // non-standard comment
++ printf("hello world\n");  // non-standard C/C++ embed
+
+set a=123				; only labels, ;, #, or // in col 1
+ label set a=123		; label must be in col 1
+ set a = 123			; no blanks allowed in arguments
+ halt:a=b set a=123	; Halt needs 2 blanks after
+							; the postconditional
+
+
+
+
+
+Originally, all Mumps commands only had line scope. That is, no command extended beyond the line on which it appeared. In later years, however, a block structure facility was added to the language. 
+This lead to the introduction of the argumentless do command. Originally, all do commands had arguments consisting of either a label, offset, file name or combination of these that addressed a block of code to be invoked as a subroutine.
+An argumentless do command also invokes a block of code. The code invoked consists of the lines immediately following the line containing the do command if they are at a line level one greater than the line level of the do. The block ends when the declines to the line level of the do or below.  
+Mumps lines are normally at line level one. A higher line level is achieved by preceding the code on a line with one or more periods. A line with one period is at line level two, one with two periods is at level three and so on. 
+Execution of a Mumps program normally proceeds from one level one line to the next except as if, else, and goto commands may dictate otherwise. If execution encounters a line at a level greater than the current level, the line is skipped unless entered by means of a do command on the preceding line with a level one lower. 
+
+
+
+
+
+
+For example:  
+
+  set a=1
+  if a=1 do
+  . write "a is 1",!		; block dependent on do
+  write "hello",!
+
+The do on line 2, at line level one, if executed, invokes the one line block on line 3 which is at line level two. If the do is not executed, the block consisting of line 3 is skipped and line 4 is executed after line 2.
+Code at line levels greater than one may be entered by means of an argumentless do command. The goto command should not be used to enter or exit  blocks of code with line levels greater than one.
+
+
+
+
+
+
+
+
+
+  set a=1
+  if a=1 do
+  . write "a is 1",!
+  . set a=a*3
+  else  do
+  . write "a is not 1",!
+  . set a=a*4
+  write "a is ",a,!
+
+Because a has a value of 1, lines 3 & 4 will be executed and lines 6 & 7 will not be executed. 
+
+
+
+
+
+
+
+
+
+
+
+  if a’=0 do
+  . write "a is 1",!
+  . set a=a*3
+  . if a>10 do
+  .. write "a is greater than 10",!
+  .. set a=a/2
+  . set a=a+a
+  write "a is ",a,!
+
+The block beginning on line 2 is entered if variable a is not zero. Otherwise, execution skips to line 8
+
+The block beginning at line 5 is entered if variable a is greater than 10. Otherwise line 5 & 6 are skipped and execution resumes at line 7.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$test is a builtin system variable that indicates if certain operations succeeded (true) or failed (false). 
+For example, if a read command fails to read data (end of file, for example), $test will be false after the read command, otherwise, true. 
+The open command sets $test to be true if a file is successfully opened, false otherwise. The if is another command sets $test based on the result of its predicate.
+Both the if and else commands have an argumentless form where execution of the command is determined by the current value in $test. 
+An oddity in Mumps is that the else command is not necessarily connected with a preceding if command. The else command can be standalone. If the value in $test is false, the remainder of the line on which the else appears is executed. If the value is true, execution skips to the next line.
+For example:
+ read x
+ else  write "end of file",! halt
+The else executes based on the value of $test that was set as the result of the read command. If the read failed, the code on the line following the else will execute and the program will halt. If the read succeeded, the program will not halt.
+However, in practice, an else command is often used with a preceding if command where $test is set by the if’s predicate. 
+In the case of an argumentless if command, the value of $test determines if the remainder of the line is executed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+$test is a builtin system variable that indicates if certain operations succeeded (true) or failed (false). 
+For example, if a read command fails to read data (end of file, for example), $test will be false after the read command, otherwise, true. 
+The open command sets $test to be true if a file is successfully opened, false otherwise. The if is another command sets $test based on the result of its predicate.
+Both the if and else commands have an argumentless form where execution of the command is determined by the current value in $test. 
+An oddity in Mumps is that the else command is not necessarily connected with a preceding if command. The else command can be standalone. If the value in $test is false, the remainder of the line on which the else appears is executed. If the value is true, execution skips to the next line.
+For example:
+ read x
+ else  write "end of file",! halt
+The else executes based on the value of $test that was set as the result of the read command. If the read failed, the code on the line following the else will execute and the program will halt. If the read succeeded, the program will not halt.
+However, in practice, an else command is often used with a preceding if command where $test is set by the if’s predicate. 
+In the case of an argumentless if command, the value of $test determines if the remainder of the line is executed.
+
+
+
+
+
+
+
+
+
+$test is a builtin system variable that indicates if certain operations succeeded (true) or failed (false). 
+For example, if a read command fails to read data (end of file, for example), $test will be false after the read command, otherwise, true. 
+The open command sets $test to be true if a file is successfully opened, false otherwise. The if is another command sets $test based on the result of its predicate.
+Both the if and else commands have an argumentless form where execution of the command is determined by the current value in $test. 
+An oddity in Mumps is that the else command is not necessarily connected with a preceding if command. The else command can be standalone. If the value in $test is false, the remainder of the line on which the else appears is executed. If the value is true, execution skips to the next line.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$test is a builtin system variable that indicates if certain operations succeeded (true) or failed (false). 
+For example, if a read command fails to read data (end of file, for example), $test will be false after the read command, otherwise, true. 
+The open command sets $test to be true if a file is successfully opened, false otherwise. The if is another command sets $test based on the result of its predicate.
+Both the if and else commands have an argumentless form where execution of the command is determined by the current value in $test. 
+An oddity in Mumps is that the else command is not necessarily connected with a preceding if command. The else command can be standalone. If the value in $test is false, the remainder of the line on which the else appears is executed. If the value is true, execution skips to the next line.
+
+
+
+
+
+
+
+
+
+
+The value of $test is restored upon exit from a block:
+
+  set a=1,b=2
+  if a=1 do					; $test becomes true
+  . set a=0
+  . if b=3 do					; $test becomes false
+  .. set b=0					; not executed
+  . else  do					; executed 
+  .. set b=10  				; executed
+  . write $test," ",b,!		; $test is false
+  write $test," ",b,!		; $test restored to true
+
+In the above, line 2 sets $test to be 1 (the predicate is true). Lines 3 & 4 are executed. Line 4 sets $test to be 0 (the predicate is false). Line 5 is not executed.
+Line 6 is executed and, since $test is false, the do is executed and line 7 is executed. Line 8 is executed with $test as 0 and b as 10.
+Line 9 is executed. $test is restored to the value it had in line 2 (true). The value of b is 10.
+
+
+
+
+
+
+
+
+
+
+
+
+
+A quit command in standard Mumps causes:
+ A single-line scope for command to terminate, or
+
+ A subroutine to return, or
+
+ A code block to be exited with execution resuming on the line containing the invoking do command.
+
+A quit command without arguments requires at least two blanks after it if there are more commands on the line (the case where a quit has a postconditional).
+
+
+
+
+
+Using quit to terminate a for command:
+
+ for i=1:1 quit:i>100  write i," ",i*i,!
+
+When i becomes 101, the loop will terminate.
+
+; read and write until no more input ($test is 0).
+  set f=0
+  for  do  quit:f=1  ; this quit, when executed, terminates the loop
+  . read a
+  . if '$test set f=1 quit  ; this quit returns to the do
+  . write a,!
+
+The for without arguments (note the two blanks following it) loops forever. The do invokes the block where data is read. When there is no more data, f is set to 1 and return is made to the line containing the for command. The for terminates when f becomes 1. If the read succeeds, the value read is written and the loop iterates.
+
+
+
+
+
+
+
+
+
+
+
+
+Using quit to return form a legacy subroutine. Mumps originally used the do command to invoke a local or remote block of code which, when completed, would return the the line containing the invoking do command. This was similar to the early BASIC gosub statement. The original Mumps do command did not allow arguments to be passed.
+
+The argument for a do command was either a label, a label with offset, a file name, or a combination of all three (some systems used different syntax):
+
+ do lab1				; execute beginning at label lab1
+ do lab1+3			; execute beginning at the 3rd line following lab1
+ do ^file.mps		; execute the contents of file.mps
+ do lab1^file.mps		; execute contents of file.mps beginning at lab1
+ do lab1+3^file.mps	; execute file.mps beginning at 3rd line from lab1
+
+In each case, when the code block thus invoked ended or encountered a quit command, return was made to the invoking do command. Note: if the invoking do command had additional arguments, they would now be executed in sequence.
+
+; using quit as a return from a subroutine
+  do top
+...
+top   set page=page+1
+      write #,?70,"Page ",page,!
+      quit  ; return to invoking do command
+  
+
+
+
+
+
+
+
+
+     
+; non-standard use of break instead of quit in Open Mumps
+  for  do
+  . read a
+  . if '$test break ; exits the loop and the block
+  . write a,!
+  
+
+
+
+
+
+
+
+
+
+; loop while elements of array a exist
+ for i=1:1 quit:'$data(a(i))  write a(i),!
+
+; display all nodes at level one
+ set i=”” for  set i=$order(^a(i)) quit:i=””  write ^a(i),!
+
+; inner loop quits if an element of array b has the value 99 but
+; outer loop continues to next value of i.
+  set x=0
+  for i=1:1:10 for j=1:1:10 if b(i,j)=99 set x=x+1 quit
+
+; outer loop terminates when f becomes 1 in the block
+  set f=0
+  for i=1:1:10 do  quit:f=1
+  . if a(i)=99 set f=1
+
+; The last line of the block is not executed when i>50
+  set f=1
+  for i=1:1:100 do
+  . set a(i)=i
+  . set b(i)=i*2
+  . if i>50 quit
+  . set c(i)=i*i
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

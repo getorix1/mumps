@@ -1,0 +1,12 @@
+#!/bin/bash
+
+MANWIDTH=80
+export MANWIDTH
+
+man -l --nh ./mumps-sql-db-create.1 > mumps-sql-db-create.txt
+
+man -l --nh mumps-doc.7 > mumps-doc.txt
+mv mumps-doc.txt mumps-doc-man-page.txt
+
+man -l --nh ./mumps.1 > mumps.txt
+
