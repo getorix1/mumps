@@ -1,0 +1,71 @@
+#!/bin/bash
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Mumps Bioinformatics Software Library
+#+     Copyright (C) 2015 - 2025 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://threadsafebooks.com/
+#+     https://www.cs.uni.edu/~okane
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+# Oct 18, 2025 Kevin C. O'Kane
+
+# create mumps database for sqlite3
+
+echo
+echo "Mumps Sqlite3 Database Creation Routine"
+echo
+
+ while true; do
+	read -p "This will delete any prior contents of the database. Proceed? y/n " yn
+	echo
+        case $yn in
+             [Yy]* ) 	break;;
+             [Nn]* ) 	echo "exiting..."
+			exit
+			;;
+             * ) 	echo "Please answer yes or no.";;
+             esac
+	done
+
+echo "pragma page_size=1024;" > tmp
+
+echo "pragma journal_mode=MEMORY;" >> tmp
+
+echo "create table mumps (a1 varchar(64), a2 varchar(64), \
+a3 varchar(64), a4 varchar(64), a5 varchar(64), \
+a6 varchar(64), a7 varchar(64), a8 varchar(64), \
+a9 varchar(64), a10 varchar(128));" >> tmp
+
+echo "create index MI on mumps (a1, a2);" >> tmp
+
+echo ".save mumps.sqlite" >> tmp
+echo ".schema" >> tmp
+
+echo ".quit" > tmp1
+
+rm -f mumps.sqlite
+
+sqlite3 -cmd ".read tmp" < tmp1
+
+rm -f tmp
+rm -f tmp1
+

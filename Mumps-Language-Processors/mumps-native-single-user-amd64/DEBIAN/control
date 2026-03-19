@@ -1,0 +1,13 @@
+Package: mumps-native-single-user
+Version: 2025.12.24-1
+Architecture: amd64
+Maintainer: Kevin C. O'Kane <kc.okane@gmail.com>
+Section: utils
+Priority: optional
+Homepage: https://www.cs.uni.edu/~okane/
+Copyright: 1980-2025 Kevin C. O'Kane <okane@uni.edu>
+License: GPL-2+
+Depends: libc6, libreadline-dev, g++, libgmp-dev, libmpfr-dev, libglib2.0-dev, libgtk-3-dev, libgtkmm-2.4-dev, libgtkmm-3.0-dev, libgtk-3-0, libwebkit2gtk-4.1-dev, astyle, make, sqlite3, libsqlite3-dev, autoconf
+Conflicts: mumps-sqlite3, mumps-native-multiuser
+Description: Mumps programming language single user native database interpreter and compiler.
+ Mumps is a general purpose programming language that supports a native, hierarchical database facility. The acronym stands for the Massachusetts General Hospital Utility Multi-programming System.
