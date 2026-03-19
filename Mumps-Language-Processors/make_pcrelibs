@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# this is a total hack of the last (final) release of pcre3.
+# pcre2 (!) is now the current version and it's api is
+# substantially different. so, this recompiles and uses the
+# old pcre3 which is all that is needed by mumps at this time.
+# not: it's a tradition in Linux that new code breaks old code.
+# someday, I'll clean this mess up but this works for now.
+
+cd pcre-8.45
+cp not-used/* .
+configure
+make -B -j 8
+
+rm dftables.c
+rm pcrecpp_unittest
+rm pcrecpp_unittest.cc
+rm pcrecpp_unittest-pcrecpp_unittest.o
+rm pcredemo.c
+rm pcregrep
+rm pcregrep.c
+rm pcregrep-pcregrep.o
+rm pcre_jit_compile.c
+rm pcre_jit_test.c
+rm pcre_scanner.cc
+rm pcre_scanner.h
+rm pcre_scanner_unittest
+rm pcre_scanner_unittest.cc
+rm pcre_scanner_unittest-pcre_scanner_unittest.o
+rm pcre_stringpiece_unittest
+rm pcre_stringpiece_unittest.cc
+rm pcre_stringpiece_unittest-pcre_stringpiece_unittest.o
+rm pcretest.c
+rm pcretest-pcre_printint.o
+rm pcretest-pcretest.o
+
+ar rcs pcrelibs *.o

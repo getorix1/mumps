@@ -1,0 +1,82 @@
+#!/bin/bash
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Mumps Bioinformatics Software Library
+#+     Copyright (C) 2015 - 2026 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://threadsafebooks.com/
+#+     https://www.cs.uni.edu/~okane
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+# Mar 4, 2026 Kevin C. O'Kane
+
+# create mumps database for sqlite3
+
+echo
+echo "--------------------------------------------------------"
+echo "Mumps Sqlite3 mumps table creation for file @dbfile@"
+ while true; do
+	read -p "This will delete any prior contents of the database. Proceed? y/n " yn
+        case $yn in
+             [Yy]* ) 	break;;
+             [Nn]* ) 	echo "exiting..."
+			exit
+			;;
+             * ) 	echo "Please answer yes or no.";;
+             esac
+	done
+
+# echo "pragma page_size=1024;" > tmp
+
+rm -f mumps.sqlite
+
+echo "drop table if exists mumps;" > tmp
+
+echo "pragma journal_mode=@journal_mode@;" >> tmp
+
+if [ @index_max@ -gt 32 ]; then
+	echo "*** Too many index levels (index_max) requested."
+	echo "*** Database not created."
+	exit
+	fi
+
+echo -n "create table @dbname@ (a1 varchar(@index_size@), a2 varchar(@index_size@), " >> tmp
+
+for ((i = 3; i < @index_max@; i++ ));
+	do
+	echo -n "a$i varchar(@index_size@), " >> tmp 
+	done
+
+echo "a@index_max@ varchar(@data_size@));" >> tmp
+
+echo "create index MI on @dbname@ (a1, a2);" >> tmp
+
+#echo ".save @dbfile@" >> tmp
+echo ".schema" >> tmp
+
+echo ".quit" > tmp1
+
+sqlite3 @dbfile@ -cmd ".read tmp" < tmp1
+
+rm -f tmp
+rm -f tmp1
+echo "-------- mumps table created in @dbfile@ ---------------"
+

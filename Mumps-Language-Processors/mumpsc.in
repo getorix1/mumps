@@ -1,0 +1,164 @@
+#!/bin/bash
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Mumps Bioinformatics Software Library
+#+     Copyright (C) 2015 - 2026 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://threadsafebooks.com/
+#+     https://www.cs.uni.edu/~okane
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+# Feb 15, 2026
+
+SHELL=/bin/sh
+INSTALL=install
+
+PREFIX=@prefix@
+
+INCLUDEDIR=$PREFIX/include
+BINDIR=$PREFIX/bin
+LIBDIR=$PREFIX/@LIB@
+
+ARGS=$*
+
+FLAGS="-fno-var-tracking-assignments -w -pipe -I $INCLUDEDIR @CPPFLAGS@ @LDFLAGS@ @sqlite_cflags@ "
+
+FILEBITS="@file64@"
+
+GBLLIB=@gbllib@
+MUMPSLIB=mumps
+
+FILE_FOUND=n
+CPP="g++"
+Cflg=0
+
+echo
+
+
+objs=""
+
+# compiling with object modules?
+
+for arg in $ARGS
+	do
+
+	base=`basename $arg`
+	ext=${base#*.}
+
+	if [ $ext = 'o' ]
+		then
+		objs="$objs $arg"
+		fi
+
+	done
+
+#------------------------------------------------------------------------------------------
+# @mathLink@ will contain "-lgmp -Lx86-64-linux-gnu -lmpfr" if hardware math is turned off.
+#------------------------------------------------------------------------------------------
+
+common_libs="-lm -lreadline  -L$LIBDIR -lmpscpp -l$MUMPSLIB -l$GBLLIB  @mathLink@"
+
+for arg in $ARGS 
+	do
+
+	base=`basename $arg`
+	ext=${base#*.}
+
+	if [ "$ext" = 'mps' -o "$ext" = 'cpp' ]
+		then
+
+		FILE_FOUND=y
+		infile_dir=`dirname $arg`
+		infile_base=`basename $arg .mps`
+		infile="$infile_dir/$infile_base"
+		infileB="$infile"
+
+		if [ $ext = 'mps' ]
+			then
+
+			echo "Compiling from Mumps source program ..."
+			Cflg=1
+
+			#----------------------------
+			# compile .mps program
+			#----------------------------
+
+			mumps2c $infile.mps
+
+			if [ $? != 0 ]
+				then
+				echo "terminating due to compiler detected source code error"
+				exit 16
+				fi
+
+			#-------------------------------------
+			# format cpp code
+			# if astyle option is used, mumpsc
+			# can only be invoked once at a time
+			#-------------------------------------
+
+			# astyle -q -A6 -T $infile_base.cpp
+
+			#----------------------------
+			# delete intermediate code
+			#----------------------------
+
+			rm -f $infile.m
+
+			#-----------------------------------------------
+			# the new infile will be the generated .cpp file
+			#-----------------------------------------------
+
+			infile_base=`basename $arg .mps`
+			infile="$infile.cpp"
+			fi
+
+		if [ $ext = 'cpp' ]
+			then
+			Cflg=0
+			infile_base=`basename $arg .cpp`
+			infile="$infile_dir/$infile_base.cpp"
+			echo "Compiling C++ source"
+			echo "Compiling " $infile 
+			FLAGS="$FLAGS -D_MDH_"
+			fi
+
+		if [ $Cflg = 1 ]
+			then
+			echo "Compiling generated C++ code ..."
+			else
+			echo "Compiling MDH C++ file ..."
+			fi
+
+		$CPP @optmain@ \
+			-fdiagnostics-color=never -fpermissive \
+			$DEBUG $FLAGS -pthread \
+			`pkg-config --cflags --libs glib-2.0` -L$LIBDIR $FILEBITS \
+			-o $infile_base $infile \
+			@profile@ $objs -lmumps $common_libs @sqlite_cppflags@ \
+			`pkg-config --libs glib-2.0` -lpthread -lreadline\
+			`pkg-config --cflags --libs gtk+-3.0` -export-dynamic
+		exit $?
+
+		fi
+	done
+
+exit 0

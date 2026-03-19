@@ -1,0 +1,514 @@
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Mumps Bioinformatics Software Library
+#+     Copyright (C) 2015 - 2026 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     okane@uni.edu
+#+     kc.okane@gmail.com
+#+     https://threadsafebooks.com/
+#+     https://www.cs.uni.edu/~okane
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+# Feb 15, 2026 Kevin C. O'Kane
+
+SHELL       = /bin/sh
+INSTALL     = install
+PREFIX	= /home/okane/Desktop/mumps/Mumps-Language-Processors/Mumps-Interpreter-Compiler-Library/local_install
+CC	= gcc
+CXX	= g++
+
+INCLUDEDIR  = $(PREFIX)/include
+BINDIR      = $(PREFIX)/bin
+LIBDIR      = $(PREFIX)/lib
+SHARE       = $(PREFIX)/share
+DOCDIR      = $(PREFIX)/share/doc/mumpsc
+MANDIR      = $(PREFIX)/share/man
+MAN1DIR     = $(MANDIR)/man1
+SRCDIR      = mumpsc
+
+#--------------------------------------------------------------------
+# some recent versions of gcc/g++ have had problems with -o3 enabled
+#--------------------------------------------------------------------
+
+CFLAGS      = -w -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -O3 -fno-stack-protector -Iinclude/  \
+		-Wno-implicit-function-declaration \
+		-finline-functions -fno-strict-aliasing -g -DNDEBUG -L/usr/lib/x86_64-linux-gnu -lsqlite3 -ldl -lpthread -lm  -fdiagnostics-color=never
+
+CPPFLAGS    = -w -fno-stack-protector `pkg-config --cflags --libs gtk+-3.0` \
+		-Wno-implicit-function-declaration \
+		-export-dynamic `pkg-config --cflags --libs gdkmm-3.0` \
+		-Iinclude/ -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -fno-strict-aliasing -g -DNDEBUG -L/usr/lib/x86_64-linux-gnu -lsqlite3 -ldl -lpthread -lm  -lgmp  \
+		-fno-diagnostics-color
+
+CPPOPTFLGS  = -w  -Ofast  -fno-stack-protector \
+		`pkg-config --cflags --libs gtk+-3.0` -export-dynamic \
+		-fno-diagnostics-color  \
+		-Iinclude/ -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -fno-strict-aliasing -g -DNDEBUG -L/usr/lib/x86_64-linux-gnu -lsqlite3 -ldl -lpthread -lm  -lgmp  \
+		`pkg-config --cflags --libs gdkmm-3.0`\
+
+CPPSPCFLGS  = -w -falign-functions  -falign-jumps -falign-labels  -falign-loops -fauto-inc-dec -fbranch-count-reg -fcaller-saves -fcode-hoisting -fcombine-stack-adjustments -fcompare-elim -fcprop-registers -fcrossjumping -fcse-follow-jumps  -fcse-skip-blocks -fdce -fdefer-pop -fdelete-null-pointer-checks -fdevirtualize  -fdevirtualize-speculatively  -fdse -fforward-propagate -ffinite-loops -fgcse -fgcse-lm -fhoist-adjacent-loads -fif-conversion -fif-conversion2 -finline-functions -finline-functions-called-once -finline-small-functions -fipa-modref -fipa-profile -fipa-pure-const -fipa-reference -fipa-reference-addressable -fmerge-constants -fmove-loop-invariants -fomit-frame-pointer -freorder-blocks -fshrink-wrap -fshrink-wrap-separate -fsplit-wide-types -fssa-backprop -fssa-phiopt -ftree-bit-ccp -ftree-ccp -ftree-ch -ftree-coalesce-vars -ftree-copy-prop -ftree-dce -ftree-dominator-opts -ftree-dse -ftree-forwprop -ftree-fre -ftree-phiprop -ftree-pta -ftree-scev-cprop -ftree-sink -ftree-slsr -ftree-sra -ftree-ter -funit-at-a-time   \
+		-Iinclude/ -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -fno-strict-aliasing -g -DNDEBUG -L/usr/lib/x86_64-linux-gnu -lsqlite3 -ldl -lpthread -lm  -lgmp  \
+		-fno-diagnostics-color  \
+		-fno-stack-protector `pkg-config --cflags --libs gtk+-3.0` -export-dynamic \
+		`pkg-config --cflags --libs gdkmm-3.0`\
+		-Iinclude/ -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -fno-strict-aliasing -g -DNDEBUG -L/usr/lib/x86_64-linux-gnu -lsqlite3 -ldl -lpthread -lm  -lgmp 
+
+HEADERS   = include/mumpsc/*.h
+
+BINARIES  = mumps2c 
+
+LIBRARIES = libmumps.a libmpsglobal_native.a libmpscpp.a 
+#pcre-8.45/pcrelibs
+
+compile: $(BINARIES) $(LIBRARIES) 
+
+############################################################################
+#                                  Binaries                                #
+############################################################################
+
+MUMPS2C_OBJS    = compiler-mumps.o compiler-parse.o compiler-sys1.o \
+		compiler-at-test.o compiler-copyright-notice.o \
+		compiler-open.o compiler-set.o compiler-for.o compiler-abrtx.o \
+		compiler-lock.o compiler-if.o compiler-kill.o compiler-new.o \
+		compiler-read.o compiler-write.o compiler-zcommands.o \
+		compiler-doty.o compiler-fcninit.o compiler-epi.o \
+		compiler-globalarray.o compiler-localarray.o 
+
+compiler-mumps.o : compiler-mumps.c $(HEADERS)
+	$(CC) -c compiler-mumps.c $(CFLAGS)
+
+compiler-parse.o : compiler-parse.c $(HEADERS)
+	$(CC) -c compiler-parse.c $(CFLAGS)
+
+compiler-sys1.o : compiler-sys1.c $(HEADERS)
+	$(CC) -c compiler-sys1.c $(CFLAGS)
+
+compiler-localarray.o : compiler-localarray.c $(HEADERS)
+	$(CC) -c compiler-localarray.c $(CFLAGS)
+
+compiler-globalarray.o : compiler-globalarray.c $(HEADERS)
+	$(CC) -c compiler-globalarray.c $(CFLAGS)
+
+compiler-epi.o : compiler-epi.c $(HEADERS)
+	$(CC) -c compiler-epi.c $(CFLAGS)
+
+compiler-fcninit.o : compiler-fcninit.c $(HEADERS)
+	$(CC) -c compiler-fcninit.c $(CFLAGS)
+
+compiler-doty.o : compiler-doty.c $(HEADERS)
+	$(CC) -c compiler-doty.c $(CFLAGS)
+
+compiler-zcommands.o : compiler-zcommands.c $(HEADERS)
+	$(CC) -c compiler-zcommands.c $(CFLAGS)
+
+compiler-write.o : compiler-write.c $(HEADERS)
+	$(CC) -c compiler-write.c $(CFLAGS)
+
+compiler-read.o : compiler-read.c $(HEADERS)
+	$(CC) -c compiler-read.c $(CFLAGS)
+
+compiler-new.o : compiler-new.c $(HEADERS)
+	$(CC) -c compiler-new.c $(CFLAGS)
+
+compiler-kill.o : compiler-kill.c $(HEADERS)
+	$(CC) -c compiler-kill.c $(CFLAGS)
+
+compiler-if.o : compiler-if.c $(HEADERS)
+	$(CC) -c compiler-if.c $(CFLAGS)
+
+compiler-lock.o : compiler-lock.c $(HEADERS)
+	$(CC) -c compiler-lock.c $(CFLAGS)
+
+compiler-abrtx.o : compiler-abrtx.c $(HEADERS)
+	$(CC) -c compiler-abrtx.c $(CFLAGS)
+
+compiler-for.o : compiler-for.c $(HEADERS)
+	$(CC) -c compiler-for.c $(CFLAGS)
+
+compiler-set.o : compiler-set.c $(HEADERS)
+	$(CC) -c compiler-set.c $(CFLAGS)
+
+compiler-copyright-notice.o : compiler-copyright-notice.c $(HEADERS)
+	$(CC) -c compiler-copyright-notice.c $(CFLAGS)
+
+compiler-at-test.o : compiler-at-test.c $(HEADERS)
+	$(CC) -c compiler-at-test.c $(CFLAGS)
+
+mumps2c	: $(MUMPS2C_OBJS) $(HEADERS)
+	$(CC) -o mumps2c $(MUMPS2C_OBJS) $(CFLAGS)
+
+############################################################################
+#                                 Libraries                                #
+############################################################################
+
+libmumps.a : interp-arith.o interp-zfcns.o interp-bstring.o interp-interp.o \
+		interp-rpm.o interp-pm.o interp-stem.o interp-strmanip.o interp-service.o interp-sym.o \
+		interp-select.o interp-fnumber.o interp-sysfunc.o interp-lock.o interp-bmgsubs.o \
+		interp-piece.o interp-fcn.o interp-parse.o interp-globalb.o interp-sql.o
+
+	ar rcs libmumps.a interp-arith.o interp-zfcns.o interp-bstring.o \
+		interp-select.o interp-interp.o interp-rpm.o interp-pm.o interp-stem.o  \
+		interp-strmanip.o interp-service.o interp-sym.o interp-sysfunc.o \
+		interp-parse.o interp-lock.o interp-bmgsubs.o interp-globalb.o \
+		interp-fnumber.o interp-piece.o interp-fcn.o interp-sql.o
+
+libmpscpp.a : libmpscpp.o
+	ar rcs libmpscpp.a libmpscpp.o 
+
+libmpscpp.o : libmpscpp.cpp
+	g++ -c libmpscpp.cpp $(CPPOPTFLGS)
+
+libmpsglobal_native.a : interp-globalb.o interp-sql.o
+	ar rcs libmpsglobal_native.a interp-globalb.o interp-sql.o
+
+interp-arith.o : interp-arith.cpp $(HEADERS)
+	g++ -c interp-arith.cpp $(CPPOPTFLGS)
+
+interp-zfcns.o : interp-zfcns.cpp $(HEADERS)
+	g++ -c interp-zfcns.cpp $(CPPOPTFLGS)
+
+interp-bstring.o : interp-bstring.cpp $(HEADERS)
+	g++ -c interp-bstring.cpp $(CPPOPTFLGS)
+
+interp-interp.o : interp-interp.cpp $(HEADERS)
+	g++ -c interp-interp.cpp $(CPPOPTFLGS)
+
+interp-parse.o : interp-parse.cpp $(HEADERS)
+	g++ -c interp-parse.cpp  $(CPPOPTFLGS)
+
+interp-pm.o : interp-pm.cpp $(HEADERS)
+	g++ -c interp-pm.cpp $(CPPOPTFLGS)
+
+interp-rpm.o : interp-rpm.cpp $(HEADERS)
+	g++ -c interp-rpm.cpp $(CPPOPTFLGS)
+
+interp-stem.o : interp-stem.cpp $(HEADERS)
+	g++ -c interp-stem.cpp $(CPPOPTFLGS)
+
+interp-strmanip.o : interp-strmanip.cpp $(HEADERS)
+	g++ -c interp-strmanip.cpp $(CPPOPTFLGS)
+
+interp-sym.o : interp-sym.cpp $(HEADERS)
+	g++ -c interp-sym.cpp $(CPPOPTFLGS)
+
+interp-piece.o : interp-piece.cpp $(HEADERS)
+	g++ -c interp-piece.cpp $(CPPOPTFLGS)
+
+interp-fcn.o : interp-fcn.cpp $(HEADERS)
+	g++ -c interp-fcn.cpp $(CPPOPTFLGS)
+
+interp-select.o : interp-select.cpp $(HEADERS)
+	g++ -c interp-select.cpp $(CPPOPTFLGS)
+
+interp-fnumber.o : interp-fnumber.cpp $(HEADERS)
+	g++ -c interp-fnumber.cpp $(CPPOPTFLGS)
+
+interp-service.o : interp-service.cpp $(HEADERS)
+	g++ -c interp-service.cpp $(CPPOPTFLGS)
+
+interp-sysfunc.o : interp-sysfunc.cpp $(HEADERS)
+	g++ -c interp-sysfunc.cpp $(CPPOPTFLGS)
+
+interp-lock.o : interp-lock.cpp $(HEADERS)
+	g++ -c interp-lock.cpp $(CPPOPTFLGS)
+
+interp-bmgsubs.o : interp-bmgsubs.c $(HEADERS)
+	gcc -c interp-bmgsubs.c -std=gnu89 $(CPPOPTFLGS)
+
+interp-globalb.o : interp-globalb.cpp $(HEADERS)
+	g++ -c interp-globalb.cpp $(CPPOPTFLGS)
+
+interp-sql.o : interp-sql.cpp $(HEADERS)
+	g++ -c interp-sql.cpp $(CPPSPCFLGS)
+
+
+############################################################################
+
+install: install-common
+
+install-common:
+	$(INSTALL) -d        $(PREFIX)
+	$(INSTALL) -d        $(BINDIR)
+	$(INSTALL) -d        $(INCLUDEDIR)
+	$(INSTALL) -d        $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -d        $(SHARE)
+	$(INSTALL) -d        $(SHARE)/doc/
+	$(INSTALL) -d        $(SHARE)/man/
+	$(INSTALL) -d        $(MANDIR)
+	$(INSTALL) -d        $(MAN1DIR)
+	$(INSTALL) -d        $(LIBDIR)
+	$(INSTALL) -d        $(DOCDIR)
+	$(INSTALL) -m 755    $(BINARIES)               $(BINDIR)
+	$(INSTALL) -m 755    mumpsc                    $(BINDIR)
+	$(INSTALL) -m 755    mumps-sql-db-create       $(BINDIR)
+	$(INSTALL) -m 644    $(LIBRARIES)              $(LIBDIR)
+
+	$(INSTALL) -m 644    include/mumpsc/arith.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/errors.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/zfcns.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/bstring.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/btree.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/builtin.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/cgi.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/config.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/cppsysfunc.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/externs.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/fcns.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/defines.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/global.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/globalClass.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/mstringClass.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/globalOrder.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/globalvars.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/interp.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/keyfix.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/compiler.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/libmpscpp.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/memsize.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/numSetupDefines.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/numSetup.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/pm.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/stateVector.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/stem.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/strmanip.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/strmax.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/inline.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/sym.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/sysfunc.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/sysparms.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/symbasic.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    include/mumpsc/builtinTable.h $(INCLUDEDIR)/mumpsc/
+	$(INSTALL) -m 644    Documentation/MumpsTutorial.pdf $(DOCDIR)
+	$(INSTALL) -m 644    Documentation/MumpsUsersGuide.pdf $(DOCDIR)
+
+	$(INSTALL) -d        $(DOCDIR)/examples/
+	$(INSTALL) -d        $(MAN1DIR)
+
+
+	chmod u+x mumpsc
+	./mumpsc mumps.cpp
+
+	strip --strip-unneeded mumps
+	strip --strip-unneeded mumps2c
+
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "sudo priv required to create install package mumps-sqlite3-amd64"
+	@echo "------------------------------------------------------------------"
+	@echo
+
+	sudo mkdir -p mumps-sqlite3-amd64/usr
+	sudo chown root mumps-sqlite3-amd64/usr
+	sudo chgrp root mumps-sqlite3-amd64/usr
+	sudo chmod 755 mumps-sqlite3-amd64/usr
+
+	sudo mkdir -p mumps-sqlite3-amd64/usr/share
+	sudo chown root mumps-sqlite3-amd64/usr/share
+	sudo chgrp root mumps-sqlite3-amd64/usr/share
+	sudo chmod 755 mumps-sqlite3-amd64/usr/share
+
+	sudo mkdir -p mumps-sqlite3-amd64/usr/bin
+	sudo chown root mumps-sqlite3-amd64/usr/bin
+	sudo chgrp root mumps-sqlite3-amd64/usr/bin
+	sudo chmod 755 mumps-sqlite3-amd64/usr/bin
+
+	sudo mkdir -p mumps-sqlite3-amd64/usr/share/man
+	sudo chown root mumps-sqlite3-amd64/usr/share/man
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/man
+	sudo chmod 755 mumps-sqlite3-amd64/usr/share/man
+
+	sudo mkdir -p mumps-sqlite3-amd64/usr/share/man/man1
+	sudo chown root mumps-sqlite3-amd64/usr/share/man/man1
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/man/man1
+	sudo chmod 755 mumps-sqlite3-amd64/usr/share/man/man1
+
+	gzip -kf Documentation/mumps.1
+	sudo mkdir -p mumps-sqlite3-amd64/usr/share/man/man1
+	sudo chown root mumps-sqlite3-amd64/usr/share/man/man1
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/man/man1
+	sudo chmod 755 mumps-sqlite3-amd64/usr/share/man/man1
+	sudo cp Documentation/mumps.1.gz mumps-sqlite3-amd64/usr/share/man/man1
+	sudo chown root mumps-sqlite3-amd64/usr/share/man/man1/mumps.1.gz
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/man/man1/mumps.1.gz
+	sudo chmod 644 mumps-sqlite3-amd64/usr/share/man/man1/mumps.1.gz
+
+	gzip -kf Documentation/mumps-sql-db-create.1
+	sudo cp Documentation/mumps-sql-db-create.1.gz mumps-sqlite3-amd64/usr/share/man/man1
+	sudo chown root mumps-sqlite3-amd64/usr/share/man/man1/mumps-sql-db-create.1.gz
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/man/man1/mumps-sql-db-create.1.gz
+	sudo chmod 644 mumps-sqlite3-amd64/usr/share/man/man1/mumps-sql-db-create.1.gz
+
+	sudo mkdir -p mumps-sqlite3-amd64/usr/include/mumpsc
+	sudo chown root mumps-sqlite3-amd64/usr mumps-sqlite3-amd64/usr/include \
+		mumps-sqlite3-amd64/usr/include/mumpsc
+	sudo chgrp root mumps-sqlite3-amd64/usr mumps-sqlite3-amd64/usr/include \
+		mumps-sqlite3-amd64/usr/include/mumpsc
+	sudo chmod 755 mumps-sqlite3-amd64/usr mumps-sqlite3-amd64/usr/include \
+		mumps-sqlite3-amd64/usr/include/mumpsc
+	sudo chown root mumps-sqlite3-amd64/usr/include/mumpsc
+	sudo chgrp root mumps-sqlite3-amd64/usr/include/mumpsc
+	sudo chmod 755 mumps-sqlite3-amd64/usr/include/mumpsc
+	sudo cp include/mumpsc/*.h mumps-sqlite3-amd64/usr/include/mumpsc
+	sudo chown root mumps-sqlite3-amd64/usr/include/mumpsc/*
+	sudo chgrp root mumps-sqlite3-amd64/usr/include/mumpsc/*
+	sudo chmod 644 mumps-sqlite3-amd64/usr/include/mumpsc/*
+
+	sudo mkdir -p mumps-sqlite3-amd64/usr/bin
+	sudo chown root  mumps-sqlite3-amd64/usr/bin
+	sudo chgrp root  mumps-sqlite3-amd64/usr/bin
+	sudo chmod 755  mumps-sqlite3-amd64/usr/bin
+	sudo cp mumps mumps-sqlite3-amd64/usr/bin
+	sudo cp mumps2c mumps-sqlite3-amd64/usr/bin
+	sudo cp mumpsc mumps-sqlite3-amd64/usr/bin
+	sudo cp mumps-sql-db-create mumps-sqlite3-amd64/usr/bin
+	sudo chown root mumps-sqlite3-amd64/usr/bin/*
+	sudo chgrp root mumps-sqlite3-amd64/usr/bin/*
+	sudo chmod 755 mumps-sqlite3-amd64/usr/bin/*
+
+	sudo mkdir -p mumps-sqlite3-amd64/usr/lib
+	sudo chown root  mumps-sqlite3-amd64/usr/lib
+	sudo chgrp root  mumps-sqlite3-amd64/usr/lib
+	sudo chmod 755  mumps-sqlite3-amd64/usr/lib
+	sudo cp libmumps.a mumps-sqlite3-amd64/usr/lib
+	sudo cp libmpscpp.a mumps-sqlite3-amd64/usr/lib
+	sudo cp libmpsglobal_native.a mumps-sqlite3-amd64/usr/lib
+	sudo chown root mumps-sqlite3-amd64/usr/lib/*
+	sudo chgrp root mumps-sqlite3-amd64/usr/lib/*
+	sudo chmod 644 mumps-sqlite3-amd64/usr/lib/*
+
+	sudo mkdir -p mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3
+	sudo chown root mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3
+	sudo chown root mumps-sqlite3-amd64/usr/share
+	sudo chown root mumps-sqlite3-amd64/usr/share/doc
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3
+	sudo chgrp root mumps-sqlite3-amd64/usr/share
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/doc
+	sudo chmod 755 mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3
+	sudo chmod 755 mumps-sqlite3-amd64/usr/share
+	sudo chmod 755 mumps-sqlite3-amd64/usr/share/doc
+
+	gzip -kf Documentation/changelog.Debian
+	sudo cp Documentation/changelog.Debian.gz mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3
+	sudo chown root mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3/changelog.Debian.gz
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3/changelog.Debian.gz
+	sudo chmod 644 mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3/changelog.Debian.gz
+
+	sudo cp copyright mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3
+	sudo chown root mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3/copyright
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3/copyright
+	sudo chmod 644 mumps-sqlite3-amd64/usr/share/doc/mumps-sqlite3/copyright
+
+	sudo mkdir -p mumps-sqlite3-amd64/usr/share/man/man7
+	sudo chown root mumps-sqlite3-amd64/usr/share/man/man7
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/man/man7
+	sudo chmod 755 mumps-sqlite3-amd64/usr/share/man/man7
+
+	gzip -kf Documentation/mumps-doc.7
+	sudo cp Documentation/mumps-doc.7.gz mumps-sqlite3-amd64/usr/share/man/man7
+	sudo chown root mumps-sqlite3-amd64/usr/share/man/man7/mumps-doc.7.gz
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/man/man7/mumps-doc.7.gz
+	sudo chmod 644 mumps-sqlite3-amd64/usr/share/man/man7/mumps-doc.7.gz
+
+	sudo chown root mumps-sqlite3-amd64/DEBIAN
+	sudo chown root mumps-sqlite3-amd64/DEBIAN/control
+	sudo chown root mumps-sqlite3-amd64/DEBIAN/postinst
+
+	sudo chgrp root mumps-sqlite3-amd64/DEBIAN
+	sudo chgrp root mumps-sqlite3-amd64/DEBIAN/control
+	sudo chgrp root mumps-sqlite3-amd64/DEBIAN/postinst
+
+	sudo chmod 755 mumps-sqlite3-amd64/DEBIAN
+	sudo chmod 755 mumps-sqlite3-amd64/DEBIAN/control
+	sudo chmod 755 mumps-sqlite3-amd64/DEBIAN/postinst
+
+	sudo chown root mumps-sqlite3-amd64/usr/share/doc
+	sudo chgrp root mumps-sqlite3-amd64/usr/share/doc
+
+	@echo "Directory fix code follows:"
+
+	for i in `find mumps-sqlite3-amd64 -type d` ; do sudo chown root $$i ; \
+	echo $$i ; sudo chgrp root $$i ; sudo chmod 755 $$i ; done
+
+	dpkg-deb --build mumps-sqlite3-amd64/
+
+	sudo chown -R $$USER mumps-sqlite3-amd64
+	sudo chgrp -R $$USER mumps-sqlite3-amd64
+
+clean:
+	$(RM) *.[oas] $(BINARIES)
+	rm -f key.dat
+	rm -f data.dat
+	rm -f mumps mumpsc mumpsRO mumps2c
+	rm -f Checkout/examples/btree/btree1
+	rm -f Checkout/examples/btree/btree2
+	rm -f Checkout/examples/btree/btree3
+	rm -f Checkout/examples/btree/btree4
+	rm -f Checkout/examples/btree/btree5
+	rm -f Checkout/examples/btree/btree6
+	rm -f Checkout/examples/btree/btree7
+	rm -f Checkout/examples/btree/btree8
+	rm -f Checkout/examples/btree/data.dat
+	rm -f Checkout/examples/btree/key.dat
+	rm -f Checkout/validate-compiler/key.dat
+	rm -f Checkout/validate-compiler/data.dat
+	rm -f Checkout/validate-compiler/*.cpp
+	rm -f Checkout/validate-compiler/*.orig
+	rm -f Checkout/validate-compiler/ccc.*
+	rm -f Checkout/validate-compiler/ddd.*
+	rm -f Checkout/validate-compiler/eee.*
+	rm -f Checkout/validate-compiler/ggg.*
+	rm -f Checkout/validate-compiler/hhh.*
+	rm -f Checkout/validate-compiler/backref
+	rm -f Checkout/validate-compiler/checkout
+	rm -f Checkout/validate-compiler/do1
+	rm -f Checkout/validate-compiler/extractTests
+	rm -f Checkout/validate-compiler/fcns
+	rm -f Checkout/validate-compiler/for1
+	rm -f Checkout/validate-compiler/for2
+	rm -f Checkout/validate-compiler/for3
+	rm -f Checkout/validate-compiler/globals1
+	rm -f Checkout/validate-compiler/go1
+	rm -f Checkout/validate-compiler/kill
+	rm -f Checkout/validate-compiler/lclOrder
+	rm -f Checkout/validate-compiler/new01
+	rm -f Checkout/validate-compiler/new02
+	rm -f Checkout/validate-compiler/new03
+	rm -f Checkout/validate-compiler/ops
+	rm -f Checkout/validate-compiler/pieceTests
+	rm -f Checkout/validate-compiler/qtst
+	rm -f Checkout/validate-compiler/remote
+	rm -f Checkout/validate-compiler/s16a
+	rm -f Checkout/validate-compiler/s6a
+	rm -f Checkout/validate-compiler/s6b
+	rm -f Checkout/validate-compiler/s6c
+	rm -f Checkout/validate-compiler/s6
+	rm -f Checkout/validate-compiler/s6d
+	rm -f Checkout/validate-compiler/zfunctions
+	rm -f Checkout/validate-compiler/numtests
+	rm -f Checkout/validate-compiler/interp1
+	rm -f Checkout/validate-compiler/interp1
+	rm -f Checkout/validate-compiler/mumps.sqlite
+	rm -f mumps.sqlite
+
+	rm -f *.orig
+	rm -f mumps.sqlite
+	rm -rf /home/okane/Desktop/mumps/Mumps-Language-Processors/Mumps-Interpreter-Compiler-Library/local_install
+	sudo chown -R $(USER) *
+	sudo chgrp -R $(USER) *
+
