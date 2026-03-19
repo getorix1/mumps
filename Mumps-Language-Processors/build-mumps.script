@@ -1,0 +1,166 @@
+#!/bin/bash
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Mumps Bioinformatics Software Library
+#+     Copyright (C) 2015 - 2025 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://threadsafebooks.com/
+#+     https://www.cs.uni.edu/~okane
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+# Feb 5, 2026 
+
+echo "Building Mumps with Globals in a Sqlite Server"
+echo
+
+# usage:	build-mumps.script		Sqlite3 database
+#		buils-mumps.script native	Native database
+
+if [ `whoami` == "root" ]; then
+        echo
+        echo "**********************************************"
+        echo "**** you must NOT be root to run this script"
+        echo "**********************************************"
+        echo
+        exit
+        fi
+
+if [ "$1" == "?" ] || [ "$1" == "-?" ] || [ "$1" == "help" ] || 
+	[ "$1" == "--help" ] || [ "$1" == "-help" ]; then
+	echo
+	echo "usage:	for Sqlite3 database:"
+	echo "		build-mumps.script"
+	echo "		build-mumps.script memory"
+	echo "usage:	for native database:"
+	echo "		build-mumps.script native"
+	echo
+	echo "Sqlite3 memory option creates the a volitile database"
+	echo "in memory which is deleted on exit."
+	echo 
+	exit
+	fi
+
+# make_pcrelibs
+
+if [ -z $1 ]; then
+
+	# sqlite3 disk based configure - default
+	# other possible sqlite options:
+	# --with-memory-database - memory based database - transient
+	# --with-journal-mode=MEMORY - journal stored in emory
+
+	./configure \
+	--with-sqlite --with-dbname=mumps \
+	--with-slice=0 \
+	--with-hardware-math=yes \
+	--with-float-digits=8 \
+	--with-int-32 \
+	--with-journal-mode=OFF \
+	--with-data-size=512 \
+	--with-index-size=256 \
+	--with-index-max=14 \
+	--with-alarm=0
+
+if (($? > 0))
+	then
+	echo "Configure error"
+	exit 16
+	fi
+
+	echo "Return code $?"
+
+elif [ "$1" == "native" ]; then
+
+# legacy native database configure
+
+	./configure \
+	--with-cache=262145 \
+	--with-hardware-math=yes \
+	--with-int-32 \
+	--with-float-digits=8 \
+	--with-block=2048 \
+	--with-slice=0 \
+	--with-alarm=0
+
+if (($? > 0))
+	then
+	echo "Configure error"
+	exit 16
+	fi
+
+elif [ "$1" == "memory" ]; then
+
+# sqlite3 memory based database - transient
+
+	./configure \
+	--with-sqlite --with-dbname=mumps \
+	--with-slice=0 \
+	--with-hardware-math=yes \
+	--with-int-32 \
+	--with-float-digits=8 \
+	--with-journal-mode=OFF \
+	--with-data-size=512 \
+	--with-index-size=256 \
+	--with-memory-database \
+	--with-alarm=0
+
+if (($? > 0))
+	then
+	echo "Configure error"
+	exit 16
+	fi
+else
+	echo
+	echo "invalid option parameter"
+	echo
+	exit 16
+fi
+
+
+if (($? > 0))
+	then
+	echo "Configureation error"
+	exit 16
+	fi
+
+JOBS=8
+
+rm -rf local_install
+rm -f *.a
+rm -f *.o
+
+make -B -j $JOBS compile
+
+if (($? > 0))
+	then
+	echo "Compilation error"
+	exit 16
+	fi
+
+make -B -j $JOBS install
+
+if (($? > 0))
+	then
+	echo "Install error"
+	exit 16
+	fi
+
+final.script
