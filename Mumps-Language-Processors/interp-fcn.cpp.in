@@ -1,0 +1,1281 @@
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Mumps Bioinformatics Software Library
+#+     Copyright (C) 2003 - 2025 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://threadsafebooks.com/
+#+     https://www.cs.uni.edu/~okane
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+//	Dec 13, 2025
+
+@dbtype@
+
+// enable debug code
+// #define SYMDEBUG
+
+/* sym.c - Mumps Runtime Library
+ *
+ * Mumps symbol table management.  Variables not handled by global.h
+ * and friends should be handled by these routines.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <sys/types.h>
+#include <monetary.h>
+#include <locale.h>
+#include <math.h>
+// #include <wait.h>
+
+#define _INTERP_
+#define CSTR (char *)
+#define USTR (unsigned char *)
+
+#include <mumpsc/defines.h>
+#include <mumpsc/sym.h>
+#include <mumpsc/btree.h>
+#include <mumpsc/globalOrder.h>
+#include <mumpsc/keyfix.h>
+#include <mumpsc/inline.h>
+
+#include <unistd.h>
+
+#include <time.h>
+
+#include <sys/types.h>
+
+using namespace std;
+
+#include <mumpsc/fcns.h>
+
+#include <mumpsc/builtin.h>
+#include <mumpsc/interp.h>
+
+// floatSize is defines BIGFLOAT if selected in configure
+@floatSize@
+
+// intLong will be defined is 32 bit wanted - 64 otherwise
+@intLong@
+
+int Interpret(const char *, MSV *);
+int ScanParse(char *);
+int Eval(unsigned char *, unsigned char *, struct MSV *);  // evaluate expression
+
+extern int (*__label_lookup)(char *);
+extern char* (*__text_function)(int);  /* fcn */
+
+#include <mumpsc/global.h>
+
+extern "C" long _getpid(void);
+extern "C" time_t time(time_t *);
+
+#define SYMSTORE 0 
+#define SYMRETRIEVE 1
+
+/*===========================================================================*
+ *                                    FCN                                    *
+ *===========================================================================*/
+
+void fcn(MSV * svPtr) {
+
+      unsigned char tmp1[2] = { 0, 0 };
+      long int day, fd;
+      time_t timex;
+      double t1;
+      char *ctime();
+      char S;
+      unsigned char tmp2[STR_MAX];
+      unsigned char tmp3[STR_MAX];
+      int rslt;
+      const unsigned char cod209[2] = { 209, 0 };
+      char *ctmp;
+      long timezone = 0;
+      long daylight = 0;
+
+#if defined(SQLITE)
+      int sql(int, struct MSV *, char *, char *, char *, const char *);
+#endif
+
+      const static unsigned char opcode[256] = {
+
+            /*0 */ 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+            /*10 */ 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+            /*20 */ 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+            /*30 */ 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+            /*40 */ 99, 99, 99, 99, 99, 99, 99, 99, 99, 21,
+            /*50 */ 22, 23, 24, 25, 26, 27, 28, 29, 99, 99,
+            /*60 */ 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+            /*70 */ 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+            /*80 */ 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+            /*90 */ 99, 99, 99, 99, 99, 99, 99, 2,  99, 3,
+            /*100 */ 99, 1, 4, 15, 14, 13, 5, 99, 6, 99,
+            /*110 */ 30, 32, 7, 31, 10, 8, 9, 99, 99, 99,
+            /*120 */ 11, 12, 98, 99, 99, 99, 99, 99
+            };
+
+      short int iargs[10], nargs, m, n, k, l;
+      long i, j;
+
+//----------------
+//	$$FUNCTION
+//----------------
+
+      if (svPtr->v1d[1] == '$' && svPtr->v1d[2] == '$' ) {
+
+            int status;
+
+            svPtr->xpx++;
+            int org = svPtr->xpx;
+            int end=ScanParse( (char *) &svPtr->xd[svPtr->xpx])+svPtr->xpx;
+            int hold=svPtr->xd[end];
+            svPtr->xd[end]=0;
+            char tcmd[128] = "do ";
+            strcat(tcmd, (const char *) &svPtr->v1d[3]);
+
+// look for ^ in function call - if not, function is local
+
+            int ca;
+            for (ca=svPtr->xpx; svPtr->xd[ca]!=0; ca++)
+                  if (svPtr->xd[ca]=='^') break;
+
+            if (svPtr->xd[ca]==0) {
+                  char tmp[STR_MAX];
+                  char tmp1[STR_MAX];
+                  int i,j,k;
+                  for (i=3; svPtr->v1d[i]!=0; i++) if (svPtr->v1d[i]==206) break;
+                  if (svPtr->v1d[i]==0) j=1;
+                  else j=0; // no arg case
+                  svPtr->v1d[i]=0;
+                  strcpy(tmp,"do ");
+                  strcat(tmp, (char *) &svPtr->v1d[3] ); // label
+                  strcat(tmp,"^"); // caret
+                  strcat( tmp, svPtr->CurrentFile ); // current directory
+                  if (j==0) { // attach argument
+                        svPtr->v1d[i]='(';
+                        strcat( tmp, (char *) &svPtr->v1d[i] );
+                        tmp[strlen(tmp)-1]=0;
+                        strcat(tmp,")");
+                        }
+                  strcpy(tcmd,tmp);
+                  }
+
+            else {
+                  strcat(tcmd, (const char *) &svPtr->xd[org]);
+                  svPtr->xd[end]=hold;
+                  }
+
+//--------------------------------------
+// create environment and launch command
+//--------------------------------------
+
+                  {
+                  MSV *svPtr1=AllocSV();
+
+                  svPtr1->_Sym=svPtr->_Sym;
+                  svPtr1->LineNumber=svPtr->LineNumber;
+                  for (int i=0; i<SYM_MAX; i++) svPtr1->start[i]=svPtr->start[i];
+                  svPtr1->nstart=svPtr->nstart;
+
+                  svPtr->ierr=Interpret((const char *) tcmd,svPtr1);
+
+                  for (int i=0; i<SYM_MAX; i++) svPtr->start[i]=svPtr1->start[i];
+
+                  strcpy ( (char *) tmp2, (const char *) &svPtr1->args);
+
+#if defined(SQLITE)
+
+#endif
+
+                  free(svPtr1);
+                  }
+
+            if (svPtr->ierr != 0) goto err;
+
+            svPtr->xpx=end-1;
+            strcpy ( (char *) &svPtr->bd[1], (const char *) tmp2);
+            return;
+            }
+
+
+
+
+      svPtr->ierr = 0;
+      nargs = 0;
+      iargs[0] = 1;
+      j = svPtr->v1d[2];  // hold function id
+      S = svPtr->v1d[3];
+
+      strcpy( CSTR tmp2, CSTR &svPtr->v1d[1]);
+
+      while (svPtr->v1d[1] != 206 && svPtr->v1d[1] != 0)
+            strmove(&svPtr->v1d[1], &svPtr->v1d[2]);
+
+      if (svPtr->v1d[1] == CodedOpen) strmove(&svPtr->v1d[1], &svPtr->v1d[2]);
+
+      if (j == CodedOpen ) { // noname form - parms to sub only
+            strcpy((char *) svPtr->args,(const char *) &svPtr->v1d[1]);
+            goto ex2;
+            }
+
+      for (i = 1; svPtr->v1d[i] != 0; i++)
+
+            if (svPtr->v1d[i] == CodedClose || svPtr->v1d[i] == CodedComma) {
+                  svPtr->v1d[i] = 0;
+                  iargs[++nargs] = i + 1;
+                  }
+
+      j=tolower(j);      /*lower case conversion */
+
+      if ((i = opcode[j]) == 99) {
+            svPtr->ierr = 30;
+            goto unknown_err;
+            }
+
+      switch (i) {
+
+//-----------------------------------------------------------------------
+//	unknown code
+//-----------------------------------------------------------------------
+
+            default:
+
+                  svPtr->ierr=30;
+                  goto unknown_err;
+
+//-----------------------------------------------------------------------
+//	$z variable and LHS functions
+//-----------------------------------------------------------------------
+
+            case 98:
+
+                  if (strcasecmp(CSTR tmp2, "$ztable") == 0 ) { // change RDBMS name
+
+#if defined(SQLITE)
+//                        sql( CLOSE, svPtr, NULL, NULL, NULL, NULL);
+//                        strcpy( CSTR svPtr->Table, CSTR &svPtr->pd1[svPtr->sdlim]);
+//                        sql( OPEN, svPtr, NULL, NULL, NULL, NULL);
+#endif
+                        goto ex2;
+                        }
+
+                  if (strcasecmp(CSTR tmp2, "$ztabsize") == 0 ) { // change RDBMS table size
+
+#if defined(SQLITE)
+                        sql( OPEN, svPtr, NULL, NULL, NULL, NULL);
+                        svPtr->TabSize = atoi(CSTR &svPtr->pd1[svPtr->sdlim]);
+                        if (svPtr->TabSize>22) goto unknown_err;
+                        if (svPtr->TabSize<1) goto unknown_err;
+#endif
+                        goto ex2;
+                        }
+
+                  if (strcasecmp(CSTR tmp2, "$zsqloutput") == 0 ) { // change RDBMS table size
+
+                        strcpy( CSTR svPtr->sqloutput, CSTR &svPtr->pd1[svPtr->sdlim]);
+                        goto ex2;
+                        }
+
+                  printf("\n*** Unrecognized Z-type variable.\n%s\nIn or near line number %d\n\n",
+                         tmp2,svPtr->LineNumber);
+                  exit(EXIT_FAILURE);
+
+//-----------------------------------------------------------------------
+//	$extract()
+//-----------------------------------------------------------------------
+
+            case 1:                    /* $extract */
+
+                  if (nargs == 1) { // no 2nd or 3rd operand - return first char
+
+                        if (svPtr->setpiece) { // LHS ref
+                              char tmp1[STR_MAX];
+
+                              if (svPtr->setname[0] == '^') {  // global array reference
+                                    int f;
+                                    char tmp2[STR_MAX];
+
+                                    f = Mglobal(RETRIEVE, svPtr->setname, (unsigned char *)tmp2, svPtr); // fetch gbl
+
+                                    if (f) { // global exists
+                                          strcpy(tmp1, (char *) &svPtr->pd1[svPtr->sdlim]);
+                                          if (strlen(tmp2)!=0) strcat (tmp1, &tmp2[1]);
+                                          f = Mglobal(STORE, svPtr->setname, (unsigned char *)tmp1, svPtr);
+                                          goto ex2;
+                                          }
+
+                                    else { // global does not exist
+                                          strcpy(tmp1, (char *) &svPtr->pd1[svPtr->sdlim]);
+                                          f = Mglobal(STORE, svPtr->setname, (unsigned char *)tmp1, svPtr);
+                                          goto ex2;
+                                          }
+
+                                    }
+
+                              else {  // local variable reference
+                                    ctmp = sym_(SYMRETRIEVE, svPtr->setname, &svPtr->bd[1],svPtr);
+                                    if (ctmp != NULL) { // variable exists
+                                          strcpy(tmp1, (char *) &svPtr->pd1[svPtr->sdlim]);
+                                          if (strlen(ctmp)!=0) strcat (tmp1, &ctmp[1]);
+                                          ctmp = sym_(SYMSTORE, svPtr->setname, (unsigned char *) tmp1,svPtr);
+                                          goto ex2;
+                                          }
+                                    else { // variable does not exist
+                                          strcpy(tmp1, (char *) &svPtr->pd1[svPtr->sdlim]);
+                                          ctmp = sym_(SYMSTORE, svPtr->setname, (unsigned char *) tmp1,svPtr);
+                                          goto ex2;
+                                          }
+                                    }
+                              }
+
+//---------------------------
+// not LHS $e()	- RHS function
+//---------------------------
+
+                        svPtr->bd[1] = svPtr->v1d[1]; // return first char
+                        svPtr->bd[2] = 0;
+                        goto ex2;
+                        }
+
+                  if (nargs != 2 && nargs != 3) goto arg_count_err;
+
+                  i=0;
+                  sscanf((char*) &svPtr->v1d[iargs[1]], "%ld", &i); // arg 2
+
+                  if (i <= 0 ) i=1;
+
+                  if (nargs != 3) j = i; // 2nd operand only - return one char
+                  else { // get 3rd operand
+                        j=0;
+                        sscanf( (char *) &svPtr->v1d[iargs[2]], "%ld", &j); // arg 3
+                        }
+
+                  if (j <= 0) j=0; // return null string
+
+//------------------------------------
+// RHS function where end before start
+//------------------------------------
+
+                  if (!(svPtr->setpiece) && (i >= iargs[1] || j < i)) { // start as after end of string or end LT start
+                        svPtr->bd[1] = 0; // empty string
+                        goto ex2;
+                        }
+
+//--------------------------
+// LHS where end before start
+//--------------------------
+
+                  if (svPtr->setpiece && j < i) { // store empty string if end exceeds start
+                        char tmp1[16]= "";
+
+                        if (svPtr->setname[0] == '^') {  // global array reference
+                              int f;
+                              f = Mglobal(STORE, svPtr->setname, (unsigned char *)tmp1, svPtr);
+                              goto ex2;
+                              }
+
+                        else { // local variable
+                              ctmp = sym_(SYMSTORE, svPtr->setname, (unsigned char *) tmp1,svPtr);
+                              goto ex2;
+                              }
+                        }
+
+                  // if j exceeds str length, make it str length - RHS
+
+                  if ( !(svPtr->setpiece) && j > iargs[1]) j = iargs[1];
+
+                  if (i < 1) i = 1; // is start is less than 1, make it 1
+
+// 3 argument forms
+
+// LHS ref ------------------------------------------
+
+                  if (svPtr->setpiece) { // LHS ref
+                        char tmp1[STR_MAX];
+                        char tmp2[STR_MAX];
+
+                        if (svPtr->setname[0] == '^') {  // global array reference
+                              int f;
+                              char tmp2[STR_MAX];
+
+                              f = Mglobal(RETRIEVE, svPtr->setname, (unsigned char *)tmp2, svPtr); // fetch gbl
+
+                              if (f) { // global exists
+
+                                    char ctmp[STR_MAX];
+                                    strcpy(ctmp,tmp2); // gbl array value
+
+                                    if (strlen(tmp2) < i) while(strlen(tmp2)<j) strcat(tmp2," "); // make it longer
+                                    tmp2[i-1]=0; // truncate
+
+                                    strcpy(tmp1, (char *) &svPtr->pd1[svPtr->sdlim]); // RHS
+
+                                    if (strlen(ctmp)!=0) strcat (tmp2, tmp1);  // insert RHS
+                                    if (strlen(ctmp)>=j) strcat(tmp2,&ctmp[j]);
+
+                                    f = Mglobal(STORE, svPtr->setname, (unsigned char *)tmp2, svPtr);
+
+                                    goto ex2;
+                                    }
+
+                              else { // global does not exist
+                                    for (k=0; k<i-1; k++) tmp1[k]=' ';
+                                    tmp1[k]=0; // initial string
+                                    strcat(tmp1, (char *) &svPtr->pd1[svPtr->sdlim]);
+                                    f = Mglobal(STORE, svPtr->setname, (unsigned char *)tmp1, svPtr);
+                                    goto ex2;
+                                    }
+                              }
+
+                        else { // local variable
+
+                              ctmp = sym_(SYMRETRIEVE, svPtr->setname, &svPtr->bd[1],svPtr); // fetch variable value
+                              if (ctmp != NULL) { // variable exists
+                                    strcpy(tmp2,ctmp);  // value of variable
+                                    if (strlen(tmp2) < i) while(strlen(tmp2)<j) strcat(tmp2," "); // make it longer
+                                    tmp2[i-1]=0; // truncate
+                                    strcpy(tmp1, (char *) &svPtr->pd1[svPtr->sdlim]); // RHS
+                                    if (strlen(ctmp)!=0) strcat (tmp2, tmp1);  // insert RHS
+                                    if (strlen(ctmp)>=j) strcat(tmp2,&ctmp[j]);
+                                    ctmp = sym_(SYMSTORE, svPtr->setname, (unsigned char *) tmp2,svPtr);
+                                    goto ex2;
+                                    }
+                              else { // variable does not exist - create and append
+                                    for (k=0; k<i-1; k++) tmp1[k]=' ';
+                                    tmp1[k]=0; // initial string
+                                    strcat(tmp1, (char *) &svPtr->pd1[svPtr->sdlim]);
+                                    ctmp = sym_(SYMSTORE, svPtr->setname, (unsigned char *) tmp1,svPtr);
+                                    goto ex2;
+                                    }
+                              }
+                        }
+
+// RHS ref --------------------------------------------
+
+                  k = 1;
+                  for (i = i; i <= j; i++) svPtr->bd[k++] = svPtr->v1d[i];
+
+                  svPtr->bd[k] = 0;
+                  goto ex2;
+
+//-----------------------------------------------------------------------
+//	$ascii()
+//-----------------------------------------------------------------------
+
+            case 2:                    /* $ascii */
+
+                  if (nargs > 2) goto arg_count_err;
+
+                  if (nargs == 2) sscanf((char*) &svPtr->v1d[iargs[1]], "%ld", &i);
+                  else i = 1;
+
+                  if (i >= iargs[1] || i <= 0) {
+                        svPtr->bd[1] = '-';
+                        svPtr->bd[2] = '1';
+                        svPtr->bd[3] = 0;
+                        return;
+                        }
+
+                  rslt = svPtr->v1d[i];
+                  if (rslt == 0) rslt = -1;
+                  goto ex1;
+
+//-----------------------------------------------------------------------
+//	$char()
+//-----------------------------------------------------------------------
+
+            case 3:                    /* $char        */
+
+                  svPtr->bd[1] = 0;
+                  j = 1;
+                  for (i = 1; i <= nargs; i++) {
+                        strmove(tmp2, &svPtr->v1d[j]);
+                        day = atol((const char *)tmp2);
+                        if (day <= 0) day = 0;
+                        tmp1[0] = day;
+                        tmp1[1] = 0;
+                        strcat((char*) &svPtr->bd[1], (char*) tmp1);
+                        j = iargs[i];
+                        }
+
+                  return;
+
+//-----------------------------------------------------------------------
+//	$find() $fnumber()
+//-----------------------------------------------------------------------
+
+            case 4:                    /* $find $fnumber */
+
+                  if (tolower(S) == 'n') { // $fnumber()
+                        double x;
+                        int dp=-1,plus=0,minus=0,comma=0,t=0,t1=0,p=0; // expr flags
+                        char str[32],rstr[64];
+
+                        if (nargs != 3 && nargs != 2) goto arg_count_err;
+
+                        if (nargs == 3) dp=atoi( (char *) &svPtr->v1d[iargs[2]]);
+
+                        x=atof((char *)&svPtr->v1d[1]); // value to be converted
+
+                        if ( svPtr->v1d[iargs[1]] == '*') { // arg is for strfmon
+                              strfmon((char *)&svPtr->bd[1],256,(char *)&svPtr->v1d[iargs[1]+1],x);
+                              return;
+                              }
+
+                        if (strchr((char *) &svPtr->v1d[iargs[1]], (int) '+') != NULL ) plus=1;
+                        if (strchr((char *) &svPtr->v1d[iargs[1]], (int) '-') != NULL ) minus=1;
+                        if (strchr((char *) &svPtr->v1d[iargs[1]], (int) ',') != NULL ) comma=1;
+                        if (strchr((char *) &svPtr->v1d[iargs[1]], (int) 'T') != NULL ) t=1;
+                        if (strchr((char *) &svPtr->v1d[iargs[1]], (int) 't') != NULL ) t=1;
+                        if (strchr((char *) &svPtr->v1d[iargs[1]], (int) 'P') != NULL ) p=1;
+                        if (strchr((char *) &svPtr->v1d[iargs[1]], (int) 'p') != NULL ) p=1;
+
+                        if (p && ( plus || minus || t ) ) goto fnum_wrong;
+
+                        strcpy(str,"%!");            // format supress currency sym
+
+                        if (t) { // trailing sign
+                              if (x<0) t1=1;
+                              x=fabs(x);
+                              }
+
+                        if (!comma) strcat(str,"^");  // no grouping chars
+                        if (p) strcat (str,"(");     // use parens for neg
+                        if (minus) x=fabs(x);        // supress minus
+
+                        if (dp != -1) {
+                              char dps[16];
+                              sprintf(dps,".%d",dp);
+                              strcat(str,dps);
+                              }
+                        else {
+                              int i;
+                              for (i=1; svPtr->v1d[i] != 0 && svPtr->v1d[i] != '.'; i++);
+                              if (svPtr->v1d[i] == 0) strcat(str,".0");
+                              else {
+                                    char tmp[32];
+                                    i= strlen ( (char *) &svPtr->v1d[1] )-i;
+                                    sprintf(tmp,".%d",i);
+                                    strcat(str,tmp);
+                                    }
+                              }
+
+                        strcat(str,"i");
+
+//		printf("\nin pattern %s\nval=%s\nstrfmon string %s\n",
+//		&svPtr->v1d[iargs[1]],&svPtr->v1d[1],str);
+
+                        strfmon( &rstr[1], 256, str, x);
+
+                        if (plus && x>0 && ! minus && ! t) rstr[0]='+'; //number was made positive by minus/t
+                        else rstr[0]=' ';
+
+                        if (t) {
+                              if (t1) strcat(rstr,"-");
+                              else if (plus) strcat(rstr,"+");
+                              }
+
+                        if (rstr[0]==' ') strcpy ( (char *) &svPtr->bd[1], &rstr[1]);
+                        else strcpy ( (char *) &svPtr->bd[1], rstr);
+
+                        return;
+                        }
+
+//------
+// $find
+//------
+                  if (nargs != 2 && nargs != 3) goto arg_count_err;
+
+                  strmove(tmp2, &svPtr->v1d[1]);
+                  strmove(tmp3, &svPtr->v1d[iargs[1]]);
+
+                  if (nargs == 2) i = 1;
+                  else sscanf((char*) &svPtr->v1d[iargs[2]], "%ld", &i);
+
+                  if (tmp3[0] != 0) {
+                        if ((i = xindex(tmp2, tmp3, (short) i)) > 0) i += strlen((char*) tmp3);
+                        }
+
+                  if (i > strlen((char*) tmp2) + 1) i = 0;
+                  rslt = i;
+                  goto ex1;
+
+//-----------------------------------------------------------------------
+//	$justify() $job
+//-----------------------------------------------------------------------
+
+            case 5:                    /* $justify $job */
+
+                  if (nargs == 0) {       /* $job */
+
+                        sprintf((char*) &svPtr->bd[1], "%X", getpid());
+                        goto ex2;
+                        }
+
+                  if (nargs < 2 || nargs > 3) goto arg_count_err;
+
+                  l = atoi((char*) &svPtr->v1d[iargs[1]]);
+
+                  strmove(&svPtr->bd[1], &svPtr->v1d[1]);
+
+                  if (nargs != 3) {
+                        k = strlen((char*) &svPtr->bd[1]);
+                        if (k >= l) goto ex2;
+                        if (l > 255) l = 255;
+                        lpad((unsigned char *) &svPtr->bd[1], (unsigned char *) &svPtr->bd[1], (short) l);
+                        goto ex2;
+                        }
+
+                  k = atoi((char*) &svPtr->v1d[iargs[2]]);       /* arg 3 */
+
+#ifndef MULTI_PRECISION
+
+#ifdef BIGFLOAT
+                  sprintf((char*) tmp2, "%c%d%c%dLf", '%', l, '.', k);
+#else
+                  sprintf((char*) tmp2, "%c%d%c%df", '%', l, '.', k);
+#endif
+
+#else
+                  sprintf((char*) tmp2, "%c%d%c%dRNf", '%', l, '.', k);
+#endif
+                  mps_justify( (char *) tmp2, (char *) &svPtr->bd[1], ( char *) &svPtr->v1d[1]);
+                  goto ex2;
+
+//-----------------------------------------------------------------------
+//	$len()
+//-----------------------------------------------------------------------
+
+            case 6:                    /* $len */
+
+                  if (nargs == 0) {
+                        svPtr->bd[1] = '0';
+                        svPtr->bd[2] = 0;
+                        return;
+                        }
+
+                  strmove(tmp2, &svPtr->v1d[1]);
+
+                  if (nargs == 2) {
+                        i = 1;
+                        j = 0;
+                        if ((k = strlen((char*) &svPtr->v1d[iargs[1]])) == 0) {
+                              rslt = 0;
+                              goto ex1;
+                              }
+                        while ((i = xindex(tmp2, &svPtr->v1d[iargs[1]], (short) i)) != 0) {
+                              j++;
+                              i += k;
+                              }
+                        rslt = j + 1;
+                        goto ex1;
+                        }
+
+                  if (nargs > 1) goto arg_count_err;
+
+                  rslt = strlen((char*) tmp2);
+
+ex1:
+                  sprintf((char*) &svPtr->bd[1], "%d", rslt);
+                  return;
+
+//-----------------------------------------------------------------------
+//	$piece()
+//-----------------------------------------------------------------------
+
+            case 7:                    /* $piece */
+
+                  if (nargs == 2 ) {
+                        if (svPtr->setpiece) {
+                              _piece(svPtr->setname, &svPtr->v1d[1], &svPtr->v1d[iargs[1]], (unsigned char *) "1",
+                                     (unsigned char *) "1", 1, (unsigned char *) &svPtr->pd1[svPtr->sdlim], svPtr);
+                              }
+                        else
+                              _piece(&svPtr->bd[1], &svPtr->v1d[1], &svPtr->v1d[iargs[1]], (unsigned char *) "1",
+                                     (unsigned char *) "1", 0, (unsigned char *) &svPtr->bd[1], svPtr);
+                        goto ex2;
+                        }
+
+                  if (nargs == 3 ) {
+                        if (svPtr->setpiece)
+                              _piece(svPtr->setname, &svPtr->v1d[1], &svPtr->v1d[iargs[1]], &svPtr->v1d[iargs[2]],
+                                     &svPtr->v1d[iargs[2]], 1, (unsigned char *) &svPtr->pd1[svPtr->sdlim], svPtr);
+                        else
+                              _piece(&svPtr->bd[1], &svPtr->v1d[1], &svPtr->v1d[iargs[1]], &svPtr->v1d[iargs[2]],
+                                     &svPtr->v1d[iargs[2]], 0, (unsigned char *) &svPtr->bd[1], svPtr);
+                        goto ex2;
+                        }
+
+                  if (nargs != 4) goto arg_count_err;
+
+                  if (svPtr->setpiece)
+                        _piece(svPtr->setname, &svPtr->v1d[1], &svPtr->v1d[iargs[1]], &svPtr->v1d[iargs[2]],
+                               &svPtr->v1d[iargs[3]], 1, (unsigned char *) &svPtr->pd1[svPtr->sdlim], svPtr);
+                  else
+                        _piece(&svPtr->bd[1], &svPtr->v1d[1], &svPtr->v1d[iargs[1]], &svPtr->v1d[iargs[2]],
+                               &svPtr->v1d[iargs[3]], 0, (unsigned char *) &svPtr->bd[1], svPtr);
+
+                  goto ex2;
+
+//-----------------------------------------------------------------------
+//	$select() $storage
+//-----------------------------------------------------------------------
+
+            case 8:          //  $select $storage
+
+                  if (nargs == 0) {       /* $storage */
+
+                        rslt = svPtr->PD1;
+                        sprintf((char*) &svPtr->bd[1], "%d", rslt);
+                        goto ex2;
+                        }
+
+//----------
+// $select()
+//----------
+
+                  i = 0;
+sel1:
+                  strmove(tmp2, &svPtr->v1d[iargs[i]]); // scan for a true result expt:rslt
+                  j = xindex(tmp2, cod209, (short) 1) - 1;
+                  if (j <= 0) goto err;
+                  if (tmp2[j - 1] == '0') {
+                        i++;
+                        if (i >= nargs) goto err;
+                        else goto sel1;
+                        }
+                  strmove(&svPtr->bd[1], &tmp2[j + 1]);
+                  goto ex2;
+
+//-----------------------------------------------------------------------
+//	$test $text() $translate()
+//-----------------------------------------------------------------------
+
+            case 9:                    /* $test $text() $translate() */
+
+                  if (nargs == 0) {       /* $test */
+                        if (svPtr->tpx == 1) svPtr->bd[1] = '1';
+                        else svPtr->bd[1] = '0';
+                        svPtr->bd[2] = 0;
+                        goto ex2;
+                        }
+
+                  if (toupper(S) == 'R') goto trns;  /* $translate() */
+
+//-----------------------------------------------------------------------
+//	$text()
+//-----------------------------------------------------------------------
+
+                  if (nargs != 1) goto arg_count_err;
+
+                  i = atoi ( (char *) &svPtr->v1d[1] );
+                  if ( i <= 0 ) {
+                        svPtr->bd[1]=0;
+                        goto ex2;
+                        }
+                  j=1;
+                  k=1;
+                  while ( k != i ) {
+                        j = j + strlen( (char *) &svPtr->pd1[j] ) + 1;
+                        if ( j > svPtr->pd1len ) {
+                              svPtr->bd[1] = 0;
+                              goto ex2;
+                              }
+                        k++;
+                        }
+                  i = 1;
+                  while( svPtr->pd1[j] != 0 )
+                        if ( svPtr->pd1[j] != TAB &&
+                                    svPtr->pd1[j] != ' ' ) svPtr->bd[i++] = svPtr->pd1[j++];
+                        else {
+                              svPtr->bd[i++] = ' ';
+                              j++;
+                              }
+                  svPtr->bd[i] = 0;
+                  goto ex2;
+
+//-----------------------------------------------------------------------
+//	$translate()
+//-----------------------------------------------------------------------
+
+trns:                    /* $translate() function */
+
+                  if (nargs < 2 || nargs > 3) goto arg_count_err;
+
+                  if (nargs == 2) {       /* 2 argument form */
+                        char r[256];
+                        int i, j;
+
+                        strmove((unsigned char*) r, &svPtr->v1d[iargs[1]]);
+
+                        for (j = 1, i = 1; svPtr->v1d[i] != 0; i++) {
+                              if (strchr(r, svPtr->v1d[i]) == NULL) {
+                                    svPtr->bd[j++] = svPtr->v1d[i];
+                                    }
+                              }
+                        svPtr->bd[j] = 0;
+                        goto ex2;
+                        }
+
+                        {
+                        /* 3 argument form */
+
+                        char r[256], s[256], t[256] = "";
+                        int i, j;
+
+                        strmove((unsigned char*) r, &svPtr->v1d[iargs[1]]);
+                        strmove((unsigned char*) s, &svPtr->v1d[iargs[2]]);
+
+                        if (strlen(r) > strlen(s)) {
+                              i = strlen(s);
+                              strmove((unsigned char*) t, (unsigned char*) &r[i]);
+                              }
+
+                        for (i = 1, j = 1; svPtr->v1d[i] != 0; i++) {
+                              if (strchr(t, svPtr->v1d[i]) == NULL) {
+                                    if (strchr(r, svPtr->v1d[i]) == NULL)
+                                          svPtr->bd[j++] = svPtr->v1d[i];
+                                    else
+                                          svPtr->bd[j++] = s[(long) strchr(r, svPtr->v1d[i]) - (long) r];
+                                    }
+                              }
+                        svPtr->bd[j] = 0;
+                        goto ex2;
+                        }
+
+//-----------------------------------------------------------------------
+//	$random() $reverse()
+//-----------------------------------------------------------------------
+
+            case 10:                   /* $random() and $reverse() */
+
+                  if (nargs != 1) goto arg_count_err;
+
+                  if (tolower(S)=='e') { /* $reverse() */
+                        j=strlen((const char *) &svPtr->v1d[1])+1;
+                        svPtr->bd[j]='\0';
+                        for (i=1; svPtr->v1d[i]!='\0'; i++) svPtr->bd[--j]=svPtr->v1d[i];
+                        return;
+                        }
+
+#ifdef MULTI_PRECISION
+//	multiple precision integer random number
+                  static gmp_randstate_t state;
+                  static mpz_t  na;
+                  static mpz_t  nb;
+                  static mpz_t  nc;
+                  static mpz_t  zero;
+                  static mp_bitcnt_t bc;
+                  static int flg=1;
+                  bc=64;
+                  static unsigned long seed;
+                  seed=time(NULL);
+
+                  if (flg) {
+                        flg=0;
+                        mpz_init(na);
+                        mpz_init(nb);
+                        mpz_init(nc);
+                        mpz_init(zero);
+                        gmp_randinit_default (state);
+                        mpz_set_ui ( na, seed );
+                        gmp_randseed_ui ( state, seed );
+                        }
+
+                  mpz_urandomb (na, state, 64);
+
+                  gmp_sscanf ((char *)&svPtr->v1d[1], "%Zd", nb );
+
+                  if (mpz_cmp(nb,zero)==0) {
+                        printf("*** Zero divisor error in modulo\n");
+                        sigint(100);
+                        }
+                  mpz_mod(nc,na,nb);
+                  gmp_sprintf((char *)&svPtr->bd[1],"%Zd",nc);
+                  return;
+#endif
+
+                  j = atoi((char*) &svPtr->v1d[1]);
+
+                  if (j < 2) {
+                        svPtr->bd[1] = '0';
+                        svPtr->bd[2] = 0;
+                        return;
+                        }
+                  sprintf((char*) &svPtr->bd[1], "%d", rand()%j );
+
+                  return;
+
+            case 11:                   /* $x */
+
+                  sprintf((char*) &svPtr->bd[1], "%d", svPtr->hor[svPtr->io]);
+                  goto ex2;
+
+            case 12:                   /* $y */
+
+                  sprintf((char*) &svPtr->bd[1], "%d", svPtr->ver[svPtr->io]);
+                  goto ex2;
+
+            case 13:                   /* $io */
+
+                  sprintf((char*) &svPtr->bd[1], "%ld", svPtr->io);
+                  goto ex2;
+
+            case 14:                   /* $horolog */
+
+                  timex = time(&timex);
+                  day = timex / 86400;
+                  timex = timex - (day * 86400);
+                  day = 47116 + day;
+                  fd = day+1;
+                  sprintf((char*) &svPtr->bd[1], "%ld", fd);
+                  strcat((char*) &svPtr->bd[1], ",");
+                  fd = timex;
+                  sprintf((char*) tmp2, "%ld", fd);
+                  strcat((char*) &svPtr->bd[1], (char*) tmp2);
+                  return;
+
+//------------------------
+//	$get()
+//------------------------
+
+            case 15:                   /* $get */
+
+                  if (nargs < 1 || nargs > 3) goto arg_count_err;
+
+// the following lines are unknown
+
+                  if (svPtr->v1d[1]=='\x03') {
+                        if (svPtr->v1d[2]=='\x02') {
+                              if (nargs == 1) {
+                                    strmove(&svPtr->bd[1], (unsigned char *) "");
+                                    goto ex2;
+                                    }
+                              strmove(&svPtr->bd[1], &svPtr->v1d[iargs[1]]);
+                              goto ex2;
+                              }
+                        strcpy((char *) &svPtr->bd[1],(const char *) &svPtr->v1d[2]);
+                        goto ex2;
+                        }
+
+// actual $get code
+
+                  ctmp = sym_(1, &svPtr->v1d[1], &svPtr->bd[1],svPtr);
+
+                  if (ctmp != NULL) goto ex2; // value returned and in bd
+
+                  if (nargs == 1) {
+                        if (ctmp == NULL) strmove(&svPtr->bd[1], (unsigned char *) "");
+                        goto ex2;
+                        }
+
+                  if (nargs != 2) goto arg_count_err;
+
+                  strmove(&svPtr->bd[1], &svPtr->v1d[iargs[1]]);
+                  goto ex2;
+
+//---------------------------
+// 	Pattern match codes
+//---------------------------
+
+            case 21:  /* $1 */
+            case 22:
+            case 23:
+            case 24:
+            case 25:
+            case 26:
+            case 27:
+            case 28:
+            case 29: /* $9 */
+
+                  {
+                  char x[10];
+                  x[0]='_';
+                  x[1]=j;
+                  x[2]=S;
+                  x[3]='\0';
+                  svPtr->ierr = 0;
+                  if (sym_(1,(unsigned char *) x,(unsigned char *) &svPtr->bd[1],svPtr)==NULL) {
+                        printf("*** %s: No such Perl back reference in or near line %d\n\n",
+                               x,svPtr->LineNumber);
+                        sigint(100);
+                        }
+                  return;
+                  }
+
+//----------------------------
+//	$name()
+//	$next()
+//	$noerr
+//----------------------------
+
+            case 30: /* $name() $next() $noerr */
+
+                  if (toupper(S) == 'O') { /* $noerr */
+                        sprintf((char *) &svPtr->bd[1], "%d", svPtr->NOERR);
+                        svPtr->ierr=0;
+                        return;
+                        }
+
+                  if (toupper(S)=='A') { /* $name() section */
+
+                        if (strcmp((const char *) &svPtr->v1d[1],(const char *) "<lcl>")==0) {
+                              BuildLocal(2,0,(unsigned char *) "",(unsigned char *) tmp2,svPtr);
+                              if (nargs==1) LocalName(tmp2,&svPtr->bd[1],NULL,svPtr);
+                              else LocalName(tmp2,&svPtr->bd[1],&svPtr->v1d[iargs[1]],svPtr);
+                              }
+
+                        else if (strcmp((const char *) &svPtr->v1d[1],(const char *) "<gbl>")==0) {
+
+                              /* globals processed by compiler have x01 codes embedded.
+                              	use LocalName() here because interpreter does not
+                              	embed x01's at this point.
+                              	*/
+
+                              BuildGlobal(2,0,(unsigned char *) "",(unsigned char *) tmp2,svPtr);
+                              if (nargs==1) LocalName(tmp2,&svPtr->bd[1],NULL,svPtr);
+                              else          LocalName(tmp2,&svPtr->bd[1],&svPtr->v1d[iargs[1]],svPtr);
+                              }
+                        svPtr->ierr = 0;
+                        return;
+                        }
+
+                  /* $next() section */
+
+                  if (toupper(S)!='E' && isalpha(S)) goto err; /* second char not correct */
+
+                  if (strcmp((const char *) &svPtr->v1d[1],(const char *) "<gbl>")==0) {
+                        if (BuildGlobal(1,NEXT,&svPtr->v1d[1],&svPtr->bd[1],svPtr)==0) goto err;
+                        if (strlen((char *) &svPtr->bd[1]) == 0 ) strcpy((char *) &svPtr->bd[1], "-1");
+                        }
+                  else {
+                        if (BuildLocal(1,NEXT,&svPtr->v1d[1],&svPtr->bd[1],svPtr)==0) goto err;
+                        }
+                  svPtr->ierr = 0;
+                  return;
+
+            case 32: /* $order() section */
+
+                  if (nargs==1) {
+
+                        if (svPtr->v1d[1] == '^') {
+                              GlobalOrder(&svPtr->v1d[1], &svPtr->bd[1], (unsigned char *) "1", svPtr);
+                              goto ex2;
+                              }
+
+                        if (BuildLocal(1, ORDERNEXT, &svPtr->v1d[1], &svPtr->bd[1], svPtr) == 0) goto err;
+                        goto ex2;
+                        }
+
+                  if (nargs!=2) goto err;
+
+                  if (strcmp((const char *) &svPtr->v1d[iargs[1]], "1") == 0) {
+
+                        if (svPtr->v1d[1] == '^') {
+                              GlobalOrder(&svPtr->v1d[1], &svPtr->bd[1], (unsigned char *) "1",svPtr);
+                              goto ex2;
+                              }
+
+                        if (BuildLocal(1, ORDERNEXT, &svPtr->v1d[1], &svPtr->bd[1], svPtr) == 0) goto err;
+                        else goto ex2;
+                        }
+
+                  if (strcmp((const char *) &svPtr->v1d[iargs[1]],"-1")==0) {
+
+                        if (svPtr->v1d[1] == '^') {
+                              GlobalOrder(&svPtr->v1d[1], &svPtr->bd[1], (unsigned char *) "-1",svPtr);
+                              goto ex2;
+                              }
+
+                        if (BuildLocal(1, ORDERPREV, &svPtr->v1d[1], &svPtr->bd[1], svPtr) == 0) goto err;
+                        else goto ex2;
+                        }
+                  goto err;
+
+
+            case 31: /* $query(x)  $qlength(x) $qsubscript(x,y) */
+
+                  /*    $query(arg) */
+                  /*    receives arguments unevaluated */
+
+
+//-------------------------
+//	$query()
+//-------------------------
+
+                  if (tolower(S)=='u' || !isalpha(S)) { /* $query() */
+                        if ( nargs > 1 || nargs ==0 ) goto arg_count_err;
+
+                        if (strcmp((const char *) &svPtr->v1d[1],(const char *) "<lcl>")==0) {
+                              BuildLocal(2,0,(unsigned char *) "",(unsigned char *) tmp2,svPtr);
+                              LocalName(tmp2,&svPtr->bd[1],NULL,svPtr);
+                              strcpy((char *)&svPtr->v1d[1],(char *)tmp2);
+                              Qsub((unsigned char *) &svPtr->v1d[1],(unsigned char *) tmp2,
+                                   (unsigned char *) "-2",svPtr);
+                              for (i=1; svPtr->v1d[i]!=1 && svPtr->v1d[i] != 0; i++);
+                              if (svPtr->v1d[i] == 0) {
+                                    svPtr->v1d[i++]=1;
+                                    svPtr->v1d[i]=0;
+                                    }
+                              sym_((int)101,&svPtr->v1d[1],&svPtr->bd[1],svPtr);
+                              GlobalName(&svPtr->bd[1],0,svPtr); /* name fixer */
+                              goto ex2;
+                              }
+
+                        else if (strcmp((const char *) &svPtr->v1d[1],(const char *) "<gbl>")==0) {
+
+                              /* globals processed by compiler have x01 codes embedded.
+                                          use LocalName() here because interpreter does not
+                                          embed x01's at this point.
+                                          */
+
+                              BuildGlobal(2,0,(unsigned char *) "",(unsigned char *) tmp2,svPtr);
+                              LocalName(tmp2,&svPtr->bd[1],NULL,svPtr);
+                              }
+
+                        GlobalQuery(&svPtr->bd[1],&svPtr->bd[1],0,svPtr);
+                        goto ex2;
+
+                        }
+
+//-----------------------
+//	$qlength()
+//-----------------------
+
+                  if (tolower(S)=='l') { /* $qlength() */
+
+                        unsigned char op1[512];
+
+                        if (nargs !=1) goto arg_count_err;
+
+
+                        if ( strcmp( (char *) &svPtr->v1d[1], "<lcl>") == 0 ) {
+                              BuildLocal(2, 0, (unsigned char *) "", op1, svPtr); // extract lcl stack
+                              if (Eval( op1, op1, svPtr)) goto qlenerr;
+                              }
+                        else if ( strcmp( (char *) &svPtr->v1d[1], "<gbl>") == 0 ) {
+                              BuildGlobal(2,0,(unsigned char *) "", op1, svPtr); // get global indx nbr
+//                        if (Eval( op1, op1, svPtr)) goto qlenerr;
+                              }
+                        else strcpy ( (char *) op1, (char *) &svPtr->v1d[1]);
+
+                        Qlength(op1, (unsigned char *) &svPtr->bd[1],svPtr);
+                        goto ex2;
+                        }
+
+//------------------------
+//	$qsubscript()
+//------------------------
+
+                  if (tolower(S)=='s') { // $qsubscript()
+                        char tmp[512];
+
+                        unsigned char op1[512], op2[512];
+
+                        if (nargs !=2) goto arg_count_err;
+
+                        if (strcmp((const char *) &svPtr->v1d[iargs[1]],"-1")==0) {
+                              // return current working directory
+                              if (getcwd((char *) &svPtr->bd[1],512)==NULL) goto err;
+                              goto ex2;
+                              }
+
+// order of these operations is important because of the stack
+// do not change.
+
+
+                        if ( strcmp( (char *) &svPtr->v1d[iargs[1]], "<lcl>") == 0 ) {
+                              BuildLocal(2, 0, (unsigned char *) "", op2, svPtr); // extract lcl stack
+                              for (int i=0; op2[i] != 0; i++)
+                                    if (op2[i] == 206) op2[i] = '(';
+                                    else if (op2[i] == 207) op2[i] = ')';
+                                    else if (op2[i] == 208) op2[i] = ',';
+
+                              if (Eval( op2, op2, svPtr)) goto qsuberr1;
+                              }
+                        else if ( strcmp( (char *) &svPtr->v1d[iargs[1]], "<gbl>") == 0 ) {
+                              BuildGlobal(2,0,(unsigned char *) "", op2, svPtr); // get global indx nbr
+                              if (Eval( op2, op2, svPtr)) goto qsuberr1;
+                              }
+                        else strcpy ( (char *) op2, (char *) &svPtr->v1d[iargs[1]]);
+
+                        if ( strcmp( (char *) &svPtr->v1d[1], "<lcl>") == 0 ) {
+                              BuildLocal(2, 0, (unsigned char *) "", op1, svPtr); // extract lcl stack
+                              if (Eval( op1, op1, svPtr)) goto qsuberr1;
+                              }
+                        else if ( strcmp( (char *) &svPtr->v1d[1], "<gbl>") == 0 ) {
+                              BuildGlobal(2,0,(unsigned char *) "", op1, svPtr); // get global indx nbr
+//                        if (Eval( op1, op1, svPtr)) goto qsuberr1;
+                              }
+                        else strcpy ( (char *) op1, (char *) &svPtr->v1d[1]);
+
+                        Qsub(op1, &svPtr->bd[1], op2, svPtr);
+
+                        goto ex2;
+
+                        }
+
+                  goto unknown_err; // function not recognized
+
+            }
+
+ex2:
+
+      svPtr->ierr = 0;
+      return;
+
+fnum_wrong:
+
+      printf("\n*** Function error: $fnumber pattern error. In or near line %d\n\n", svPtr->LineNumber);
+      sigint(100);
+
+qlenerr:
+
+      printf("\n*** Qlength Function argument error. In or near line %d\n\n", svPtr->LineNumber);
+      sigint(100);
+
+qsuberr:
+
+      printf("\n*** Qsubscript Function error: 2nd argument. In or near line %d\n\n", svPtr->LineNumber);
+      sigint(100);
+
+qsuberr1:
+
+      printf("\n*** Qsubscript Function error: 1nd argument. In or near line %d\n\n", svPtr->LineNumber);
+      sigint(100);
+
+arg_count_err:
+
+      printf("\n*** Function error: wrong number of arguments. In or near line %d\n\n", svPtr->LineNumber);
+      sigint(100);
+
+unknown_err:
+
+      printf("\n*** Unknown function. In or near line %d\n\n", svPtr->LineNumber);
+      sigint(100);
+
+err:
+
+      printf("\n*** Function error in or near line %d\n\n", svPtr->LineNumber);
+      sigint(100);
+      }
+

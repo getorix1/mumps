@@ -1,0 +1,1447 @@
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Mumps Bioinformatics Software Library
+#+     Copyright (C) 2003 - 2025 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://threadsafebooks.com/
+#+     https://www.cs.uni.edu/~okane
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+//	Dec 13, 2025
+
+#define SQLITE
+
+// enable debug code
+// #define SYMDEBUG
+
+/* sym.c - Mumps Runtime Library
+ *
+ * Mumps symbol table management.  Variables not handled by global.h
+ * and friends should be handled by these routines.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <sys/types.h>
+#include <monetary.h>
+#include <locale.h>
+#include <math.h>
+// #include <wait.h>
+
+#define _INTERP_
+#define CSTR (char *)
+#define USTR (unsigned char *)
+
+#include <mumpsc/defines.h>
+#include <mumpsc/sym.h>
+#include <mumpsc/btree.h>
+#include <mumpsc/globalOrder.h>
+#include <mumpsc/keyfix.h>
+#include <mumpsc/inline.h>
+
+#include <unistd.h>
+
+#include <time.h>
+
+#include <sys/types.h>
+
+using namespace std;
+
+#include <mumpsc/fcns.h>
+
+#include <mumpsc/builtin.h>
+#include <mumpsc/interp.h>
+
+// floatSize is defines BIGFLOAT if selected in configure
+
+
+// intLong will be defined is 32 bit wanted - 64 otherwise
+#define intLong
+
+int Interpret(const char *, MSV *);
+int ScanParse(char *);
+int Eval(unsigned char *, unsigned char *, struct MSV *);  // evaluate expression
+
+extern int (*__label_lookup)(char *);
+extern char* (*__text_function)(int);  /* fcn */
+
+#include <mumpsc/global.h>
+
+extern "C" long _getpid(void);
+extern "C" time_t time(time_t *);
+
+
+/*===========================================================================*
+ *                                  BuildLocal                               *
+ *===========================================================================*/
+
+int BuildLocal(int code, int g, unsigned char * str, unsigned char * rslt, struct MSV * svPtr) {
+
+      static unsigned char tmp[TSTACK][STR_MAX];
+      static int stk=0;
+
+      if (code<0) {
+            stk=0;
+            return 1;
+            }
+
+      if (code==0) {
+
+            if (stk >= TSTACK) {
+                  printf("*** Build Stack Overflow %d\n\n", svPtr->LineNumber);
+                  sigint(100);
+                  }
+
+            strcpy( (char *) tmp[stk++],(const char *) str);
+// fff printf("4444444 str=%s\n", str);
+            return 1;
+            }
+
+      if (code==2) {
+            if (stk == 0) {
+                  rslt[0]  =0;
+                  }
+            else strcpy( (char *) rslt, (const char *) tmp[--stk]);
+
+            return 1;
+            }
+
+      stk--;
+
+// fff printf("555555 stack=%s g=%d ORDERNEXT=%d\n", tmp[stk], g, ORDERNEXT);
+
+      if (g == NEXT) LocalOrder(tmp[stk], rslt, (unsigned char *) "1", svPtr); //GlobalNext(tmp,rslt, svPtr);
+      else if (g == ORDERNEXT) LocalOrder(tmp[stk], rslt, (unsigned char *) "1", svPtr);
+      else if (g == ORDERPREV) LocalOrder(tmp[stk], rslt, (unsigned char *) "-1", svPtr);
+      else return 0;
+
+      return 1;
+      }
+
+//===========================================================================
+//                                   sym_
+//===========================================================================
+
+char * sym_(int symflg, unsigned char *a, unsigned char *b, struct MSV * svPtr) {
+
+      /*#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      **#+
+      **#+  Run Time Symbol Table.  All mumps local variables
+      **#+  are created and stored here.  First argument is the
+      **#+  operation code, second is the variable name (including
+      **#+  array marker information) and the third is the incoming
+      **#+  value to be stored or a result being sent back.
+      **#+
+      **#+    symflg= 0 store/create
+      **#+              SymStore
+      **#+    symflg= 1 retrieve
+      **#+              SymRetrieve
+      **#+    symflg= 2 delete explicit
+      **#+    symflg= 3 $next on last argument
+      **#+    symflg= 4 kill all
+      **#+    symflg= 5 kill all except...
+      **#+    symflg= 6 $data
+      **#+    symflg= 7 New except (...)
+      **#+    symflg= 8 New inclusive
+      **#+    symflg= 9 No copy flag
+      **#+    symflg=10 Return variable name
+      **#+    symflg=11 Retrieve variable only - no labels
+      **#+              SymRetNoLbls
+      **#+    symflg=33 Order
+      **#+    symflg=99 Push table
+      **#+    symflg=100 store at this level only
+      **#+    symflg=101 retrieve next
+      **#+    symflg=150 mark copy flag
+      **#+    symflg=200 this variable is a call by reference
+      **#+               original name is in svPtr->reference
+      **#+
+      **#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+#define SYMSTORE 0
+#define SYMRETRIEVE 1
+
+      unsigned char key[1024];
+      struct stab *p1, *p2, *p3;
+      int i;
+      unsigned char * mkpt(unsigned char * str);
+
+      if (a == NULL) return NULL;
+
+//    strcpy((char *)key, (char *) a);
+//    keyfix((unsigned char *) key);
+
+      unsigned char *kp = a;
+      unsigned char *ky = key;
+
+      while (*kp) {
+            *ky = *kp & 0x80 ? 1 : *kp;
+            kp++;
+            ky++;
+            }
+
+      *ky = 0;
+
+
+//----------------
+// R E T R I E V E
+//----------------
+
+      if (symflg == SymRetrieve || symflg == SymRetNoLbls) {
+
+            int isym,cr;
+
+            for (isym = svPtr->_Sym; isym >= 0; isym--) {
+
+                  p1 = svPtr->start[isym];
+
+                  while (p1 != NULL) {
+                        if ( (cr = strcmp((char *) p1->name, (char *) key)) == 0 ) {
+                              strcpy((char *) b, (*p1->data).c_str());
+                              return (char *) b;
+                              }
+
+                        p1 = p1->next;
+                        }
+                  }
+
+            symflg = 0;
+            b[0] = 0;
+            return NULL;
+
+            }
+
+
+//---------------------------
+// S T O R E
+// S T O R E
+// S T O R E
+// S T O R E
+//---------------------------
+
+// 100 means this level only store
+
+      if (    symflg == SymStore ||
+                  symflg == 100 ||
+                  symflg == 200 ||
+                  symflg == SymCPPdata ||
+                  symflg == SymMarkCopyFlag) {
+
+            int icmp, isym = svPtr->_Sym;
+
+            if (key[0] == '$' && strcasecmp((const char *) key,"$noerr") == 0 ) {
+                  if (b[0] == '1') svPtr->NOERR = 1;
+                  else svPtr->NOERR = 0;
+                  return (char *) b;
+                  }
+
+            for (; isym >= 0; --isym) { // search this and lower levels
+
+                  p2 = NULL;
+                  p3 = svPtr->start[isym];
+
+                  while (p3) { // all level scan requires exact match
+
+                        if ( (icmp = strcmp((char *) p3->name, (char *) key)) == 0) {
+                              *(p3->data) = (char *) b;	// store to c++ string
+                              return (char *) b;	// variable exists. value updated
+                              }
+
+                        if ( icmp > 0 ) break; // past place where it should be
+
+                        p2 = p3;
+                        p3 = p3->next;
+                        }
+
+                  if (symflg == 100 || symflg == 200) break; // store this level only
+                  }
+
+
+            if (symflg == SymStore) { // ***************************
+
+                  isym = 0;	// seached to the bottom
+
+                  p1 = new struct stab;
+
+                  if (p1 == NULL) {
+                        printf("*** Out of memory in or near %d\n\n", svPtr->LineNumber);
+                        sigint(100);
+                        }
+
+                  p1->OrigName = new string;
+
+                  p1->exec = 0;
+
+                  p1->name = (char *) malloc(strlen((char *) key) + 1);
+
+                  if (p1->name == NULL) {
+                        printf("*** Out of memory in or near %d\n\n", svPtr->LineNumber);
+                        sigint(100);
+                        }
+
+                  strcpy((char *) p1->name, (char *) key);
+
+                  if (p2 == NULL) { // no previous. list is empty (p3==NULL) or has no element
+                        p1->next = p3;
+                        svPtr->start[isym] = p1;
+                        }
+
+                  else { // if last, p3 is NULL, next otherwise. add to list
+                        p1->next = p3;
+                        p2->next = p1;
+                        }
+
+                  p1 -> data = new string ((char *) b);
+
+                  if (p1->data == NULL) {
+                        printf("*** Out of memory in or near %d\n\n", svPtr->LineNumber);
+                        sigint(100);
+                        }
+
+                  p1->copy = 0;
+                  return (char *) p1;
+                  }
+
+
+
+            if (symflg == 100 || symflg == 200)
+                  isym = svPtr->_Sym;
+            else isym = 0;
+
+            p2 = NULL;
+
+            p3 = svPtr->start[isym];
+
+            while (p3) {
+                  if (strcmp((char *) p3->name, (char *) key) > 0) break;
+                  p2 = p3;
+                  p3 = p3->next;
+                  }
+
+            p1 = new struct stab;
+
+            if (p1 == NULL) {
+                  printf("*** Out of memory in or near %d\n\n", svPtr->LineNumber);
+                  sigint(100);
+                  }
+
+            p1->OrigName = new string;
+
+//----------------------------------------------------------------------
+//	if this is a 'this level only' store (100/200), flag the level
+//----------------------------------------------------------------------
+
+            if (symflg == 100 || symflg == 200)
+                  p1->exec = 1;
+            else p1->exec = 0;
+
+            if (symflg == 200)
+                  *p1->OrigName = svPtr->reference; // call by reference var
+            else *p1->OrigName="";
+
+            p1->name = (char *) malloc(strlen((char *) key) + 1);
+
+            if (p1->name == NULL) {
+                  printf("*** Out of memory in or near %d\n\n", svPtr->LineNumber);
+                  sigint(100);
+                  }
+
+            strcpy((char *) p1->name, (char *) key);
+
+            if (p2==NULL) { // no previous. list is empty (p3==NULL) or has on member
+                  p1->next = p3;
+                  svPtr->start[isym] = p1;
+                  }
+
+            else { // if last, p3 is NULL, next otherwise.
+                  p1->next=p3;
+                  p2->next=p1;
+                  }
+
+            p1 -> data = new string ((char *) b);
+
+            if (p1->data == NULL) {
+                  printf("*** Out of memory in or near %d\n\n", svPtr->LineNumber);
+                  sigint(100);
+                  }
+
+            p1->copy = 0;
+            return (char *) p1;
+            }
+
+//-----------------------------------------------------------------------------------------
+
+
+      if ( symflg == 9 || symflg == 101 ) {   /* retrieve or zero copy flag */
+
+            int isym, cr;
+
+            for (isym = svPtr->_Sym; isym >= 0; isym--) {
+
+                  p1 = svPtr->start[isym];
+
+                  while (p1 != NULL) {
+                        if ( (cr = strcmp((char *) p1->name, (char *) key)) == 0 ) goto found;
+                        if (symflg == 101 && cr > 0) goto found;
+                        p1 = p1->next;
+                        }
+                  }
+
+            if (p1 == NULL) {
+                  if (symflg == 11 ) return NULL;
+                  if (symflg == 9) {
+                        symflg = 0;
+                        return NULL;
+                        }
+
+                  i = __label_lookup((char *) key);
+
+                  if (i != -1) {
+                        sprintf((char *) b, "%d", i);
+                        symflg = 2;
+                        return (char *) b;
+                        }
+
+                  symflg = 0;
+                  b[0] = 0;
+                  return NULL;
+                  }
+
+found:
+
+            if (symflg == 9) {	// no copy flag
+                  symflg = 1;
+                  p1->copy = 0;
+                  return NULL;
+                  }
+
+            if (symflg == 101 ) { /* next absolute */
+
+                  if (p1 == NULL && p1->next == NULL ) {
+                        strcpy((char *) b, "");
+                        return NULL;
+                        }
+
+                  if (cr == 0) {
+                        if (p1->next == NULL) {
+                              strcpy((char *) b, "");
+                              return NULL;
+                              }
+
+                        p1 = p1->next; // exact match - get next
+                        }
+
+                  for (i=0; key[i] !=1 && key[i] != 0; i++);
+
+                  if (strncmp((char *) key,(char *) p1->name,i) == 0 && p1->name[i] == 1) {
+                        unsigned char tmp[STR_MAX];
+                        strcpy((char *) tmp, (char *) p1->name);
+                        fullUnpad(tmp, svPtr);
+                        strcpy((char *) b, (const char *) tmp);
+                        return (char *) b;
+                        }
+                  strcpy((char *) b, "");
+                  return NULL;
+                  }
+
+//-------------------
+//	other cases
+//-------------------
+
+            strcpy((char *) b, (*p1->data).c_str());
+            return (char *) b;
+            }
+
+
+// ------
+// $order
+// ------
+
+      if (symflg == 33) { /* order */
+            i = strlen((char *) key);
+            if (svPtr->order<0) {
+                  if (key[i-1]==1 && key[i-2]==1) {
+                        key[i-1]='\x80';
+                        key[i]=1;
+                        key[++i]='\0';
+                        }
+                  }
+//       else {
+//            }
+            }
+
+//------
+// $next
+//------
+
+      if (symflg == 3) {          /* next */
+            i = strlen((char *) key);
+            if (key[i - 3] == '-' &&
+                        key[i - 2] == '1' &&
+                        key[i - 1] == 1) {
+                  key[i - 3] = 1;
+                  key[i - 2] = 0;
+                  i = i - 2;
+                  }
+            }
+
+      if (symflg == 3 || symflg == 33) {          /* next or order */
+
+            int isym=svPtr->_Sym;
+
+o_again:
+
+            p1 = svPtr->start[isym];
+            p2 = NULL;
+
+            while (p1 != NULL) { /* looking for entry GT or EQ key */
+
+                  if (strncmp((char *) p1->name, (char *) key, i) >= 0) break;
+                  p2 = p1;
+                  p1 = p1->next;
+                  }
+
+            if (symflg==33 && svPtr->order < 0) { //reverse order
+
+                  if (isym > 0 && p2 == NULL) { // not finished with sym table
+                        --isym;
+                        goto o_again;
+                        }
+
+                  if (p2==NULL) {
+                        strcpy((char *)b,"");
+                        symflg=1;
+                        return (char *) b;
+                        }
+
+                  for (i=i-2; key[i] != 1; i--);
+                  p1=p2;
+                  goto end;
+                  goto orderbackexit;
+                  }
+
+            if (p1 == NULL) {  /* none found - search key GT all stored names */
+                  if (isym > 0) {  // more sym table levels th check
+                        --isym;
+                        goto o_again;
+                        }
+                  if (symflg == 3) strcpy((char *) b, "-1");
+                  else strcpy ((char *) b, "");
+                  symflg = 1;
+                  return (char *) b;
+                  }
+
+            if (strncmp((char *) p1->name, (char *) key, i) > 0) goto end;  /* stored name GT key */
+
+            p1 = p1->next; /* found EQ key fragment */
+            while (p1 != NULL) { /* advance to 1st NE to key */
+                  if (strncmp((char *) p1->name, (char *) key, i) != 0) break;
+                  p1 = p1->next;
+                  }
+
+            if (p1 == NULL) {  /* none greater found */
+                  if (symflg == 3) strcpy((char *) b, "-1");
+                  else strcpy ((char *) b, "");
+                  symflg = 1;
+                  return (char *) b;
+                  }
+
+end:
+
+            if (symflg == 3 ) i = strlen((char *) key) - 2; /* back off to prior code lev */
+            else if (symflg == 33 ) i = strlen((char *) key) - 2; /* back off to prior code lev */
+
+            for (; key[i] != 1; i--);
+
+            if (strncmp((char *) key, (char *) p1->name, i) != 0) {
+                  if (symflg == 3) strcpy((char *) b, "-1");
+                  else strcpy ((char *) b, "");
+                  symflg=1;
+                  return (char *) b;
+                  }
+
+orderbackexit:
+
+            if ( *(p1->name+i) == 0) {
+                  b[0]=0;    // case when there is a scalar var with same name
+                  return (char *) b;
+                  }
+            strcpy((char *) b, (char *) p1->name + i + 1 );
+
+            for (i = 0; b[i] != 1 && b[i] != 0; i++);
+            b[i] = 0;
+
+            while (b[0] == ' ') for (unsigned char * x=b; *x != 0; x++) *x = *(x+1); //STRCPY
+
+exit_processing:
+
+            symflg = 1;
+            if (*b == '\x1f') { /* coded number - kok */
+                  unsigned char tmp[64];
+                  unsigned char * r = b;
+                  double x;
+                  r++;
+                  if (*r=='0') *r='-';
+                  else *r='+';
+                  memcpy(tmp,r,40);
+                  tmp[40]='\0';
+                  sscanf((char *) tmp,"%lf",&x);
+                  sprintf((char *) b,"%lg", x);
+                  }
+
+            return (char *) b;
+            }
+
+//--------------
+// kill selected
+//--------------
+
+      if (symflg == 2) {          /* KILL selected */
+
+            int isym,cr;
+
+            for (isym=svPtr->_Sym; isym>=0; isym--) {
+
+repeat:
+                  p1 = svPtr->start[isym];
+                  p2 = NULL;
+                  i = 0;
+                  i = strlen((char *) key);
+
+                  while (p1 != NULL) {
+
+                        if (strncmp((char *) p1->name, (char *) key, i)==0
+                                    && p1->name[i]==1 ) break;
+
+                        else if (strcmp((char *) p1->name, (char *) key) == 0) break;
+
+                        p2 = p1;
+                        p1 = p1->next;
+                        }
+
+                  if (p1 == NULL) continue;
+
+                  if (p2 == NULL) svPtr->start[svPtr->_Sym] = p1->next;
+                  else p2->next = p1->next;
+
+                  delete p1->data;
+                  free(p1->name);
+                  delete p1->OrigName;
+                  delete p1;
+
+                  goto repeat;
+                  }
+            return NULL;
+            }
+
+      if (symflg == 4) {          /* kill all */
+            p1 = svPtr->start[svPtr->_Sym];
+            while (p1 != NULL) {
+                  p2 = p1->next;
+                  delete p1->data;
+                  free( p1->name);
+                  delete p1->OrigName;
+                  delete p1;
+                  p1 = p2;
+                  }
+            svPtr->start[svPtr->_Sym] = NULL;
+            symflg = 1;
+            return NULL;
+            }
+
+      if (symflg == 5) {          /* kill all except... */
+
+            struct nmes *np1;
+            int flg;
+
+            p1 = svPtr->start[svPtr->_Sym];
+            p3 = NULL;
+            while (p1 != NULL) {
+                  np1 = svPtr->nstart;
+                  flg = 0;
+                  while (np1 != NULL) {
+
+                        i = strlen(np1->name) - 1;
+
+                        if ((strncmp((char *) np1->name, (char *) p1->name, i) == 0
+                                    && p1->name[i] == 1)
+                                    || (strcmp((char *) np1->name, (char *) p1->name) == 0)) {
+                              p3 = p1;
+                              p1 = p1->next;
+                              flg = 1;    /* don't delete p1 */
+                              break;
+                              }
+                        np1 = np1->next;
+                        }
+
+                  if (flg) continue;
+                  delete p1->data;
+                  free(p1->name);
+                  delete p1->OrigName;
+                  p2 = p1->next;
+                  delete p1;
+                  if (p3 == NULL) svPtr->start[svPtr->_Sym] = p2;
+                  else p3->next = p2;
+                  p1 = p2;
+                  }
+
+            np1 = svPtr->nstart;
+            while (np1 != NULL) {
+                  struct nmes *np2;
+                  np2 = np1->next;
+                  free(np1->name);    /* cleanup */
+                  free(np1);
+                  np1 = np2;
+                  }
+
+            symflg = 1;
+            return NULL;
+            }
+
+//------
+// $data
+//------
+
+      if (symflg == 6) {          /* $data */
+
+            int isym;
+
+            for (isym=svPtr->_Sym; isym>=0; isym--) {
+                  p1 = svPtr->start[isym];
+
+                  while (p1 != NULL) {
+                        if (strcmp((char *) p1->name, (char *) key) == 0) break;
+                        p1 = p1->next;
+                        }
+
+                  if (p1 != NULL) break;
+                  }
+
+            if (p1 == NULL) {       /* search fail */
+
+                  i = strlen((char *) key);
+
+                  p1 = svPtr->start[svPtr->_Sym];
+                  while (p1 != NULL) {
+                        if (strncmp((char *) p1->name, (char *) key, i) == 0) break;
+                        p1 = p1->next;
+                        }
+
+                  if (p1 != NULL) {
+
+                        if (key[i-1]==1) i--;
+
+                        if (p1->name[i] != 1) {
+
+
+                              b[0] = '0';
+                              b[1] = 0;
+                              b[2] = 0;
+                              return (char *) b;
+                              }
+                        else {
+                              strcpy((char *) b,"10");
+                              return (char *) b;
+                              }
+                        }
+
+                  b[0] = '0';
+                  b[1] = 0;
+                  return (char *) b;
+                  }
+
+
+            b[0] = '1';             /* exists */
+
+            p1 = p1->next;
+
+            if (p1 == NULL) {       /* no possible descendants */
+                  b[1] = 0;
+                  return (char *) b;
+                  }
+
+            i = strlen((char *) key);
+
+            if (strncmp((char *) key, (char *) p1->name, i) == 0) {
+                  b[1] = '1';
+                  b[2] = 0;
+                  return (char *) b;
+                  }
+
+            b[1] = 0;
+            return (char *) b;
+
+            }
+
+      if (symflg == 7) {          /* New except (...) */
+
+            struct nmes *begin=NULL,*np1=NULL,*np2=NULL,*np3=NULL;
+            struct stab *symtab=NULL;
+            int flg;
+            int isym;
+
+            for (isym=svPtr->_Sym; isym>=0; isym--) { /* build unique list of variable names */
+                  symtab=svPtr->start[isym];
+                  while (symtab != NULL) {
+                        flg=1;
+                        for (np2=begin; np2!=NULL; np2=np2->next)
+                              if (strcmp(np2->name,symtab->name)==0) flg=0; /* in list already? */
+                        for (np2=svPtr->nstart; np2!=NULL; np2=np2->next)
+                              if (strcmp(np2->name,symtab->name)==0) flg=0; /* in except list? */
+                        if (flg) {
+                              np3=(struct nmes *)malloc(sizeof(struct nmes));
+                              if (np3 == NULL) {
+                                    printf("*** Out of memory in or near %d\n\n", svPtr->LineNumber);
+                                    sigint(100);
+                                    }
+                              np3->next=begin;
+                              np3->name=symtab->name;
+                              begin=np3;
+                              }
+                        symtab=symtab->next;
+                        }
+                  }
+            svPtr->_SymPush++;
+            if (svPtr->_Sym>SYM_MAX) {
+                  printf("*** Too many symbol table layers\n");
+                  sigint(100);
+                  }
+            for (np2=begin; np2!=NULL; np2=np2->next) {
+                  sym_(100,(unsigned char *) np2->name,(unsigned char *) "",svPtr);
+                  }
+            }
+
+      if (symflg == 99) {
+            svPtr->_SymPush++;
+            svPtr->_Sym++;
+            svPtr->start[svPtr->_Sym]=NULL;
+            if (svPtr->_Sym>SYM_MAX) {
+                  printf("*** Too many symbol table layers\n");
+                  sigint(100);
+                  }
+            return NULL;
+            }
+
+      if (symflg == 8) {          /* New inclusive */
+
+            p1 = svPtr->start[svPtr->_Sym];
+            svPtr->_Sym++;
+            svPtr->start[svPtr->_Sym] = NULL;
+
+            while (p1 != NULL) {
+                  p2 = (struct stab *) sym_(0, (unsigned char *) p1->name,
+                                            (unsigned char *) (*p1->data).c_str(), svPtr);
+                  if (symflg == 1)
+                        p2->copy = 1;
+                  p1 = p1->next;
+                  }
+
+            symflg = 1;
+            return NULL;
+            }
+
+      if (symflg == 10) {         /* return variable name */
+            strcpy((char *) b, (char *) a);
+            symflg = 1;
+            return (char *) b;
+            }
+
+      return NULL;
+
+      }
+
+
+//===========================================================================
+//                                 _SymFree
+//===========================================================================
+
+int _SymFree(int i, struct MSV * svPtr) {
+
+      struct stab *p1, *p2;
+
+      /* if argument is non zero, pop the symbol table.
+         if argument is zero, delete variables only.
+         argument of zero is used with kill all locals. */
+
+      p1 = svPtr->start[svPtr->_Sym];
+      svPtr->start[svPtr->_Sym]=NULL;
+
+      if (svPtr->_Sym == 0 ) {
+
+            while (p1 != NULL) {
+
+                  free(p1->name);
+                  delete p1->data;
+                  delete p1->OrigName;
+                  p2 = p1->next;
+                  free(p1);
+                  p1 = p2;
+                  }
+            return 0;
+            }
+
+      while (p1 != NULL) {
+
+            if (p1->exec && *p1->OrigName !="" ) {
+                  sym_(0, USTR (*p1->OrigName).c_str(),
+                       USTR  (*p1->data).c_str(), svPtr); // store call by ref
+                  }
+
+            free(p1->name);
+            delete p1->data;
+            delete p1->OrigName;
+            p2 = p1->next;
+            free(p1);
+            p1 = p2;
+            }
+
+      svPtr->_Sym--;
+
+      if (svPtr->_Sym<0) {
+            printf("*** SymFree symbol table underflow\n"), sigint(100);
+            }
+
+      return 0;
+      }
+
+void SysDump(long pid, struct MSV * svPtr) {
+
+      char key[1024];
+      struct stab *p1, *p2, *p3;
+      int i;
+      FILE *dump;
+      char p[32],cp1[STR_MAX];
+
+      Mltoa(pid, (unsigned char *) p);
+      dump=fopen(p,"w");
+      if (dump==NULL) ErrorMessage("Internal sym dum failed",svPtr->LineNumber);
+
+      p1 = svPtr->start[svPtr->_Sym];
+
+      while (p1 != NULL) {
+            fprintf (dump, "%s\n",p1->name);
+            strcpy(cp1,(*p1->data).c_str());
+            fprintf (dump, "%s\n",cp1);
+            p1 = p1->next;
+            }
+      fclose(dump);
+
+      }
+
+int SysLoad(long pid, struct MSV * svPtr)
+
+      {
+      /* sym table load */
+      FILE *indump;
+      unsigned char inbuf[2048],inbuf2[2048];
+      Mltoa(pid,inbuf);
+      indump=fopen((char *) inbuf,"r");
+      if (indump!=NULL) {
+            while(fgets((char *) inbuf,2048,indump)!=NULL) {
+                  fgets((char *) inbuf2,2048,indump);
+                  inbuf[strlen((char *) inbuf)-1]=0; /* new line */
+                  inbuf2[strlen((char *) inbuf2)-1]=0; /* new line */
+                  sym_(0,(unsigned char *) inbuf,(unsigned char *) inbuf2,svPtr); /* store */
+                  }
+            fclose(indump);
+            return 1;
+            }
+      return 0;
+      }
+
+unsigned char * mkpt(unsigned char * str) {
+      int i=0;
+      static unsigned char buf[2048];
+      for (i=0; str[i]!=0; i++) {
+            if (str[i]>=32 && str[i]<=128) {
+                  buf[i]=str[i];
+                  continue;
+                  }
+            if (str[i]<32) buf[i]='-';
+            if (str[i]=='\x1f') buf[i]='F';
+            if (str[i]=='\x1e') buf[i]='E';
+            if (str[i]=='\x01') buf[i]='.';
+            }
+      buf[i]=0;
+      return buf;
+      }
+
+void GlobalQuery(unsigned char * tmp0, unsigned char * tmp1, char tok, struct MSV * svPtrX) {
+
+      int i,j,k=0,oflg=0;
+      struct MSV * svPtr;
+
+      i=svPtrX->LineNumber;
+      svPtr=AllocSV(); /* push statevector */
+      svPtr->LineNumber=i;
+
+      memcpy(svPtr,svPtrX,sizeof(struct MSV)); /* copy old state vector - inefficient */
+
+      svPtr->t0px=1;
+      svPtr->t2=1;
+
+      strcpy( (char *) svPtr->xd, (const char *) tmp0);
+
+      svPtr->xpx=0;
+      i=parse_(svPtr);
+
+      if (i) {
+            printf("** $Query error\n");
+            sigint(100);
+            }
+
+
+      keyfix(&svPtr->v1d[1]);
+
+      if ( svPtr->v1d[i=strlen( (const char *) &svPtr->v1d[1])] != 1) { // ^a case - no parens
+            svPtr->v1d[++i]=1;
+            svPtr->v1d[++i]=1;
+            svPtr->v1d[++i]=0;
+            }
+
+      char *p1= (char *)malloc(strlen( (const char *)&svPtr->v1d[1])+1);
+      strcpy(p1,(const char *)&svPtr->v1d[1]);
+
+      for (i=1; svPtr->v1d[i] != 1 && svPtr->v1d[i] != 0; i++);
+
+      if ((k=Mglobal(XNEXT,&svPtr->v1d[1],tmp1,svPtr))==0) {
+            strcpy( (char *) tmp1,"");
+            free (svPtr);
+            free (p1);
+            return;
+            }
+
+#if defined(SQLITE)
+
+      free (svPtr);
+      free (p1);
+      return;
+
+#endif
+
+      if (strncmp(p1,(const char *) tmp1,i)!=0) {
+            strcpy( (char *) tmp1,"");
+            free (svPtr);
+            free (p1);
+            return;
+            }
+
+      free (p1);
+
+      char tmp3[STR_MAX];
+      int tx=1;
+      tmp3[0]='^';
+
+      if (tok == 0) {
+            for (i=0; tmp1[i]!='\0'; i++) {
+                  if (tmp1[i]=='\x01' && !oflg) {
+                        tmp3[tx++]='(';
+                        tmp3[tx++]='\"';
+                        k++;
+                        oflg=1;
+                        }
+                  else if (tmp1[i]=='\x01' && oflg && tmp1[i+1]!='\0') {
+                        tmp3[tx++]='\"';
+                        tmp3[tx++]=',';
+                        tmp3[tx++]='\"';
+                        k++;
+                        }
+                  else if (tmp1[i]=='\x01') {
+                        tmp3[tx++]='\"';
+                        tmp3[tx++]=')';
+                        k++;
+                        }
+                  else tmp3[tx++]=tmp1[i];
+                  }
+            }
+      else {
+            for (i=0; tmp1[i]!='\0'; i++) {
+                  if (tmp1[i]=='\x01' && !oflg) {
+                        tmp3[tx++]=tok;
+                        k++;
+                        oflg=1;
+                        }
+                  else if (tmp1[i]=='\x01' && oflg && tmp1[i+1]!='\0') {
+                        tmp3[tx++]=tok;
+                        k++;
+                        }
+                  else if (tmp1[i]=='\x01') {
+                        tmp3[tx++]=tok;
+                        k++;
+                        }
+                  else tmp3[tx++]=tmp1[i];
+                  }
+            }
+      tmp3[tx]=0;
+      strcpy((char *) tmp1,tmp3);
+      free (svPtr);
+      return;
+      }
+
+
+void Qlength(unsigned char * tmp0, unsigned char * tmp2, struct MSV * svPtrX) {
+
+      int i,j=0;
+      struct MSV * svPtr;
+
+//if (tmp0[0]!='^') ErrorMessage("$qlength() must have global array name as argument",
+//                               svPtr->LineNumber);
+
+      i=svPtrX->LineNumber;
+      svPtr=AllocSV(); /* push statevector */
+      svPtr->LineNumber=i;
+
+      memcpy(svPtr,svPtrX,sizeof(struct MSV)); /* copy old state vector - inefficient */
+      svPtr->t0px=1;
+      svPtr->t2=1;
+      strcpy( (char *) svPtr->xd, (const char *) tmp0);
+      svPtr->xpx=0;
+      i=parse_(svPtr);
+      keyfix(&svPtr->v1d[1]);
+      for (i=1; svPtr->v1d[i]!=0; i++) if (svPtr->v1d[i]==1 || svPtr->v1d[i]>128) j++;
+      if (j==0) strcpy( (char *) tmp2,"0");
+      else sprintf( (char *) tmp2,"%d",j-1);
+
+      free (svPtr);
+      }
+
+void Qsub(unsigned char * tmp0, unsigned char * tmp1, unsigned char * tmp2, struct MSV * svPtrX) {
+      int i,j=0,k=0,m=0,n,gblflg=0;
+      struct MSV * svPtr;
+
+      if (tmp0[0]=='^') gblflg=1;
+
+      i=svPtrX->LineNumber;
+      svPtr=AllocSV(); /* push statevector */
+      svPtr->LineNumber=i;
+
+      memcpy(svPtr,svPtrX,sizeof(struct MSV)); /* copy old state vector - inefficient */
+      svPtr->t0px=0;
+      svPtr->t2=1;
+      strcpy( (char *) svPtr->xd, (const char *) tmp0);
+      svPtr->xpx=0;
+      j=svPtr->gpad;
+      svPtr->gpad=0;
+      i=parse_(svPtr);
+      keyfix(&svPtr->v1d[1]);
+      svPtr->gpad=j;
+      if (gblflg)
+            strcpy( (char *) &tmp0[1], (const char *) &svPtr->v1d[1]);
+      else  strcpy( (char *) tmp0, (const char *) &svPtr->v1d[1]);
+      if (tmp2 != NULL) j=atoi( (const char *) tmp2);
+
+      if (j==-1) {
+            strcpy( (char *) tmp1,"");
+            free (svPtr);
+            return;
+            }
+
+      if (j==-2) {
+            strcpy( (char *) tmp1, (const char *) tmp0);
+            free (svPtr);
+            return;
+            }
+
+      n=strlen( (const char *) tmp0);
+      i=0;
+      for (k=0; k<=j; k++) {
+            m=i;
+            if (m>=n) {
+                  strcpy( (char *) tmp1,"");
+                  free (svPtr);
+                  return;
+                  }
+            for (; tmp0[i]!='\0'; i++) {
+                  if (tmp0[i]=='\x01'||tmp0[i]>128) {
+                        tmp0[i]='\0';
+                        break;
+                        }
+                  }
+            i++;
+            }
+      strcpy( (char *) tmp1, (const char *) &tmp0[m]);
+
+      free (svPtr);
+      return;
+      }
+
+//======================================================
+//
+// evaluate an expression - non zero return is error
+//
+//======================================================
+
+int Eval(unsigned char * tmp0, unsigned char * tmp2, struct MSV * svPtrX) {
+
+      int i;
+      struct MSV * svPtr;
+
+      i=svPtrX->LineNumber;
+      svPtr=AllocSV(); /* push statevector */
+      svPtr->LineNumber=i;
+
+      memcpy(svPtr,svPtrX,sizeof(struct MSV)); /* copy old state vector - inefficient */
+      svPtr->t2=1;
+      strcpy( (char *) svPtr->xd, (const char *) tmp0);
+      svPtr->xpx=0;
+      i=parse_(svPtr);
+      strcpy( (char *) tmp2,  (const char *) &svPtr->pd1[svPtr->sdlim]);
+      free (svPtr);
+      return i;
+      }
+
+
+/*===========================================================================*
+ *                                  _ascii                                   *
+ *===========================================================================*/
+void _ascii(unsigned char out[], unsigned char in[], unsigned char begin[]) {
+
+      int i;
+      i = atoi((char *) begin);
+      if (i < 1)
+            i = 1;
+
+      if (i > strlen((char *) in)) {
+            strmove(out, (unsigned char *) "-1");
+            return;
+            }
+
+      i = in[i - 1];
+      sprintf((char *) out, "%d", i);
+      return;
+      }
+
+/*===========================================================================*
+ *                                 _extract                                  *
+ *===========================================================================*/
+void _extract(unsigned char * out, unsigned char * in,
+              unsigned char * start, unsigned char * len) {
+
+      int i, j, k, n;
+
+      i = atoi((char *) start);
+      j = atoi((char *) len);
+
+      if (i < 0)
+            i = 0;
+      else
+            i--;
+
+      if (j < 0)
+            j = i;
+      else
+            j--;
+
+      if (j < i) {
+            strmove(out, (unsigned char *) "");
+            return;
+            }
+
+      if (i == 0 && j == 0) {
+            out[0] = in[0];
+            out[1] = '\0';
+            return;
+            }
+
+      n = strlen((char *) in);
+
+      if (i > n) {
+            strmove(out, (unsigned char *) "");
+            return;
+            }
+
+      if (j > n)
+            j = n;
+      for (k = 0; i <= j; i++)
+            out[k++] = in[i];
+      out[k] = 0;
+      return;
+      }
+
+/*===========================================================================*
+ *                                   _find                                   *
+ *===========================================================================*/
+void _find(unsigned char * out, unsigned char * in,
+           unsigned char * key, unsigned char * begin) {
+
+      int i;
+      i = atoi((char *) begin);
+      if (i < 0)
+            i = 0;
+
+      if (key[0] != 0) {
+            if ((i = xindex(in, key, (short) i)) > 0)
+                  i += strlen((char *) key);
+            }
+
+      if (i > strlen((char *) in) + 1)
+            i = 0;
+
+      sprintf((char *) out, "%d", i);
+      return;
+      }
+
+/*===========================================================================*
+ *                                 _horolog                                  *
+ *===========================================================================*/
+void _horolog(unsigned char in[]) {
+
+      long day, fd;
+      time_t timex;
+      char tmp2[64];
+
+      timex = time(&timex);
+      day = timex / 86400;
+      timex = timex - (day * 86400);
+      day = 47122 + day;
+      fd = day;
+      sprintf((char*) in, "%ld", fd);
+      strcat((char*) in, ",");
+      fd = timex;
+      sprintf(tmp2, "%ld", fd);
+      strcat((char*) in, tmp2);
+      return;
+      }
+
+/*===========================================================================*
+ *                                 _justify                                  *
+// may be dead
+ *===========================================================================*/
+void _justify(unsigned char out[], unsigned char in[],
+              unsigned char w[], unsigned char p[]) {
+
+      int l, k;
+      char bd[STR_MAX], tmp2[32];
+      double t1;
+      l = atoi((char *) w);
+      strncpy((char *) bd, (char *) in, STR_MAX);
+
+      if (strcmp((char *) p, "-1") == 0) {
+            k = strlen(bd);
+
+            if (k >= l) {
+                  strncpy((char *) out, (char *) in, STR_MAX);
+                  return;
+                  }
+
+            if (l > 255)
+                  l = 255;
+            lpad((unsigned char *) bd, (unsigned char *) bd, (short) l);
+            strncpy((char *) out, bd, STR_MAX);
+            return;
+            }
+
+      k = atoi((char *) p);       /* arg 3 */
+      sprintf(tmp2, "%c%d%c%dlf", '%', l, '.', k);
+      t1 = atof((char *) in);
+      sprintf(bd, tmp2, t1);
+      strncpy((char *) out, bd, STR_MAX);
+      return;
+      }
+
+/*===========================================================================*
+ *                                  _length                                  *
+ *===========================================================================*/
+void _length(unsigned char out[], unsigned char in[], unsigned char key[]) {
+
+      int i, j, k;
+      if (strlen((char *) key)) {
+            i = 1;
+            j = 0;
+            k = strlen((char *) key);
+
+            while ((i = xindex(in, key, (short) i)) != 0) {
+                  j++;
+                  i += k;
+                  }
+
+            sprintf((char *) out, "%d", j + 1);
+            return;
+            }
+
+      sprintf((char *) out, "%d", strlen((char *) in));
+      return;
+      }
+
+/*===========================================================================*
+ *                                  _random                                  *
+ *===========================================================================*/
+void _random(unsigned char out[], unsigned char in[]) {
+
+      int rslt, j;
+      static int first = 1;
+      time_t timex;
+
+      if (first) {
+            j = (int) time(&timex);
+            srand(j);
+            first = 0;
+            }
+
+      j = atoi((char *) in);
+      if (j < 2) {
+            strmove(out, (unsigned char *) "0");
+            return;
+            }
+
+      while ((rslt = (long) ((double) j * rand() / (RAND_MAX + 1.0))) >= j);
+      sprintf((char *) out, "%d", rslt);
+      return;
+      }
+
+int ScanParse(char * tmp1) {
+
+      int i=0,p=0;
+
+      while (1) {
+
+            if (tmp1[i] == 0) break;
+            if (tmp1[i] == ' ') break;
+            if (tmp1[i] == ',' && p == 0) break;
+            if (tmp1[i]=='(') p++;
+            if (tmp1[i]==')') p--;
+            if (tmp1[i] != '\"') {
+                  ++i;
+                  continue;
+                  }
+            ++i;
+            while (1) {
+                  if (tmp1[i] == 0 ) break;
+                  if (tmp1[i] != '\"' ) {
+                        ++i;
+                        continue;
+                        }
+                  ++i;
+                  break;
+                  }
+            }
+      return i;
+      }
+
+/*
+char * _text_function(int i) { return 0; }
+int _label_lookup(char * x) { return -1; }
+
+int (*__label_lookup)(char *) = _label_lookup;
+char* (*__text_function)(int) = _text_function;
+*/
+
+

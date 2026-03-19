@@ -1,0 +1,207 @@
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Mumps Bioinformatics Software Library
+#+     Copyright (C) 2003 - 2025 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://threadsafebooks.com/
+#+     https://www.cs.uni.edu/~okane
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+//	Dec 13, 2025
+
+#define SQLITE
+
+// enable debug code
+// #define SYMDEBUG
+
+/* sym.c - Mumps Runtime Library
+ *
+ * Mumps symbol table management.  Variables not handled by global.h
+ * and friends should be handled by these routines.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <sys/types.h>
+#include <monetary.h>
+#include <locale.h>
+#include <math.h>
+// #include <wait.h>
+
+#define _INTERP_
+#define CSTR (char *)
+#define USTR (unsigned char *)
+
+#include <mumpsc/defines.h>
+#include <mumpsc/sym.h>
+#include <mumpsc/btree.h>
+#include <mumpsc/globalOrder.h>
+#include <mumpsc/keyfix.h>
+#include <mumpsc/inline.h>
+
+#include <unistd.h>
+
+#include <time.h>
+
+#include <sys/types.h>
+
+using namespace std;
+
+#include <mumpsc/fcns.h>
+
+#include <mumpsc/builtin.h>
+#include <mumpsc/interp.h>
+
+// floatSize is defines BIGFLOAT if selected in configure
+
+
+// intLong will be defined is 32 bit wanted - 64 otherwise
+#define intLong
+
+int Interpret(const char *, MSV *);
+int ScanParse(char *);
+int Eval(unsigned char *, unsigned char *, struct MSV *);  // evaluate expression
+
+extern int (*__label_lookup)(char *);
+extern char* (*__text_function)(int);  /* fcn */
+
+#include <mumpsc/global.h>
+
+extern "C" long _getpid(void);
+extern "C" time_t time(time_t *);
+
+
+//===========================================================================
+//                                  _piece
+//===========================================================================
+
+void _piece(unsigned char out[],
+            unsigned char in[],
+            unsigned char key[],
+            unsigned char start[],
+            unsigned char end[],
+            int setpiece,
+            unsigned char lhs[],
+            struct MSV * svPtr) {
+
+      /* for setpiece=1:
+         out is name of variable into which to store result
+         in is input value of variable given in out
+         key is the pattern code
+         start and end are location counters
+         lhs is the value to be inserted into in
+      */
+
+
+      unsigned char tmp2[STR_MAX], tmp3[STR_MAX];
+      int k, l, m, n;
+
+      if (strcmp((char *) start, "-1") == 0) {    /* no start or end */
+            k = 1;
+            l = 1;
+            goto p1;
+            }
+
+      strmove(tmp2, start);
+      k = atoi((char *) tmp2);    /*start */
+
+      l = k;                      /* default end is same as start */
+
+
+      if (strcmp((char *) end, "-1") != 0) {      /* end? */
+            strmove(tmp2, end);
+            l = atoi((char *) tmp2);
+            }
+
+      if (k < 0 || l < k) {       /* check */
+            printf("** $Piece error start=%d end=%d\n",k,l);
+            sigint(100);
+            }
+
+p1:
+
+      strmove(tmp2, in);
+      strmove(tmp3, key);
+
+      if (tmp2[0] == 0 || tmp3[0] == 0 || k > l || l <= 0) {
+            if (setpiece == 0) strmove(out, (unsigned char *) "");
+            return;
+            }
+
+      m = 0;
+      n = 0;
+
+      while (n < k - 1) {
+            m = xindex(tmp2, tmp3, (short) m) + 1;
+
+            if (m == 1) {
+                  if (setpiece == 0) strmove(out, (unsigned char *) "");
+                  return;
+                  }
+
+            n++;
+            }
+
+
+      if (k != 1) k = m + strlen((char *) tmp3) - 1;
+
+      m=0;
+      n=0;
+      while (n != l) {
+            m = xindex(tmp2, tmp3, (short) (m + 1));
+
+            if (m <= 0) {
+                  m = strlen((char *) tmp2) + 1;
+                  goto piece1;
+                  }
+
+            else n++;
+            }
+
+      m = m - k;
+
+piece1:
+
+      if (m == 0 && setpiece == 0) {
+            if (setpiece == 0)
+                  strmove(out, (unsigned char *) "");
+            return;
+            }
+
+      if (setpiece == 1) {
+            char tmp[STR_MAX];
+            strmove((unsigned char *) tmp, in);
+            substr(tmp2, (unsigned char *) tmp, 1, k - 1);
+            tmp[k] = 1;
+            tmp[k + 1] = 0;
+            strcat(tmp, (char *) lhs);
+            if (k + m - 1 < strlen((char *) tmp2))
+                  strcat(tmp, (char *) &tmp2[k + m - 1]);
+            if (out[0] != '^') sym_(0, out, (unsigned char*) tmp,svPtr);
+            else Mglobal (STORE, out, (unsigned char *) tmp, svPtr);
+            return;
+            }
+
+      substr(tmp2, out, k, m);
+      return;
+      }
+

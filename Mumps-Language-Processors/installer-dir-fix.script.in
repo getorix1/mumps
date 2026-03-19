@@ -1,0 +1,8 @@
+#!/bin/bash
+
+for i in `find @mumps_version@-amd64 -type d` ; 
+	do
+	echo "	sudo chown root $i"
+	echo "	sudo chgrp root $i"
+	echo "	sudo chmod 755 $i"
+	done

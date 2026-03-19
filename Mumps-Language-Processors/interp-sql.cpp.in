@@ -1,0 +1,1134 @@
+/*#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ *#+	Mumps Compiler Run-Time Support Functions
+ *#+	Copyright (c) 2001 - 2026 by Kevin C. O'Kane
+ *#+    kc.okane@gmail.com
+ *#+    okane@uni.edu
+ *#+    https://threadsafebooks.com/
+ *#+	https://www.cs.uni.edu/~okane
+ *#+	https://www.youtube.com/@kevin_okane
+ *#+
+ *#+	This library is free software; you can redistribute it and/or
+ *#+	modify it under the terms of the GNU Lesser General Public
+ *#+	License as published by the Free Software Foundation; either
+ *#+	version 2.1 of the License, or (at your option) any later version.
+ *#+
+ *#+	This library is distributed in the hope that it will be useful,
+ *#+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *#+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *#+	Lesser General Public License for more details.
+ *#+
+ *#+   You should have received a copy of the GNU Lesser General Public
+ *#+	License along with this library; if not, write to the Free Software
+ *#+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *#+
+ *#+	astyle --style=banner --indent=tab interp-sql-btree.cpp.in
+ *#+
+ *#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ *#+
+ *#+	astyle --style=banner --indent=tab  interp-sql-btree.cpp.in
+ *#+
+ *#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ *#+	Jan 10, 2026
+ *#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+@dbtype@
+
+#define CSTR (char *)
+
+#define OK 1
+#define BAD 0
+
+//-----------------------------------------------------------------------------
+//                           SQL BTREE
+//           Translate to SQL and Execute Global Array Ops
+//-----------------------------------------------------------------------------
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <mumpsc/defines.h>
+#include <mumpsc/btree.h>
+#include <mumpsc/global.h>
+#include <mumpsc/libmpscpp.h>
+#include <mumpsc/keyfix.h>
+
+char * command_print (char * command) {
+	static char xcmd[2048];
+	int i, j;
+	for (i = 0; command[i]; i++ ) {
+		if (command[i] == 1 )
+			xcmd[i] = '#';
+		else xcmd[i] = command[i];
+		}
+	xcmd[i] = 0;
+	return xcmd;
+	}
+
+void sigint(int);
+
+unsigned char	rsltSpec[STR_MAX];	// result interface
+
+int	sql(int, struct MSV * svPtr, char *DataSourceName,
+        char *Command, char *, const char *);
+
+//--------------------------------------
+//	global array index length check
+//--------------------------------------
+
+void	lcheck(char * p, MSV * svPtr) {
+
+	if (strlen(p) > @index_size@) { // index_size filled in by configure
+
+		fprintf(stderr,
+		        "\n*** Length of global array index exceeds configuration max.\n");
+		fprintf(stderr, "*** %s\n", p);
+		fprintf(stderr, "*** In or near line %d\n\n",
+		        svPtr->LineNumber);
+		sigint(100);
+		}
+
+	return; // ok
+	}
+
+//-------------------------------------
+//	global array data length check
+//-------------------------------------
+
+void	dcheck(char * p, MSV * svPtr) {
+
+	if (strlen(p) > @data_size@) { // data_size filled in by configure
+
+		fprintf(stderr, "\n*** Length of global array data value exceeds configuration max.\n");
+		fprintf(stderr, "*** %s\n", p);
+		fprintf(stderr, "*** In or near line %d\n\n",
+		        svPtr->LineNumber);
+		sigint(100);
+		}
+
+	return; // ok
+	}
+
+//----------------------------------------------------
+//	fix embedded single quote marks in sql command
+//----------------------------------------------------
+
+char*	embed(char *in) {
+
+	static char tmp[STR_MAX];
+	int k = 1;
+	char *p1, *p2 = tmp;
+
+	tmp[0] = 0;
+
+	if (in == NULL) return tmp;
+
+	for (p1 = in; *p1!=0; p1++)
+		if (*p1 == '\'') {
+			k = 0;
+			break;
+			}
+
+	if (k) return in; // contains no quotes
+
+	for (p1 = in; *p1; p1++) {
+		if (*p1 != '\'') *(p2++) = *p1;
+		else {
+			*(p2++) = '\'';
+			*(p2++) = '\'';
+			}
+		}
+
+	*p2 = 0;
+	return tmp;
+	}
+
+//===========================================================================
+//			sql btree common section
+//===========================================================================
+
+
+int	btree (int g, unsigned char key[], unsigned char bd[],
+           struct MSV * svPtr) {
+
+	static char X01[2] = {1, 0};
+	static char XNULL[2] = {0, 0};
+	static char XTAB[2] = {'\t', 0};
+	static char XCMD[2] = {10, 0};
+	char cmd[STR_MAX], *p1, *p2, *p3, *p4;
+	char delim[2] = {1, 0};
+	int i, tokens = 0;
+	unsigned char tmp1[32];
+
+//----------------------------------------------------------
+// The following are the column names for SQL access. The
+// number of columns is limited to 32 at present. The first
+// one is a dummy as the column names begin with a1
+//----------------------------------------------------------
+
+	static char *nums[33] = {
+		" ", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10",
+		"a11", "a12", "a13", "a14", "a15", "a16", "a17", "a18", "a19",
+		"a20", "a21", "a22", "a23", "a24", "a25", "a26", "a27", "a28",
+		"a29", "a30", "a31", "a32"
+		};
+
+//-----------------------------
+// make sure connection is open
+//-----------------------------
+
+	sql(OPEN, svPtr, (char *) "@dbname@", (char *) tmp1, (char *) tmp1, XCMD);
+
+	if (g == NEXT) g = XNEXT;
+
+//--------------------
+//	user command
+//--------------------
+
+	if (g == SQLCMD) {
+		return sql(SQLCMD, svPtr, (char *) "@dbname@", (char *) key,
+		           (char *) bd, XCMD);
+		}
+
+
+//------------------------
+//	count indices
+//------------------------
+
+	for (p1 = (char *) key; *p1; p1++) 
+		if (*p1 == 1) tokens++; // count indices
+
+
+//------------------------------------------------------------------------
+//
+//			RETRIEVE
+//
+//------------------------------------------------------------------------
+
+	if (g == RETRIEVE) {
+
+		char col[64];
+		char delim[2] = {1, 0};
+		char save[STR_MAX];
+		int i, tok = 0;
+
+//--------------------------------------------------------
+//	select a10 from mumps where a1='...',a2='...',...
+//--------------------------------------------------------
+
+		if (tokens - 1 > @index_max@ - 2) {
+			fprintf(stderr, "\n*** 001 Maximum number if global"
+				" array indices exceeded\n"
+			        "in or near line %d\n", svPtr->LineNumber);
+			sigint(100);
+			}
+
+		strcpy(save, (const char *)key);
+
+		p1 = strtok( (char *) save, delim);
+
+		strcpy(cmd, "select ");
+		strcat(cmd, nums[@index_max@]);
+		strcat(cmd, " from @dbname@ ");
+
+		strcat(cmd," where a1=\'");
+
+		if (p1 != NULL ) {
+			lcheck(p1, svPtr);
+			strcat(cmd, embed(p1));
+			strcat(cmd, "\' ");
+			}
+
+		else strcat( cmd, "\' ");  // no indices to global provided
+
+		for (i = 2; i < @index_max@ - 2; i++) {
+
+			if ( (p1 = strtok(NULL, delim)) == NULL) break;
+
+			lcheck(p1, svPtr);
+			strcat(cmd, " and ");
+			strcat(cmd, nums[i]);
+			strcat(cmd, "=\'");
+			strcat(cmd, embed(p1));
+			strcat(cmd, "\'");
+			}
+
+		for (; i < @index_max@ - 2; i++) {
+
+			strcat(cmd, " and ");
+			strcat(cmd, nums[i]);
+			strcat(cmd, "=\'\'");
+			}
+
+		strcat(cmd, " limit 1;");
+		bd[0] = 0; // empty string
+//printf("aaaaaa %s\n", cmd);
+		i = sql(RETRIEVE, svPtr, (char *) "@dbname@", cmd, (char *) bd, XTAB );
+		return i;
+		}
+
+
+
+//------------------------------------------------------------------------
+//
+//		STORE
+//		STORE involves a DELETE and a STORE
+//
+//------------------------------------------------------------------------
+
+	if (g == STORE) {
+
+		char col[64];
+		char delim[2] = {1, 0};
+		char save[STR_MAX];
+		int i, tok = 0;
+
+//--------------------------------------------------------
+//	select a10 from mumps where a1='...',a2='...',...
+//--------------------------------------------------------
+
+		if (tokens - 1 > @index_max@ - 2) {
+			fprintf(stderr, "\n*** 001 xMaximum number "
+				"if global array indices exceeded\n"
+			        "in or near line %d\n", svPtr->LineNumber);
+			sigint(100);
+			}
+
+		strcpy(save, (const char *)key);
+
+		p1 = strtok( (char *) save, delim);
+
+//---------------------------------------
+//	delete any prior value this key
+//---------------------------------------
+
+		strcpy(cmd, "delete "); // delete first
+		strcat(cmd, " from @dbname@ ");
+
+		strcat(cmd," where a1=\'");
+
+		if (p1 != NULL ) {
+			lcheck(p1, svPtr);
+			strcat(cmd, embed(p1));
+			strcat(cmd, "\' ");
+			}
+
+		else strcat( cmd, "\' ");  // no indices to global provided
+
+		for (i = 2; i < @index_max@; i++) {
+
+			if ( (p1 = strtok(NULL, delim)) == NULL) break;
+
+			lcheck(p1, svPtr);
+			strcat(cmd, " and ");
+			strcat(cmd, nums[i]);
+			strcat(cmd, "=\'");
+			strcat(cmd, embed(p1));
+			strcat(cmd, "\'");
+			}
+
+		for (; i < @index_max@; i++) {	// pad WHERE with: and an=''
+
+			strcat(cmd, " and ");
+			strcat(cmd, nums[i]);
+			strcat(cmd, "=\'\'");
+			}
+
+		unsigned char bdx[128];
+		i = sql(g, svPtr, (char *) "@dbname@", cmd, (char *) bdx, XTAB );
+
+
+//--------------------------------------------
+// 		STORE new or replacement key
+//--------------------------------------------
+
+			{
+
+			char delim[2] = {1,0};
+			int i, j, tok = 0;
+			char save[STR_MAX];
+			char tmp[32];
+			char cmd1[STR_MAX * 2];
+
+			if (tokens - 1 > @index_max@ - 2) {
+				fprintf(stderr,
+				        "\n*** 002 Maximum number if global array indices exceeded\n"
+				        "in or near line %d\n", svPtr->LineNumber);
+				sigint(100);
+				}
+
+			strcpy(save, (const char *) key);
+
+//---------------------------------
+//	replace any existing tuple
+//---------------------------------
+
+			strcpy(save, (char *) key);
+
+			p1 = strtok(save, (char *) delim);
+
+//			sprintf(cmd, "replace into @dbname@ values (\'%s\', ", embed(p1));
+
+			sprintf(cmd, "insert into @dbname@ values (\'%s\', ", embed(p1));
+
+			j = strlen(cmd);
+			p3 = &cmd[j];
+
+			for (i = 2; i < @index_max@; i++) {
+
+				p1 = strtok(NULL, delim);
+
+				if (p1 == NULL) break;
+
+				lcheck(p1, svPtr);
+				p2 = embed(p1);
+				*(p3++) = '\'';
+
+				while ( *p2 != 0 ) *(p3++) = *(p2++);
+
+				*(p3++) = '\'';
+				*(p3++) = ',';
+				*(p3++) = ' ';
+				*p3 = 0;
+
+				}
+
+			for (; i < @index_max@; i++) { // off count but final val in bd
+
+				*(p3++) = '\'';
+				*(p3++) = '\'';
+				*(p3++) = ',';
+				*(p3++) = ' ';
+
+				}
+
+			*(p3) = 0;
+
+			dcheck((char *) bd, svPtr);
+			p2 = embed((char *) bd);
+			*(p3++) = '\'';
+
+			while ( *p2 != 0 ) *(p3++) = *(p2++);
+
+			*(p3++) = '\'';
+			*(p3++) = ' ';
+			*(p3++) = ')';
+			*(p3++) = ';';
+			*p3 = 0;
+
+			strcpy(cmd1, cmd);
+
+			static unsigned char bdx[256];
+
+			i = sql(g, svPtr, (char *) "@dbname@",cmd1, (char *) bdx, " ");
+
+			if (i == 0) {
+				fprintf(stderr, "\n*** SQL error reported during assignment "
+				        "to global array:\n*** %s\nCommand: %s\n",
+				        svPtr->pgsql_msg, cmd);
+				sigint(100);
+				}
+
+			return 1;
+			}
+		}
+
+
+
+	if (g == ORDERNEXT || g == ORDERPREV) {
+
+//-------------------------------------------------------------------------
+//	select aX from mumps where  a1='...'
+//		and a2='...' ... and aX>'...'  order by aX desc limit 1;
+//	select aX from mumps where  a1='...'
+//		and a2='...' ... and aX<'...'  order by aX asc limit 1;
+//-------------------------------------------------------------------------
+
+		char key1[STR_MAX], cmd[STR_MAX];
+		char col[64];
+		char delim[2] = {1, 0};
+		int i;
+
+		keyfix(key);
+
+		if (tokens - 1 > @index_max@ - 2) {
+			return 0; // permits $data to work at this level
+			printf("\n*** 004 Maximum number if global array indices exceeded\n"
+			       "in or near line %d\n", svPtr->LineNumber);
+			sigint(100);
+			}
+
+		if (tokens == 1) {
+			p1 = cmd + 15;
+			strcpy(cmd, "select a1 from ");
+			for (char *p = svPtr->Table; *p; p++) *(p1++) = *p;
+			strcpy(p1, " where a1=\'");
+			p1 += 12;
+			}
+
+		else {
+			p1 = cmd + 7;
+			strcpy(cmd, "select ");
+			for (char *p = nums[tokens];   // col whose value we want
+				*p; p++) *(p1++) = *p; // advances ptr by lngth of nums
+			strcpy(p1," from ");
+			p1 += 6;
+			for (char *p = svPtr->Table; *p; p++) *(p1++) = *p;
+			strcpy(p1," where a1=\'");
+			p1 += 11;
+			}
+
+		p3 = strtok( (char *) key, delim);
+		for (p2 = embed(p3); *p2; p2++) *(p1++) = *p2;
+
+		*(p1++) = '\'';
+		*(p1++) = ' ';
+
+		for (i = 2; i < tokens; i++) {
+			p3 = strtok(NULL, delim);
+			if (p3 == NULL) break;
+
+			strcpy(p1, "and ");
+			p1 += 4;
+			for (char *p = nums[i]; *p; p++) *(p1++) = *p;
+			*(p1++) = '=';
+			*(p1++) = '\'';
+
+			for (p2 = embed(p3); *p2; p2++) *(p1++) = *p2;
+			*(p1++) = '\'';
+			*(p1++) = ' ';
+			}
+
+		p3 = strtok(NULL, delim);
+
+		if (p3 != NULL ) {
+
+			if (g == ORDERNEXT) {
+				strcpy(p1, "and ");
+				p1 += 4;
+				for ( char *p = nums[i]; *p; p++) *(p1++) = *p;
+				*(p1++) = '>';
+				*(p1++) = '\'';
+				}
+
+			else {
+				strcpy(p1,"and ");
+				p1 += 4;
+				for ( char *p = nums[i]; *p; p++) *(p1++) = *p;
+				*(p1++) = '<';
+				*(p1++) = '\'';
+				}
+
+			for (p2 = embed(p3); *p2; p2++) *(p1++) = *p2;
+			*(p1++) = '\'';
+			*(p1++) = ' ';
+			}
+
+		else { // next requires a comp operator for empty string
+
+			if (g == ORDERNEXT) {
+				strcpy(p1, "and ");
+				p1 += 4;
+//strcpy(p1, "cast("); p1 += 5; 
+
+				for ( char *p = nums[i]; *p; p++) *(p1++) = *p;
+//strcpy(p1, " as text)");  p1 += 9;
+
+				*(p1++) = '>';
+				*(p1++) = '\'';
+				*(p1++) = '\'';
+				*(p1++) = ' ';
+				}
+			}
+
+		char order[64];
+
+		if (tokens == 1) {
+			if (g == ORDERNEXT) strcpy(p1, " order by a1 asc limit 1;");
+			else strcpy(p1, " order by a1 desc limit 1;");
+			}
+
+		else if (g == ORDERNEXT) {
+			strcpy(p1, "order by ");
+			p1 +=  9;
+			for ( char *p = nums[tokens]; *p; p++) *(p1++) = *p;
+			strcpy(p1," asc limit 1;");
+			}
+
+		else {
+			strcpy(p1,"order by ");
+			p1 +=  9;
+			for ( char *p = nums[tokens]; *p; p++) *(p1++) = *p;
+			strcpy(p1," desc limit 1;");
+			}
+
+		i = sql(GLOBAL, svPtr, (char *) "@dbname@",
+		        cmd, (char *) bd, XNULL );
+		return i;
+		}
+
+
+
+//------------------------------------------------------------------------
+//
+// 			NEXT used by $query
+//
+//------------------------------------------------------------------------
+
+	if ( g == XNEXT ) {
+
+		char cmd[STR_MAX] = "";
+		char col[64];
+		int i;
+		char keybak[STR_MAX];
+		char delim[2] = {1, 0};
+		char tmp[STR_MAX], tmp1[STR_MAX];
+
+		if (tokens - 1 > @index_max@ - 2) {
+			fprintf(stderr,
+			        "\n*** 003 Maximum number if global array indices exceeded\n"
+			        "in or near line %d\n", svPtr->LineNumber);
+			sigint(100);
+			}
+
+		p1=strtok((char *)key, delim);
+
+#if @index_max@==4
+		strcpy(cmd, "select a1,a2,a3 from @dbname@ where a1=\"");
+		strcat(cmd,  p1);
+		strcat(cmd, "\" and (a2,a3) > (");
+		#endif
+
+#if @index_max@==5
+		strcpy(cmd, "select a1,a2,a3,a4 from @dbname@ where a1=\"");
+		strcat(cmd,  p1);
+		strcat(cmd, "\" and (a2,a3,a4) > (");
+		#endif
+
+#if @index_max@==6
+		strcpy(cmd, "select a1,a2,a3,a4,a5 from @dbname@ where a1=\"");
+		strcat(cmd,  p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5) > (");
+		#endif
+
+#if @index_max@==7
+		strcpy(cmd,"select a1,a2,a3,a4,a5,a6 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5,a6) > (");
+		#endif
+
+#if @index_max@==8
+		strcpy(cmd,"select a1,a2,a3,a4,a5,a6,a7 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5,a6,a7) > (");
+		#endif
+
+#if @index_max@==9
+		strcpy(cmd, "select a1,a2,a3,a4,a5,a6,a7,a8 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd,"\" and (a2,a3,a4,a5,a6,a7,a8) > (");
+		#endif
+
+#if @index_max@==10
+		strcpy(cmd, "select a1,a2,a3,a4,a5,a6,a7,a8,a9 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5,a6,a7,a8,a9) > (");
+		#endif
+
+#if @index_max@==11
+		strcpy(cmd, "select a1,a2,a3,a4,a5,a6,a7,a8,a9,a10 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5,a6,a7,a8,a9,a10) > (");
+		#endif
+
+#if @index_max@==12
+		strcpy(cmd, "select a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) > (");
+		#endif
+
+#if @index_max@==13
+		strcpy(cmd, "select a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12) > (");
+		#endif
+
+#if @index_max@==14
+		strcpy(cmd, "select a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13) > (");
+		#endif
+
+#if @index_max@==15
+		strcpy(cmd, "select a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14) > (");
+		#endif
+
+#if @index_max@==16
+		strcpy(cmd, "select a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15) > (");
+		#endif
+
+#if @index_max@==17
+		strcpy(cmd, "select a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16 from @dbname@ where a1=\"");
+		strcat(cmd, p1);
+		strcat(cmd, "\" and (a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a16) > (");
+		#endif
+
+#if @index_max@>=18
+		#error Too many global array index levels
+		#endif
+
+
+		p1 = strtok(NULL, delim); // get another
+
+		for (i = 2; i <= tokens; i++) {
+
+			if (p1 == NULL) strcat(cmd, "\'\',");
+			else {
+				strcat(cmd, "\'");
+				lcheck(p1, svPtr);
+				strcat(cmd, embed(p1));
+				strcat(cmd, "\',");
+				p1 = strtok(NULL, delim); // get another
+				}
+			}
+
+		if (p1 == NULL) {
+			strcat(cmd, "\'\'");
+			}
+
+		else {
+			strcat(cmd, "\'");
+			lcheck(p1, svPtr);
+			strcat(cmd, embed(p1));
+			strcat(cmd, "\'");
+			}
+
+		for (; i < @index_max@ - 1; i++) strcat(cmd, ",\'\'");
+
+#if @index_max@==4
+		strcat(cmd,") order by a2,a3");
+	#endif
+
+#if @index_max@==5
+		strcat(cmd, ") order by a2,a3,a4");
+	#endif
+
+#if @index_max@==6
+		strcat(cmd, ") order by a2,a3,a4,a5");
+	#endif
+
+#if @index_max@==7
+		strcat(cmd, ") order by a2,a3,a4,a5,a6");
+	#endif
+
+#if @index_max@==8
+		strcat(cmd, ") order by a2,a3,a4,a5,a6,a7");
+	#endif
+
+#if @index_max@==9
+		strcat(cmd, ") order by a2,a3,a4,a5,a6,a7,a9");
+	#endif
+
+#if @index_max@==10
+		strcat(cmd, ") order by a2,a3,a4,a5,a6,a7,a9,a10");
+	#endif
+
+#if @index_max@==11
+		strcat(cmd, ") order by a2,a3,a4,a5,a6,a7,a9,a10,a11");
+	#endif
+
+#if @index_max@==12
+		strcat(cmd, ") order by a2,a3,a4,a5,a6,a7,a9,a10,a11,a12");
+	#endif
+
+#if @index_max@==13
+		strcat(cmd, ") order by a2,a3,a4,a5,a6,a7,a9,a10,a11,a12,a13");
+	#endif
+
+#if @index_max@==14
+		strcat(cmd, ") order by a2,a3,a4,a5,a6,a7,a9,a10,a11,a12,a13,a14");
+	#endif
+
+#if @index_max@==15
+		strcat(cmd, ") order by a2,a3,a4,a5,a6,a7,a9,a10,a11,a12,a13,a14,a15");
+	#endif
+
+#if @index_max@==16
+		strcat(cmd, ") order by a2,a3,a4,a5,a6,a7,a9,a10,a11,a12,a13,a14,a15,a16");
+	#endif
+
+#if @index_max@==17
+		strcat(cmd, ") order by a2,a3,a4,a5,a6,a7,a9,a10,a11,a12,a13,a14,a15,a16,a17");
+	#endif
+
+
+		for (i = 2; i < tokens - 1; i++) {
+			sprintf(tmp, ", a%d", i + 1);
+			strcat(cmd, tmp);
+			}
+
+		strcat(cmd, " limit 1;");
+
+		strcpy((char *) key, keybak); 
+
+		i = sql(g, svPtr, (char *) "@dbname@", cmd, (char *) bd, X01 );
+
+		strcpy((char *) key, (char *) rsltSpec);
+
+		return i;
+
+		}
+
+
+
+//------------------------------------------------------------------------
+//
+//			DELETE
+// 			GKILL
+//
+//------------------------------------------------------------------------
+
+	if ( g == GKILL ) {
+
+		char cmd[STR_MAX];
+		char col[64];
+		int i;
+		char keybak[STR_MAX];
+		char tmp[64];
+		int tokens = 0;
+
+		if (tokens - 1 > @index_max@ - 2) {
+			fprintf(stderr,
+			        "\n*** 003 Maximum number if global array indices exceeded\n"
+			        "in or near line %d\n", svPtr->LineNumber);
+			sigint(100);
+			}
+
+		strcpy(keybak, (char *) key);
+//		sprintf(cmd, "delete from @dbname@ ", svPtr->Table);
+		strcpy(cmd, "delete from @dbname@ ");
+
+		if ( tokens == 1) {
+			strcat(cmd, "where a1=\'");
+			p3 = strtok( (char *) key, delim); // array name
+			strcat(cmd, (char *) p3);
+			strcat(cmd, "\';");
+			}
+
+		else {
+
+			strcat(cmd, "where ");
+			p3 = strtok( (char *) key, delim); // array name
+
+			for (i = 1; i < @index_max@ - 2; i++) {
+
+				if (p3 == NULL) break;
+
+				if (i != 1) strcat(cmd, " and ");
+
+				strcat(cmd, nums[i]);
+				strcat(cmd, "=\'");
+				lcheck(p3, svPtr);
+				strcat(cmd, embed(p3));
+				strcat(cmd, "\' ");
+				p3=strtok(NULL, delim);
+				}
+
+			strcat(cmd, ";");
+			}
+
+		i = sql(g, svPtr, (char *) "@dbname@", cmd, (char *) bd, X01 );
+
+		return i;
+		}
+
+//-------------------------------
+//               GLOBAL NAMES
+//-------------------------------
+
+	if (g == GBLNME) {
+
+		p1 = cmd + 15;
+		strcpy(cmd, "select a1 from ");
+		for (char *p = svPtr->Table; *p; p++) *(p1++) = *p;
+		strcpy(p1, " where a1>\'");
+		strcat(p1, (char *) key);
+		strcat(p1,"\' order by a1 limit 1;");
+
+		bd[0] = 0; // empty string
+		i = sql(RETRIEVE, svPtr, (char *) "@dbname@", cmd, (char *) bd, XTAB );
+		return i;
+
+		}
+
+//-------------------------
+//               CLOSE
+//-------------------------
+
+	if (g == CLOSE) {
+		sql(CLOSE, svPtr, (char *) "", (char *) "", (char *) "", XTAB);
+		return OK;
+		}
+
+	return OK;
+	}
+
+
+
+//------------------------------------------
+//            SQLITE CALLBACK INTERFACE
+//------------------------------------------
+
+#include <sqlite3.h>
+
+static int call_back = 0;
+
+int rslt_callback(void *rslt1, int num_cols, char *col_vals[],
+                  char **err_msgs) {
+
+	char *rslt = (char *) rslt1;
+	static char mark[2] = {1,0};
+
+	call_back = 1; // we've been called
+
+	if (! col_vals[0]) { // null
+		strcpy(rslt, "");
+		return 0;
+		}
+
+	if (num_cols == 1) strcpy(rslt, col_vals[0]); // one column answer
+
+	else {
+		int i;
+		strcpy(rslt, "^");
+		if (col_vals[0]) strcat(rslt, col_vals[0]); // array name
+		else strcpy(rslt, "");
+		strcpy((char *) rsltSpec, col_vals[0]);	// for MDH result reporting
+		strcat(rslt, "(\"");
+
+		for (i = 1; i < num_cols; i++) { // 0 is array name
+
+			if (! col_vals[i] || ! strlen(col_vals[i])) break; // empty string or null
+
+			strcat(rslt, col_vals[i]);
+			strcat((char *) rsltSpec, mark);	// for MDH result reporting
+			strcat((char *) rsltSpec, col_vals[i]);	// for MDH result reporting
+			strcat(rslt, "\",\"");
+			}
+
+		i = strlen((char *) rslt);
+		strcat((char *) rsltSpec, mark);	// for MDH result reporting
+		rslt[i - 2] = ')';
+		rslt[i - 1]  = 0;
+		}
+
+	return 0;
+	}
+
+
+//----------------------------
+//	sql()
+//----------------------------
+
+int sql(int CODE, struct MSV *svPtr, char *DataSourceName,
+        char *Command, char *rslt, const char *TOK) {
+
+	static int open = 0;
+
+	static long long access = 0;
+
+	int max;
+
+	static sqlite3 *ppDb;
+	int i, j, nt = 0, nf = 0;
+	char tmp[256];
+
+	strcpy(svPtr->Col_Names, "");
+
+	if (CODE == CLOSE) {
+		if (!open) return 1;
+		svPtr->ConOpen = 0;
+		open = 0;
+		if (sqlite3_close(ppDb) == SQLITE_OK)  return OK;
+		fprintf(stderr, "*** Sql database close error\n");
+		}
+
+	if (CODE == OPEN ) {
+		if (open) return OK;
+		}
+
+//--------------------
+//	default open
+//--------------------
+
+	if (!open) { // database is not open
+
+		FILE *f1;
+		f1 = fopen("@dbfile@", "r"); // test if exists
+		int sql3;
+
+		if (f1 == NULL) {
+			fprintf(stderr, "\n\n*** Sqlite3 database \"@dbfile@\" not found.\n");
+			fprintf(stderr, "*** Database operations not available.\n");
+			fprintf(stderr, "*** Please run mumps-sql-db-create.script\n");
+			sigint(100);
+			}
+
+		fclose(f1);
+
+		if (@memory_database@) {
+
+			sql3 = sqlite3_open_v2("@dbfile@", &ppDb,
+			                       SQLITE_OPEN_READWRITE |
+			                       SQLITE_OPEN_CREATE |
+			                       SQLITE_OPEN_MEMORY,
+			                       NULL);
+
+			while (
+			    (sqlite3_exec(ppDb,
+			                  "create table @dbname@ "
+			                  "(a1 varchar(@index_size@), "
+			                  "a2 varchar(@index_size@), "
+			                  "a3 varchar(@index_size@), "
+			                  "a4 varchar(@index_size@), "
+			                  "a5 varchar(@index_size@), "
+			                  "a6 varchar(@index_size@), "
+			                  "a7 varchar(@index_size@), "
+			                  "a8 varchar(@index_size@), "
+			                  "a9 varchar(@index_size@), "
+			                  "a10 varchar(@data_size@));",
+			                  rslt_callback,
+			                  (void *)rslt, NULL))
+			    == SQLITE_BUSY);
+
+			sql3 = sqlite3_exec(ppDb, "create index MI on @dbname@ (a1, a2);",
+			                    rslt_callback, (void *)rslt, NULL);
+
+			}
+
+		else {
+			sql3 = sqlite3_open_v2("@dbfile@", &ppDb, SQLITE_OPEN_READWRITE, NULL);
+			}
+
+//-------------------------
+//	call was OPEN only
+//-------------------------
+
+//		if (CODE == OPEN ) {
+//			if (open) return OK;
+//			}
+
+//--------------------------------------------------
+//      establish options: MEMORY, OFF, TRUNCATE
+//--------------------------------------------------
+
+		while ((sql3 = sqlite3_exec(
+		                   ppDb,
+		                   "pragma main.journal_mode = @journal_mode@;",
+		                   rslt_callback,
+		                   (void *)rslt, NULL))
+		        == SQLITE_BUSY);
+
+		if (sql3 != SQLITE_OK) {
+			fprintf(stderr,
+			        "\n\n*** Sqlite3 database open error"
+				" while setting options.\n");
+			fprintf(stderr,
+			        "*** Database operations not available.\n");
+			return BAD;
+			}
+
+		sqlite3_busy_timeout(ppDb, 20000); // busy handler
+
+		open = 1;
+		svPtr->tpx = open;
+		if (CODE == OPEN ) return OK;
+
+		} 
+
+//------------------------------
+//	end default open
+//------------------------------
+
+	if (strlen(Command) == 0) return open;
+
+	call_back = 0;
+
+	int sql3;
+
+//----------------------------------------------------------------
+//	uncomment to reduce contention
+//----------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------
+//	access++;
+//      if (access % 1000 == 0) usleep(100000); // sync other users - tenth of a second
+//-------------------------------------------------------------------------------------
+
+	char *err_msg = NULL;
+
+//-------------------------------------------------------------------------------------
+//	sqlite3_exec() will not return until any and all callbacks have been executed.
+//-------------------------------------------------------------------------------------
+
+	while ( sql3 = sqlite3_exec(ppDb,
+	                            Command,
+	                            rslt_callback,
+	                            (void *)rslt, &err_msg)
+	               == SQLITE_BUSY);
+
+//---------------------------------------------------------------------------------------
+//	how to detect a busy error message
+//	if (sql3 == SQLITE_BUSY) printf("*** Database busy - adjust busy_timeout()\n");
+//---------------------------------------------------------------------------------------
+
+	if (err_msg) {
+		fprintf(stderr, "*** Sqlite Error msg: %d %s\n*** %s\n", sql3, err_msg, Command);
+		sqlite3_free(err_msg);
+		*rslt = 0;
+		return BAD;
+		}
+
+	if (sql3 == 0 && CODE == GLOBAL && !call_back) {
+		rslt[0] = 0;
+		return OK;
+		}
+
+	if (sql3 == 0 &&
+	        CODE == STORE) return OK;
+
+	if (CODE == BEGIN_TRANSACTION) {
+		if (sql3 == 0) return OK;
+		else return BAD;
+		}
+
+	if (CODE == COMMIT_TRANSACTION) {
+		if(sql3 == 0) return OK;
+		else return BAD;
+		}
+
+	if (CODE == SAVEPOINT) {
+		if(sql3 == 0) return OK;
+		else return BAD;
+		}
+
+	if (CODE == ROLLBACK_TRANSACTION) {
+		if(sql3 == 0) return OK;
+		else return BAD;
+		}
+
+	if (CODE == PRAGMA) {
+		if(sql3 == 0) return OK;
+		else return BAD;
+		}
+
+	if (! call_back) return BAD;
+
+	if (sql3 == 0) return OK;
+
+	return BAD;
+
+	}

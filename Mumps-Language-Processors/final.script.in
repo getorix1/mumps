@@ -1,0 +1,57 @@
+#!/bin/bash
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Mumps Bioinformatics Software Library
+#+     Copyright (C) 2015 - 2025 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://threadsafebooks.com/
+#+     https://www.cs.uni.edu/~okane
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+# Dec 14, 2025 
+
+echo
+echo "*************************************************************"
+echo "Now install @mumps_version@-amd64.deb"
+echo
+echo "You may need to remove an old version. If so, use:"
+echo
+echo "  sudo dpkg --remove mumps-sqlite3"
+echo "or"
+echo "  sudo dpkg --remove mumps-native-single-user"
+echo
+echo "You should probably update your system cache before the above"
+echo "due to the possibility of system support libraries being installed:"
+echo
+echo  "  sudo apt update"
+echo
+echo "Next install the package:"
+echo
+echo "  sudo dpkg --install @mumps_version@-amd64.deb"
+echo
+echo "Post-install, use:  "
+echo
+echo "  sudo apt install -f  "
+echo
+echo "to fix any missing packages detected by dpkg."
+echo "*************************************************************"
+echo
+echo

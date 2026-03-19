@@ -1,0 +1,445 @@
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+
+#+     Mumps Bioinformatics Software Library
+#+     Copyright (C) 2003 - 2026 by Kevin C. O'Kane
+#+
+#+     Kevin C. O'Kane
+#+     kc.okane@gmail.com
+#+     https://threadsafebooks.com/
+#+     https://www.cs.uni.edu/~okane
+#+
+#+ This program is free software; you can redistribute it and/or modify
+#+ it under the terms of the GNU General Public License as published by
+#+ the Free Software Foundation; either version 2 of the License, or
+#+ (at your option) any later version.
+#+
+#+ This program is distributed in the hope that it will be useful,
+#+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+#+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#+ GNU General Public License for more details.
+#+
+#+ You should have received a copy of the GNU General Public License
+#+ along with this program; if not, write to the Free Software
+#+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+//	Jan 10, 2026
+
+@dbtype@
+
+// enable debug code
+// #define SYMDEBUG
+
+/* sym.c - Mumps Runtime Library
+ *
+ * Mumps symbol table management.  Variables not handled by global.h
+ * and friends should be handled by these routines.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <sys/types.h>
+#include <monetary.h>
+#include <locale.h>
+#include <math.h>
+// #include <wait.h>
+
+#define _INTERP_
+#define CSTR (char *)
+#define USTR (unsigned char *)
+
+#include <mumpsc/defines.h>
+#include <mumpsc/sym.h>
+#include <mumpsc/btree.h>
+#include <mumpsc/globalOrder.h>
+#include <mumpsc/keyfix.h>
+#include <mumpsc/inline.h>
+
+#include <unistd.h>
+
+#include <time.h>
+
+#include <sys/types.h>
+
+using namespace std;
+
+#include <mumpsc/fcns.h>
+
+#include <mumpsc/builtin.h>
+#include <mumpsc/interp.h>
+
+// floatSize is defines BIGFLOAT if selected in configure
+@floatSize@
+
+// intLong will be defined is 32 bit wanted - 64 otherwise
+@intLong@
+
+int Interpret(const char *, MSV *);
+int ScanParse(char *);
+int Eval(unsigned char *, unsigned char *, struct MSV *);  // evaluate expression
+
+extern int (*__label_lookup)(char *);
+extern char* (*__text_function)(int);  /* fcn */
+
+void ServiceInterface(unsigned char * tmp0, unsigned char * tmp1, unsigned char * tmp4, unsigned char * tmp5,
+                      unsigned char * tmp3, char tok, struct MSV * svPtrX) {
+
+      int i,j,k=0,oflg=0;
+      struct MSV * svPtr;
+      unsigned char tmpA[STR_MAX],tmpB[STR_MAX],tmpC[STR_MAX];
+
+      tmpA[0]=0;
+      tmpB[0]=0;
+
+      if (tok==GETENV) {
+
+            Getenv( (unsigned char *) tmp3, (unsigned char *) tmp0);
+            return;
+            }
+
+      if (tok==SCANALNUM) {
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) ScanAlnum(svPtrX, (char *) ""));
+            return;
+            }
+
+      if (tok==SCAN) {
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Scan(svPtrX));
+            return;
+            }
+
+      if (tok==INPUT) {
+            strmove( (unsigned char *) tmp3, (unsigned char *) Input(svPtrX, (char *) "", (char *) tmp0));
+            return;
+            }
+
+      i=svPtrX->LineNumber;
+      svPtr=AllocSV(); /* push statevector */
+      svPtr->LineNumber=i;
+
+      memcpy(svPtr,svPtrX,sizeof(struct MSV)); /* copy old state vector - inefficient */
+
+      if (tok==COSINE) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp1);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpB,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Cosine(svPtr,
+                        (char *) "", (char *) tmpA, (char *) tmpB));
+            }
+
+      else if (tok==SIM1) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp1);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpB,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Sim1(svPtr,
+                        (char *) "", (char *) tmpA, (char *) tmpB));
+            }
+
+      else if (tok==JACCARD) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp1);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpB,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Jaccard(svPtr,
+                        (char *) "", (char *) tmpA, (char *) tmpB));
+            }
+
+      else if (tok==TRANSPOSE) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp1);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpB,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Transpose(svPtr,
+                        (char *) "", (char *) tmpA, (char *) tmpB));
+            }
+
+      else if (tok==MMULTIPLY) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp1);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpB,  (char *) &svPtr->v1d[1]);
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp4);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpC,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Multiply(svPtr,
+                        (char *) "", (char *) tmpA, (char *) tmpB, (char *) tmpC));
+            }
+
+      else if (tok==CENTROID) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp1);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpB,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Centroid(svPtr,
+                        (char *) "", (char *) tmpA, (char *) tmpB));
+            }
+
+      else if (tok==TERMCORRELATE) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp1);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpB,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) TermCorrelate(svPtr,
+                        (char *) "", (char *) tmpA, (char *) tmpB));
+            }
+
+      else if (tok==DOCCORRELATE) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp1);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpB,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) DocCorrelate(svPtr,
+                        (char *) "", (char *) tmpA, (char *) tmpB, (char *) tmp4, (char *) tmp5) );
+            }
+
+      else if (tok==INVDF) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+            tmpA[strlen((char *)tmpA)+1]=0;
+
+            strcpy(  (char *) tmpB,  (char *) tmp1);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) IDF(svPtr,
+                        (char *) "", (char *) tmpA, (char *) tmpB));
+
+            }
+
+      else if (tok==AVG) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Avg(svPtr,
+                        (char *) "", (char *) tmpA ));
+
+            }
+
+      else if (tok == GBLNME) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            strcpy(  (char *) tmp3,  (char *) &svPtr->v1d[1]);
+
+	unsigned char rslt[STR_MAX];
+	int f = Mglobal (GBLNME, tmp3, rslt, svPtr);
+	strcpy((char *) tmp3, (char *) rslt);
+
+            }
+
+      else if (tok==COUNT) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Count(svPtr,
+                        (char *) "", (char *) tmpA ));
+
+            }
+
+      else if (tok == MAX) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Max(svPtr,
+                        (char *) "", (char *) tmpA ));
+
+            }
+
+      else if (tok==MIN) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Min(svPtr,
+                        (char *) "", (char *) tmpA ));
+
+            }
+
+      else if (tok==SUM) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy(  (char *) tmpA,  (char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Sum(svPtr,
+                        (char *) "", (char *) tmpA ));
+
+            }
+
+      else if (tok==DICE) {
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp0);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy( (char *) tmpA, (const char *) &svPtr->v1d[1]);
+
+            svPtr->t0px=1;
+            svPtr->t2=1;
+            strcpy( (char *) svPtr->xd, (const char *) tmp1);
+            svPtr->xpx=0;
+            i=parse_(svPtr);
+            keyfix(&svPtr->v1d[2]);
+            strcpy( (char *) tmpB, (const char *) &svPtr->v1d[1]);
+
+            strmove( (unsigned char *) tmp3, (unsigned char *) Dice(svPtr,
+                        (char *) "", (char *) tmpA, (char *) tmpB));
+
+            }
+
+      svPtrX->tpx = svPtr->tpx;
+
+      free (svPtr);
+      return;
+      }
